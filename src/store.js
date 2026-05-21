@@ -6,7 +6,6 @@ export const store = reactive({
   apiKey: localStorage.getItem('weread_api_key') || '',
   status: '等待载入本地数据。',
   categoryStatus: '分类会写入 config/taxonomy.json。',
-  packStatus: '会优先使用当前选中的细分类。',
   raw: { books: [] },
   cardsData: { cards: [], taxonomy: [] },
   taxonomy: { categories: [] },
@@ -17,8 +16,6 @@ export const store = reactive({
   searchInput: '',
   typeFilter: '',
   bookFilter: '',
-  packQuery: '',
-  materialPack: null,
   loading: false,
   activeCategoryEdit: null,
   categoryForm: { mode: 'create', path: '', parentPath: '', originalPath: '', name: '', description: '' },
@@ -202,10 +199,19 @@ export async function classifyData() {
 }
 
 export function cardClassification(card) {
-  if (!getters.classificationMap.value) return null;
+  const map = getters.classificationMap.value;
+  if (!map) return null;
   const text = card.quote || card.note || '';
-  const key = `${card.bookId}|${card.type === 'linked' ? 'highlight' : card.type}|${text.slice(0, 60)}`;
-  return getters.classificationMap.value.get(key) || null;
+  const type = card.type === 'linked' ? 'highlight' : card.type;
+  const key = `${card.bookId}|${type}|${text.slice(0, 60)}`;
+  const hit = map.get(key);
+  if (hit) return hit;
+  // linked 卡片同时有划线和想法，quote 匹配 highlight 失败时用 note 匹配 review
+  if (card.type === 'linked' && card.note) {
+    const reviewKey = `${card.bookId}|review|${card.note.slice(0, 60)}`;
+    return map.get(reviewKey) || null;
+  }
+  return null;
 }
 
 export async function updateNoteCategory(category) {
@@ -224,32 +230,6 @@ export async function updateNoteCategory(category) {
     store.status = '分类已保存。';
   } catch (err) {
     store.status = `保存失败：${err.message}`;
-  }
-}
-
-export async function generatePack() {
-  const query = store.packQuery.trim();
-  if (!query) {
-    store.packStatus = '先输入一个写作主题。';
-    return;
-  }
-  store.loading = true;
-  store.packStatus = '正在召回资料卡...';
-  try {
-    const data = await request('/api/material-pack', {
-      method: 'POST',
-      body: JSON.stringify({
-        query,
-        tags: store.selectedTag ? [store.selectedTag] : [],
-        limit: 24,
-      }),
-    });
-    store.materialPack = data;
-    store.packStatus = `已匹配 ${data.totalMatched} 张资料卡。`;
-  } catch (err) {
-    store.packStatus = `生成失败：${err.message}`;
-  } finally {
-    store.loading = false;
   }
 }
 

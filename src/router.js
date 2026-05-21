@@ -1,16 +1,14 @@
+import DashboardPage from './pages/DashboardPage.js';
 import CardsPage from './pages/CardsPage.js';
-import TaxonomyPage from './pages/TaxonomyPage.js';
-import PackPage from './pages/PackPage.js';
-import MappingPage from './pages/MappingPage.js';
+import CategoryPage from './pages/CategoryPage.js';
 
 const { createRouter, createWebHashHistory } = VueRouter;
 
 export const router = createRouter({
   history: createWebHashHistory(),
   routes: [
-    { path: '/', component: CardsPage },
-    { path: '/taxonomy', component: TaxonomyPage },
-    { path: '/pack', component: PackPage },
-    { path: '/mapping', component: MappingPage },
+    { path: '/', component: DashboardPage },
+    { path: '/cards', component: CardsPage },
+    { path: '/categories', component: CategoryPage },
   ],
 });
