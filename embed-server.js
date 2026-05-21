@@ -2,7 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const { pipeline, env } = require('@huggingface/transformers');
 
-// Use local cache, don't show progress bars
+// Use Hugging Face mirror for China users
+env.HF_ENDPOINT = process.env.HF_ENDPOINT || 'https://hf-mirror.com';
 env.localModelPath = require('path').join(__dirname, 'models');
 env.progressCallback = null;
 
