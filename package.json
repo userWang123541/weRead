@@ -7,6 +7,7 @@
     "sync": "node fetch-data.js",
     "sync:sample": "node fetch-data.js --max-books=5",
     "classify": "node classify.js",
+    "embed": "node embed-server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -14,6 +15,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "openai": "^6.38.0"
