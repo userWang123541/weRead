@@ -460,6 +460,16 @@
       font-size: 11px;
     }
 
+    .tax-row[data-tag] {
+      cursor: pointer;
+      transition: background .15s ease, box-shadow .15s ease;
+    }
+
+    .tax-row[data-tag]:hover {
+      background: #edf4ef;
+      box-shadow: 0 2px 10px rgba(22, 115, 82, .08);
+    }
+
     .pack-layout {
       display: grid;
       grid-template-columns: 360px minmax(0, 1fr);
@@ -1251,7 +1261,7 @@
         return;
       }
       els.taxonomy.innerHTML = rows.map(item => `
-        <div class="tax-row">
+        <div class="tax-row" data-tag="${escapeHtml(item.tag)}">
           <div>
             <b>${escapeHtml(item.tag)}</b><br>
             <small>层级 ${item.depth}，覆盖 ${item.bookCount} 本书</small>
@@ -1259,6 +1269,15 @@
           <span class="count-pill">${item.count}</span>
         </div>
       `).join('');
+      els.taxonomy.querySelectorAll('[data-tag]').forEach(row => {
+        row.addEventListener('click', () => {
+          const tag = row.getAttribute('data-tag');
+          state.selectedTag = state.selectedTag === tag ? '' : tag;
+          switchView('cards');
+          renderTags();
+          renderCards();
+        });
+      });
     }
 
     function renderPack() {
