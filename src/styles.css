@@ -534,8 +534,8 @@ blockquote {
 
 .manage-node-row {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) auto auto auto;
-  gap: 6px;
+  grid-template-columns: 56px minmax(0, 1fr) auto auto auto;
+  gap: 8px;
   align-items: center;
   min-height: 34px;
   padding: 4px 6px;
@@ -556,6 +556,17 @@ blockquote {
   text-overflow: ellipsis;
   font-size: 13px;
   font-weight: 700;
+  min-width: 0;
+}
+
+.manage-node-toggle {
+  width: 56px;
+  min-width: 56px;
+}
+
+.manage-node-toggle-spacer {
+  width: 56px;
+  min-width: 56px;
 }
 
 .manage-node-children {

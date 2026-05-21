@@ -19,7 +19,8 @@ export default {
   template: `
     <div class="manage-node">
       <div class="manage-node-row" :class="{ active: isSelected }">
-        <button class="mini-btn" type="button" @click="open = !open">{{ hasChildren ? (open ? '收起' : '展开') : '' }}</button>
+        <button v-if="hasChildren" class="mini-btn manage-node-toggle" type="button" @click="open = !open">{{ open ? '收起' : '展开' }}</button>
+        <span v-else class="manage-node-toggle-spacer"></span>
         <button class="manage-node-name" type="button" :title="node.path" @click="$emit('edit', node)">{{ node.name }}</button>
         <el-button size="small" @click="$emit('add-child', node)">下级</el-button>
         <el-button size="small" @click="$emit('edit', node)">编辑</el-button>
