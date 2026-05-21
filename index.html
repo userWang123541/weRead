@@ -577,7 +577,8 @@
         <div class="button-row">
           <button class="btn primary" id="syncBtn">同步数据</button>
           <button class="btn" id="rebuildBtn">重建卡片</button>
-          <button class="btn full" id="refreshBtn">刷新本地资料库</button>
+          <button class="btn" id="classifyBtn">向量分类</button>
+          <button class="btn" id="refreshBtn">刷新</button>
         </div>
         <div class="status" id="status">等待载入本地数据。</div>
       </div>
@@ -667,6 +668,14 @@
                 <b><code>/api/material-pack</code></b>
                 <span>本地加工接口：按主题召回资料卡，输出可引用原文、你的想法、焦点标签和写作提纲。</span>
               </div>
+              <div class="map-row">
+                <b><code>/api/classify</code></b>
+                <span>向量分类接口：调用 BGE 模型对所有笔记做 embedding，按余弦相似度匹配到 75 个预建分类。需要先启动 <code>npm run embed</code>。</span>
+              </div>
+              <div class="map-row">
+                <b><code>/api/classified</code></b>
+                <span>获取已分类数据：返回所有笔记的向量分类结果和统计信息。</span>
+              </div>
             </div>
           </div>
         </div>
@@ -679,6 +688,7 @@
       view: 'cards',
       raw: { books: [] },
       cardsData: { cards: [], taxonomy: [] },
+      classified: null,
       stats: {},
       selectedTag: '',
       materialPack: null,
@@ -754,12 +764,16 @@
     async function loadData() {
       setStatus('正在读取本地资料库...');
       try {
-        const data = await request('/api/data');
+        const [data] = await Promise.all([
+          request('/api/data'),
+          loadClassifiedData(),
+        ]);
         state.raw = data.raw || { books: [] };
         state.cardsData = data.cards || { cards: [], taxonomy: [] };
         state.stats = data.stats || {};
         renderAll();
-        setStatus(`本地资料库已载入：${state.stats.totalCards || 0} 张资料卡。`);
+        const clsCount = state.classified?.totalNotes || 0;
+        setStatus(`本地资料库已载入：${state.stats.totalCards || 0} 张资料卡${clsCount ? `，${clsCount} 条已分类` : ''}。`);
       } catch (err) {
         const data = await loadStaticData();
         state.raw = data.raw;
@@ -820,6 +834,31 @@
         setStatus(`已在浏览器内重建：${state.stats.totalCards} 张资料卡。本次结果未写入磁盘。`);
       } finally {
         setBusy(false);
+      }
+    }
+
+    async function classifyData() {
+      setBusy(true, '正在调用 BGE 模型进行向量分类，首次可能需要几分钟...');
+      try {
+        const result = await request('/api/classify', {
+          method: 'POST',
+          body: JSON.stringify({}),
+        });
+        setStatus(`分类完成：${result.totalNotes} 条笔记，${Object.keys(result.stats || {}).length} 个分类。`);
+        await loadClassifiedData();
+        renderAll();
+      } catch (err) {
+        setStatus(`分类失败：${err.message}。请确保 embed-server 已启动（npm run embed）。`);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function loadClassifiedData() {
+      try {
+        state.classified = await request('/api/classified');
+      } catch (_err) {
+        state.classified = null;
       }
     }
 
@@ -1138,6 +1177,7 @@
       state.loading = isBusy;
       document.querySelector('#syncBtn').disabled = isBusy;
       document.querySelector('#rebuildBtn').disabled = isBusy;
+      document.querySelector('#classifyBtn').disabled = isBusy;
       if (message) setStatus(message);
     }
 
@@ -1152,13 +1192,15 @@
 
     function renderStats() {
       const s = state.stats || {};
+      const classifiedCount = state.classified?.totalNotes || 0;
+      const unclassifiedCount = state.classified?.stats?.['未分类'] || 0;
       const items = [
         ['书籍', s.totalBooks || 0],
         ['划线', s.totalHighlights || 0],
         ['想法', s.totalReviews || 0],
         ['资料卡', s.totalCards || 0],
-        ['已关联', s.linkedCards || 0],
-        ['细分类', s.taxonomyCount || 0],
+        ['已分类', classifiedCount],
+        ['未分类', unclassifiedCount],
       ];
       els.stats.innerHTML = items.map(([label, value]) => `
         <div class="stat">
@@ -1181,6 +1223,14 @@
 
     function filteredTags() {
       const q = els.tagSearch.value.trim().toLowerCase();
+      // Use classified data if available
+      if (state.classified?.stats) {
+        return Object.entries(state.classified.stats)
+          .map(([tag, count]) => ({ tag, count }))
+          .filter(item => !q || item.tag.toLowerCase().includes(q))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 80);
+      }
       return (state.cardsData.taxonomy || [])
         .filter(item => !q || item.tag.toLowerCase().includes(q))
         .slice(0, 80);
@@ -1189,7 +1239,7 @@
     function renderTags() {
       const rows = filteredTags();
       if (!rows.length) {
-        els.tagList.innerHTML = '<div class="empty">暂无分类。同步或重建资料卡后会出现。</div>';
+        els.tagList.innerHTML = '<div class="empty">暂无分类。点击"向量分类"按钮进行 BGE 分类。</div>';
         return;
       }
       els.tagList.innerHTML = rows.map(item => `
@@ -1209,12 +1259,37 @@
       });
     }
 
+    function getClassificationMap() {
+      if (!state.classified?.notes) return null;
+      const map = new Map();
+      for (const note of state.classified.notes) {
+        const key = `${note.bookId}|${note.type}|${(note.text || '').slice(0, 60)}`;
+        map.set(key, note);
+      }
+      return map;
+    }
+
+    function getCardClassification(card, clsMap) {
+      if (!clsMap) return null;
+      const text = card.quote || card.note || '';
+      const key = `${card.bookId}|${card.type === 'linked' ? 'highlight' : card.type}|${text.slice(0, 60)}`;
+      return clsMap.get(key) || null;
+    }
+
     function getFilteredCards() {
       const q = els.searchInput.value.trim().toLowerCase();
       const type = els.typeFilter.value;
       const book = els.bookFilter.value;
+      const clsMap = getClassificationMap();
       return (state.cardsData.cards || []).filter(card => {
-        if (state.selectedTag && !(card.tags || []).includes(state.selectedTag)) return false;
+        if (state.selectedTag) {
+          if (clsMap) {
+            const cls = getCardClassification(card, clsMap);
+            if (!cls || cls.category !== state.selectedTag) return false;
+          } else {
+            if (!(card.tags || []).includes(state.selectedTag)) return false;
+          }
+        }
         if (type && card.type !== type) return false;
         if (book && card.bookTitle !== book) return false;
         if (!q) return true;
@@ -1233,11 +1308,18 @@
 
     function renderCards() {
       const cards = getFilteredCards();
+      const clsMap = getClassificationMap();
       if (!cards.length) {
         els.cards.innerHTML = '<div class="empty">没有匹配的资料卡。可以清空筛选，或先同步微信读书数据。</div>';
         return;
       }
-      els.cards.innerHTML = cards.map(card => `
+      els.cards.innerHTML = cards.map(card => {
+        const cls = getCardClassification(card, clsMap);
+        const categoryTag = cls?.category && cls.category !== '未分类'
+          ? `<span class="tag">${escapeHtml(cls.category)}</span>`
+          : '';
+        const oldTags = !clsMap ? (card.tags || []).slice(0, 4).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('') : '';
+        return `
         <article class="card">
           <div class="meta">
             <span class="book-title" title="${escapeHtml(card.bookTitle)}">${escapeHtml(card.bookTitle || '未知书籍')}</span>
@@ -1246,28 +1328,34 @@
           ${card.chapterTitle ? `<div class="meta">${escapeHtml(card.chapterTitle)}</div>` : ''}
           ${card.quote ? `<blockquote>${escapeHtml(compact(card.quote, 260))}</blockquote>` : ''}
           ${card.note ? `<div class="note">${escapeHtml(compact(card.note, 220))}</div>` : ''}
-          <div class="tags">
-            ${(card.tags || []).slice(0, 4).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
-          </div>
+          <div class="tags">${categoryTag}${oldTags}</div>
           <div class="card-foot">
             <span>${escapeHtml(formatDate(card.createTime))}</span>
             ${card.openUrl ? `<a class="link" href="${escapeHtml(card.openUrl)}">打开原文</a>` : ''}
           </div>
         </article>
-      `).join('');
+      `}).join('');
     }
 
     function renderTaxonomy() {
-      const rows = state.cardsData.taxonomy || [];
+      // Use classified data if available
+      let rows = [];
+      if (state.classified?.stats) {
+        rows = Object.entries(state.classified.stats)
+          .map(([tag, count]) => ({ tag, count, depth: (tag.match(/\//g) || []).length + 1, bookCount: 0 }))
+          .sort((a, b) => b.count - a.count);
+      } else {
+        rows = state.cardsData.taxonomy || [];
+      }
       if (!rows.length) {
-        els.taxonomy.innerHTML = '<div class="empty">暂无分类。</div>';
+        els.taxonomy.innerHTML = '<div class="empty">暂无分类。点击"向量分类"生成。</div>';
         return;
       }
       els.taxonomy.innerHTML = rows.map(item => `
         <div class="tax-row" data-tag="${escapeHtml(item.tag)}">
           <div>
             <b>${escapeHtml(item.tag)}</b><br>
-            <small>层级 ${item.depth}，覆盖 ${item.bookCount} 本书</small>
+            <small>${item.bookCount ? `覆盖 ${item.bookCount} 本书` : `${item.depth} 级分类`}</small>
           </div>
           <span class="count-pill">${item.count}</span>
         </div>
@@ -1338,6 +1426,7 @@
     });
     document.querySelector('#syncBtn').addEventListener('click', syncData);
     document.querySelector('#rebuildBtn').addEventListener('click', rebuildCards);
+    document.querySelector('#classifyBtn').addEventListener('click', classifyData);
     document.querySelector('#refreshBtn').addEventListener('click', loadData);
     document.querySelector('#packBtn').addEventListener('click', generatePack);
     document.querySelector('#clearFilterBtn').addEventListener('click', () => {
