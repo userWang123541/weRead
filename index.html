@@ -1400,87 +1400,59 @@
     function editCategory(noteIdx, btn) {
       const options = getCategoryOptions();
       const current = state.classified.notes[noteIdx]?.category || '';
-      const currentParts = current.split('/');
 
-      // Build nested tree
+      // Build tree
       const tree = {};
       for (const opt of options) {
         if (opt === '未分类') continue;
         const parts = opt.split('/');
-        if (!tree[parts[0]]) tree[parts[0]] = {};
-        if (parts[1]) {
-          if (!tree[parts[0]][parts[1]]) tree[parts[0]][parts[1]] = [];
-          if (parts[2]) tree[parts[0]][parts[1]].push(parts[2]);
+        const l1 = parts[0] || '其他';
+        const l2 = parts[1] || '';
+        const l3 = parts[2] || '';
+        if (!tree[l1]) tree[l1] = {};
+        if (l2) {
+          if (!tree[l1][l2]) tree[l1][l2] = [];
+          if (l3) tree[l1][l2].push(l3);
         }
       }
 
-      const container = document.createElement('span');
-      container.style.cssText = 'display:inline-flex;gap:4px;align-items:center';
+      const select = document.createElement('select');
+      select.className = 'category-select';
+      select.style.maxWidth = '300px';
 
-      function buildSelect(items, placeholder, onChange) {
-        const s = document.createElement('select');
-        s.className = 'category-select';
-        s.innerHTML = '<option value="">' + placeholder + '</option>' +
-          items.map(v => '<option value="' + escapeHtml(v) + '">' + escapeHtml(v) + '</option>').join('');
-        s.addEventListener('change', () => onChange(s.value));
-        return s;
-      }
+      let html = '<option value="">选择分类...</option>';
+      html += '<option value="未分类"' + (current === '未分类' ? ' selected' : '') + '>未分类</option>';
 
-      let fullPath = '';
-
-      function onL3(val) {
-        fullPath = val ? [l1Val, l2Val, val].join('/') : '';
-      }
-
-      let l1Val = '', l2Val = '', l3Sel = null;
-
-      function onL2(val) {
-        l2Val = val;
-        if (l3Sel) { l3Sel.remove(); l3Sel = null; }
-        if (val && tree[l1Val][val] && tree[l1Val][val].length) {
-          l3Sel = buildSelect(tree[l1Val][val], '选择小类...', (v) => {
-            fullPath = v ? [l1Val, l2Val, v].join('/') : [l1Val, l2Val].join('/');
-            save();
-          });
-          container.appendChild(l3Sel);
-          fullPath = [l1Val, l2Val].join('/');
-        } else if (val) {
-          fullPath = [l1Val, l2Val].join('/');
-          save();
-        }
-      }
-
-      let l2Sel = null;
-
-      function onL1(val) {
-        l1Val = val;
-        if (l2Sel) { l2Sel.remove(); l2Sel = null; }
-        if (l3Sel) { l3Sel.remove(); l3Sel = null; }
-        if (val && tree[val]) {
-          const l2Items = Object.keys(tree[val]);
-          if (l2Items.length === 1) {
-            // Only one sub-category, auto-select
-            l2Val = l2Items[0];
-            onL2(l2Val);
+      for (const [l1, l2Map] of Object.entries(tree)) {
+        html += '<optgroup label="' + escapeHtml(l1) + '">';
+        for (const [l2, l3List] of Object.entries(l2Map)) {
+          if (l3List.length === 0) {
+            const fullPath = l1 + '/' + l2;
+            html += '<option value="' + escapeHtml(fullPath) + '"' + (fullPath === current ? ' selected' : '') + '>';
+            html += '　' + escapeHtml(l2) + '</option>';
           } else {
-            l2Sel = buildSelect(l2Items, '选择中类...', onL2);
-            container.appendChild(l2Sel);
+            for (const l3 of l3List) {
+              const fullPath = l1 + '/' + l2 + '/' + l3;
+              html += '<option value="' + escapeHtml(fullPath) + '"' + (fullPath === current ? ' selected' : '') + '>';
+              html += '　' + escapeHtml(l2) + ' / ' + escapeHtml(l3) + '</option>';
+            }
           }
-        } else if (val) {
-          fullPath = val;
-          save();
         }
+        html += '</optgroup>';
       }
 
-      async function save() {
-        if (!fullPath) return;
-        container.replaceWith(document.createTextNode('保存中...'));
+      select.innerHTML = html;
+
+      select.addEventListener('change', async () => {
+        const category = select.value;
+        if (!category) return;
+        btn.replaceWith(document.createTextNode('保存中...'));
         try {
           const result = await request('/api/classified/update', {
             method: 'POST',
-            body: JSON.stringify({ noteIndex: noteIdx, category: fullPath }),
+            body: JSON.stringify({ noteIndex: noteIdx, category }),
           });
-          state.classified.notes[noteIdx].category = fullPath;
+          state.classified.notes[noteIdx].category = category;
           state.classified.notes[noteIdx].userEdited = true;
           state.classified.stats = result.stats;
           renderAll();
@@ -1488,27 +1460,10 @@
           setStatus(`保存失败：${err.message}`);
           renderCards();
         }
-      }
+      });
 
-      const l1Items = Object.keys(tree);
-      const l1Sel = buildSelect(l1Items, '选择大类...', onL1);
-      container.appendChild(l1Sel);
-
-      // Pre-select if editing existing category
-      if (currentParts[0] && tree[currentParts[0]]) {
-        l1Sel.value = currentParts[0];
-        onL1(currentParts[0]);
-        if (currentParts[1] && l2Sel) {
-          l2Sel.value = currentParts[1];
-          onL2(currentParts[1]);
-          if (currentParts[2] && l3Sel) {
-            l3Sel.value = currentParts[2];
-          }
-        }
-      }
-
-      btn.replaceWith(container);
-      l1Sel.focus();
+      btn.replaceWith(select);
+      select.focus();
     }
 
     function renderTaxonomy() {
