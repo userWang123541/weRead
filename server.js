@@ -163,6 +163,33 @@ app.get('/api/classified', async (_req, res) => {
   }
 });
 
+app.post('/api/classified/update', async (req, res) => {
+  try {
+    const { noteIndex, category } = req.body;
+    if (noteIndex === undefined || !category) {
+      res.status(400).json({ error: 'noteIndex and category are required' });
+      return;
+    }
+    const data = await readJsonIfExists(CLASSIFIED_FILE, { notes: [], stats: {} });
+    if (noteIndex < 0 || noteIndex >= data.notes.length) {
+      res.status(400).json({ error: 'noteIndex out of range' });
+      return;
+    }
+    data.notes[noteIndex].category = category;
+    data.notes[noteIndex].userEdited = true;
+    // Recalculate stats
+    const stats = {};
+    for (const note of data.notes) {
+      stats[note.category] = (stats[note.category] || 0) + 1;
+    }
+    data.stats = stats;
+    await writeJson(CLASSIFIED_FILE, data);
+    res.json({ ok: true, stats });
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
 function summarize(raw, cardsData) {
   const books = raw.books || [];
   const cards = cardsData.cards || [];
