@@ -20,6 +20,7 @@ const DATA_DIR = path.join(__dirname, 'data');
 const RAW_DATA_FILE = path.join(DATA_DIR, 'weread-data.json');
 const CARDS_FILE = path.join(DATA_DIR, 'cards.json');
 const CLASSIFIED_FILE = path.join(DATA_DIR, 'classified.json');
+const TAXONOMY_FILE = path.join(__dirname, 'config', 'taxonomy.json');
 
 app.use(express.json({ limit: '20mb' }));
 app.use(express.static(__dirname));
@@ -43,6 +44,57 @@ async function loadCardsData(rawData) {
   const existing = await readJsonIfExists(CARDS_FILE, null);
   if (existing?.cards?.length) return existing;
   return buildCards(rawData);
+}
+
+function stableId(input) {
+  let hash = 0;
+  const text = String(input || '');
+  for (let i = 0; i < text.length; i += 1) {
+    hash = ((hash << 5) - hash) + text.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+function normalizeCategoryPath(categoryPath) {
+  return String(categoryPath || '')
+    .split('/')
+    .map(part => part.trim())
+    .filter(Boolean)
+    .join('/');
+}
+
+function normalizeTaxonomy(taxonomy) {
+  const seen = new Set();
+  const categories = [];
+  for (const item of taxonomy.categories || []) {
+    const categoryPath = normalizeCategoryPath(item.path);
+    if (!categoryPath || seen.has(categoryPath)) continue;
+    seen.add(categoryPath);
+    categories.push({
+      id: item.id || `cat_${stableId(categoryPath)}`,
+      path: categoryPath,
+      description: String(item.description || '').trim(),
+    });
+  }
+  categories.sort((a, b) => a.path.localeCompare(b.path, 'zh'));
+  return {
+    version: taxonomy.version || '1.0.0',
+    description: taxonomy.description || '预建分类体系',
+    categories,
+  };
+}
+
+async function loadTaxonomyData() {
+  return normalizeTaxonomy(await readJsonIfExists(TAXONOMY_FILE, {
+    version: '1.0.0',
+    description: '预建分类体系',
+    categories: [],
+  }));
+}
+
+async function saveTaxonomyData(taxonomy) {
+  await writeJson(TAXONOMY_FILE, normalizeTaxonomy(taxonomy));
 }
 
 app.post('/api/gateway', async (req, res) => {
@@ -117,6 +169,94 @@ app.post('/api/material-pack', async (req, res) => {
       limit: req.body?.limit || 24,
     });
     res.json(pack);
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.get('/api/taxonomy', async (_req, res) => {
+  try {
+    res.json(await loadTaxonomyData());
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.put('/api/taxonomy', async (req, res) => {
+  try {
+    const taxonomy = normalizeTaxonomy({
+      version: req.body?.version,
+      description: req.body?.description,
+      categories: req.body?.categories || [],
+    });
+    await saveTaxonomyData(taxonomy);
+    res.json(await loadTaxonomyData());
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.post('/api/taxonomy/categories', async (req, res) => {
+  try {
+    const categoryPath = normalizeCategoryPath(req.body?.path);
+    if (!categoryPath) {
+      res.status(400).json({ error: '分类路径不能为空' });
+      return;
+    }
+    const taxonomy = await loadTaxonomyData();
+    if (taxonomy.categories.some(item => item.path === categoryPath)) {
+      res.status(409).json({ error: '分类已存在' });
+      return;
+    }
+    taxonomy.categories.push({
+      id: `cat_${stableId(categoryPath)}`,
+      path: categoryPath,
+      description: String(req.body?.description || '').trim(),
+    });
+    await saveTaxonomyData(taxonomy);
+    res.json(await loadTaxonomyData());
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.put('/api/taxonomy/categories/:id', async (req, res) => {
+  try {
+    const categoryPath = normalizeCategoryPath(req.body?.path);
+    if (!categoryPath) {
+      res.status(400).json({ error: '分类路径不能为空' });
+      return;
+    }
+    const taxonomy = await loadTaxonomyData();
+    const category = taxonomy.categories.find(item => item.id === req.params.id);
+    if (!category) {
+      res.status(404).json({ error: '分类不存在' });
+      return;
+    }
+    if (taxonomy.categories.some(item => item.id !== category.id && item.path === categoryPath)) {
+      res.status(409).json({ error: '分类已存在' });
+      return;
+    }
+    category.path = categoryPath;
+    category.description = String(req.body?.description || '').trim();
+    await saveTaxonomyData(taxonomy);
+    res.json(await loadTaxonomyData());
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.delete('/api/taxonomy/categories/:id', async (req, res) => {
+  try {
+    const taxonomy = await loadTaxonomyData();
+    const nextCategories = taxonomy.categories.filter(item => item.id !== req.params.id);
+    if (nextCategories.length === taxonomy.categories.length) {
+      res.status(404).json({ error: '分类不存在' });
+      return;
+    }
+    taxonomy.categories = nextCategories;
+    await saveTaxonomyData(taxonomy);
+    res.json(await loadTaxonomyData());
   } catch (err) {
     sendError(res, err);
   }
