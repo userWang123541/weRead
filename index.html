@@ -226,6 +226,8 @@
       color: var(--ink);
       text-align: left;
       font-size: 12px;
+      cursor: pointer;
+      transition: background .15s ease, color .15s ease;
     }
 
     .tag-btn:hover,
@@ -1200,6 +1202,7 @@
         button.addEventListener('click', () => {
           const tag = button.getAttribute('data-tag');
           state.selectedTag = state.selectedTag === tag ? '' : tag;
+          switchView('cards');
           renderTags();
           renderCards();
         });
