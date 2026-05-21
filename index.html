@@ -446,11 +446,11 @@
     }
 
     .category-select {
-      font-size: 11px;
+      font-size: 12px;
       border: 1px solid var(--line);
       border-radius: 6px;
-      padding: 3px 6px;
-      max-width: 200px;
+      padding: 4px 8px;
+      max-width: 280px;
       background: var(--panel-2);
       color: var(--ink);
       outline: none;
@@ -1389,7 +1389,7 @@
           <div class="card-foot">
             <span>${escapeHtml(formatDate(card.createTime))}</span>
             <div style="display:flex;align-items:center;gap:6px">
-              ${noteIdx !== undefined ? `<button class="edit-category" onclick="editCategory(${noteIdx}, this)">改分类</button>` : ''}
+              ${noteIdx !== undefined ? `<button class="edit-category" onclick="editCategory(${noteIdx}, this)">修改分类</button>` : ''}
               ${card.openUrl ? `<a class="link" href="${escapeHtml(card.openUrl)}">打开原文</a>` : ''}
             </div>
           </div>
@@ -1400,11 +1400,31 @@
     function editCategory(noteIdx, btn) {
       const options = getCategoryOptions();
       const current = state.classified.notes[noteIdx]?.category || '';
+
+      // Build hierarchical optgroups
+      const groups = {};
+      for (const opt of options) {
+        if (opt === '未分类') continue;
+        const parts = opt.split('/');
+        const group = parts[0] || '其他';
+        if (!groups[group]) groups[group] = [];
+        groups[group].push(opt);
+      }
+
       const select = document.createElement('select');
       select.className = 'category-select';
-      select.innerHTML = '<option value="">选择分类...</option>' +
-        '<option value="未分类">未分类</option>' +
-        options.filter(o => o !== '未分类').map(o => `<option value="${escapeHtml(o)}" ${o === current ? 'selected' : ''}>${escapeHtml(o)}</option>`).join('');
+      select.size = 1;
+      let html = '<option value="">选择分类...</option><option value="未分类" ' + (current === '未分类' ? 'selected' : '') + '>未分类</option>';
+      for (const [group, items] of Object.entries(groups)) {
+        html += `<optgroup label="${escapeHtml(group)}">`;
+        for (const item of items) {
+          const label = item.split('/').slice(1).join('/');
+          html += `<option value="${escapeHtml(item)}" ${item === current ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+        }
+        html += '</optgroup>';
+      }
+      select.innerHTML = html;
+
       select.addEventListener('change', async () => {
         const category = select.value;
         if (!category) return;
