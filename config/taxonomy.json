@@ -1,0 +1,391 @@
+{
+  "version": "1.0.0",
+  "description": "预建分类体系 — 参考中国图书馆分类法 + 李敖式细分",
+  "categories": [
+    {
+      "id": "phil_existentialism",
+      "path": "哲学思想/存在主义/荒诞与意义",
+      "description": "关于人生意义、荒诞感、自由选择和存在价值的思考，如加缪、萨特、海德格尔的思想"
+    },
+    {
+      "id": "phil_stoicism",
+      "path": "哲学思想/斯多葛/控制与接受",
+      "description": "关于区分可控与不可控、接受命运、内心平静的哲学，如马可·奥勒留、爱比克泰德"
+    },
+    {
+      "id": "phil_eastern",
+      "path": "哲学思想/东方哲学/道禅儒",
+      "description": "道家无为、禅宗顿悟、儒家仁义等东方传统哲学思想"
+    },
+    {
+      "id": "phil_logic",
+      "path": "哲学思想/逻辑与辩证/思维方法",
+      "description": "辩证法、逻辑推理、归纳演绎、批判性思维的方法论"
+    },
+    {
+      "id": "phil_ethics",
+      "path": "哲学思想/伦理道德/善恶判断",
+      "description": "道德判断、善恶标准、伦理困境、正义与公平的讨论"
+    },
+    {
+      "id": "phil_aesthetics",
+      "path": "哲学思想/美学与艺术/审美",
+      "description": "美的本质、审美体验、艺术价值、创作理念"
+    },
+    {
+      "id": "phil_epistemology",
+      "path": "哲学思想/认识论/知识本质",
+      "description": "知识的来源与边界、真理的标准、认知的局限性"
+    },
+    {
+      "id": "phil_metaphysics",
+      "path": "哲学思想/形而上学/本质与现象",
+      "description": "事物的本质、存在的根本问题、因果关系、时间与空间"
+    },
+    {
+      "id": "psy_cognitive",
+      "path": "心理认知/认知偏差/思维陷阱",
+      "description": "确认偏误、锚定效应、可得性启发等认知偏差和思维谬误"
+    },
+    {
+      "id": "psy_emotion",
+      "path": "心理认知/情绪管理/焦虑恐惧",
+      "description": "焦虑、恐惧、愤怒等情绪的识别、理解和调节方法"
+    },
+    {
+      "id": "psy_habit",
+      "path": "心理认知/习惯养成/自律拖延",
+      "description": "培养好习惯、戒除坏习惯、克服拖延、自律行动的方法"
+    },
+    {
+      "id": "psy_motivation",
+      "path": "心理认知/动机驱动/目标设定",
+      "description": "内在动机、外在激励、目标设定与达成、自我驱动"
+    },
+    {
+      "id": "psy_self_awareness",
+      "path": "心理认知/自我认知/身份认同",
+      "description": "自我觉察、身份认同、自我价值感、自尊自信"
+    },
+    {
+      "id": "psy_relationship",
+      "path": "心理认知/亲密关系/依恋沟通",
+      "description": "恋爱、婚姻、依恋类型、亲密关系中的沟通与冲突处理"
+    },
+    {
+      "id": "psy_trauma",
+      "path": "心理认知/创伤疗愈/心理修复",
+      "description": "童年创伤、心理修复、原生家庭影响、疗愈成长"
+    },
+    {
+      "id": "psy_positive",
+      "path": "心理认知/积极心理/幸福感",
+      "description": "心流体验、感恩、幸福的本质、积极情绪的培养"
+    },
+    {
+      "id": "psy_social",
+      "path": "心理认知/社会心理/从众影响",
+      "description": "从众效应、社会认同、群体心理、说服与被说服"
+    },
+    {
+      "id": "psy_personality",
+      "path": "心理认知/人格特质/性格分析",
+      "description": "人格类型、性格特质分析、大五人格、MBTI等性格理论"
+    },
+    {
+      "id": "psy_adler",
+      "path": "心理认知/阿德勒心理学/自卑与超越",
+      "description": "自卑感、优越感、课题分离、共同体感觉、被讨厌的勇气"
+    },
+    {
+      "id": "psy_jung",
+      "path": "心理认知/荣格心理学/原型与集体无意识",
+      "description": "原型、集体无意识、阴影、个体化过程、荣格的红书"
+    },
+    {
+      "id": "grow_learning",
+      "path": "个人成长/学习方法/阅读与记忆",
+      "description": "高效学习、阅读技巧、记忆方法、费曼学习法、间隔重复"
+    },
+    {
+      "id": "grow_thinking",
+      "path": "个人成长/思维方式/认知升级",
+      "description": "第一性原理、多元思维模型、系统思考、认知升级"
+    },
+    {
+      "id": "grow_time",
+      "path": "个人成长/时间管理/效率提升",
+      "description": "时间管理、番茄工作法、精力管理、效率工具和方法"
+    },
+    {
+      "id": "grow_decision",
+      "path": "个人成长/决策判断/选择与取舍",
+      "description": "决策框架、博弈思维、选择困难、机会成本、沉没成本"
+    },
+    {
+      "id": "grow_communication",
+      "path": "个人成长/表达沟通/说服与写作",
+      "description": "演讲表达、写作技巧、说服力、沟通的艺术"
+    },
+    {
+      "id": "grow_career",
+      "path": "个人成长/职业发展/事业规划",
+      "description": "职业规划、跳槽决策、事业选择、职场进阶"
+    },
+    {
+      "id": "grow_resilience",
+      "path": "个人成长/逆境成长/挫折应对",
+      "description": "面对失败、逆境中成长、心理韧性、坚持与放弃"
+    },
+    {
+      "id": "grow_self",
+      "path": "个人成长/自我改变/觉醒与行动",
+      "description": "认知觉醒、自我改变的原动力、知行合一、走出舒适区"
+    },
+    {
+      "id": "econ_macro",
+      "path": "经济商业/宏观经济/政策与周期",
+      "description": "GDP、通胀、利率、经济周期、货币政策、财政政策"
+    },
+    {
+      "id": "econ_finance",
+      "path": "经济商业/投资理财/资产配置",
+      "description": "股票、基金、房产、资产配置、投资策略、风险管理"
+    },
+    {
+      "id": "econ_business",
+      "path": "经济商业/商业管理/战略组织",
+      "description": "公司管理、组织架构、商业战略、竞争分析、商业模式"
+    },
+    {
+      "id": "econ_startup",
+      "path": "经济商业/创业创新/从零到一",
+      "description": "创业经历、创新方法、从零到一、创业失败与成功"
+    },
+    {
+      "id": "econ_marketing",
+      "path": "经济商业/营销品牌/用户增长",
+      "description": "市场营销、品牌建设、用户增长、消费心理"
+    },
+    {
+      "id": "econ_behavioral",
+      "path": "经济商业/行为经济/非理性决策",
+      "description": "行为经济学、非理性消费、心理账户、前景理论"
+    },
+    {
+      "id": "econ_wealth",
+      "path": "经济商业/财富观念/财务自由",
+      "description": "财务自由、富人思维、穷人思维、财富积累路径"
+    },
+    {
+      "id": "econ_structural",
+      "path": "经济商业/制度经济/结构性改革",
+      "description": "经济制度、结构性改革、产业政策、中国经济转型"
+    },
+    {
+      "id": "soc_urbanization",
+      "path": "社会文化/乡土社会/城乡变迁",
+      "description": "乡土中国、城镇化、城乡差距、传统社会结构的变迁"
+    },
+    {
+      "id": "soc_class",
+      "path": "社会文化/阶层流动/社会公平",
+      "description": "阶层固化、社会流动、教育公平、贫富差距"
+    },
+    {
+      "id": "soc_consumption",
+      "path": "社会文化/消费社会/物质与符号",
+      "description": "消费主义、符号消费、物质主义批判、极简生活"
+    },
+    {
+      "id": "soc_politics",
+      "path": "社会文化/政治制度/治理权力",
+      "description": "政治制度、权力结构、治理模式、民主与集中"
+    },
+    {
+      "id": "soc_law",
+      "path": "社会文化/法律常识/权利与义务",
+      "description": "法律知识、权利保护、合同、劳动法、生活法律"
+    },
+    {
+      "id": "soc_media",
+      "path": "社会文化/传媒舆论/公共话语",
+      "description": "媒体素养、舆论传播、信息茧房、公共讨论"
+    },
+    {
+      "id": "soc_gender",
+      "path": "社会文化/性别议题/女性成长",
+      "description": "性别平等、女性主义、女性成长、性别角色"
+    },
+    {
+      "id": "lit_chinese_contemporary",
+      "path": "文学小说/中国当代/先锋与现实",
+      "description": "余华、莫言、马伯庸等中国当代作家的小说、散文作品"
+    },
+    {
+      "id": "lit_chinese_classic",
+      "path": "文学小说/中国古典/诗词歌赋",
+      "description": "唐诗宋词、古典文学、四大名著、古代散文"
+    },
+    {
+      "id": "lit_foreign_classic",
+      "path": "文学小说/外国经典/世界文学",
+      "description": "马尔克斯、加缪、陀思妥耶夫斯基等世界经典文学作品"
+    },
+    {
+      "id": "lit_modern_novel",
+      "path": "文学小说/当代小说/社会写实",
+      "description": "当代社会题材小说、现实主义作品、社会问题小说"
+    },
+    {
+      "id": "lit_historical",
+      "path": "文学小说/历史小说/架空与演绎",
+      "description": "历史题材小说、架空历史、历史故事的文学演绎"
+    },
+    {
+      "id": "lit_prose",
+      "path": "文学小说/散文随笔/生活感悟",
+      "description": "散文、随笔、杂文、生活感悟类文学作品"
+    },
+    {
+      "id": "lit_quotes",
+      "path": "文学小说/金句名言/精炼表达",
+      "description": "精炼有力的名言金句、发人深省的短句、经典语录"
+    },
+    {
+      "id": "hist_china_ancient",
+      "path": "历史传记/中国古代/朝代兴衰",
+      "description": "秦汉唐宋明清等朝代的历史、政治变迁、帝王将相"
+    },
+    {
+      "id": "hist_china_modern",
+      "path": "历史传记/中国近现代/变革与革命",
+      "description": "鸦片战争以来的近代史、民国、新中国发展历程"
+    },
+    {
+      "id": "hist_world",
+      "path": "历史传记/世界历史/文明演进",
+      "description": "世界各文明的历史发展、重大历史事件、国际关系"
+    },
+    {
+      "id": "hist_biography",
+      "path": "历史传记/人物传记/经历与启示",
+      "description": "名人传记、个人经历、成功与失败的人生故事"
+    },
+    {
+      "id": "hist_ming",
+      "path": "历史传记/明朝历史/政治与人物",
+      "description": "明朝政治、人物、事件，如明朝那些事儿相关内容"
+    },
+    {
+      "id": "hist_war",
+      "path": "历史传记/战争军事/战略与人性",
+      "description": "战争历史、军事战略、战争中的人性与抉择"
+    },
+    {
+      "id": "tech_ai",
+      "path": "科学技术/人工智能/机器学习",
+      "description": "AI、深度学习、大语言模型、机器学习的原理和应用"
+    },
+    {
+      "id": "tech_brain",
+      "path": "科学技术/脑科学/神经与意识",
+      "description": "大脑结构、神经科学、意识本质、大脑可塑性"
+    },
+    {
+      "id": "tech_physics",
+      "path": "科学技术/物理宇宙/时空与量子",
+      "description": "物理学、宇宙学、量子力学、相对论、时空本质"
+    },
+    {
+      "id": "tech_biology",
+      "path": "科学技术/生命科学/进化与基因",
+      "description": "进化论、基因、生命起源、生物学前沿"
+    },
+    {
+      "id": "tech_math",
+      "path": "科学技术/数学逻辑/统计与概率",
+      "description": "数学思维、统计学、概率论、逻辑推理"
+    },
+    {
+      "id": "tech_digital",
+      "path": "科学技术/数字化/互联网与元宇宙",
+      "description": "互联网、数字化转型、元宇宙、虚拟现实、区块链"
+    },
+    {
+      "id": "rel_buddhism",
+      "path": "宗教信仰/佛教/禅修与觉悟",
+      "description": "佛教思想、禅宗修行、佛经故事、觉悟与解脱"
+    },
+    {
+      "id": "rel_taoism",
+      "path": "宗教信仰/道教/道法自然",
+      "description": "道教思想、道法自然、无为而治、道教文化"
+    },
+    {
+      "id": "rel_christianity",
+      "path": "宗教信仰/基督教/信仰与救赎",
+      "description": "基督教、天主教、新教思想、信仰与救赎"
+    },
+    {
+      "id": "rel_general",
+      "path": "宗教信仰/宗教通论/信仰与人生",
+      "description": "宗教与人生意义、信仰的力量、宗教文化通论"
+    },
+    {
+      "id": "edu_parenting",
+      "path": "教育家庭/亲子教育/成长陪伴",
+      "description": "育儿方法、亲子关系、儿童心理、教育理念"
+    },
+    {
+      "id": "edu_family",
+      "path": "教育家庭/家庭关系/代际沟通",
+      "description": "家庭关系、代际冲突、父母子女关系、家庭责任"
+    },
+    {
+      "id": "edu_school",
+      "path": "教育家庭/学校教育/体制与改革",
+      "description": "教育体制、大学教育、应试教育、教育改革"
+    },
+    {
+      "id": "edu_english",
+      "path": "教育家庭/英语学习/词汇与阅读",
+      "description": "英语学习、词汇记忆、英文阅读、语言学习方法"
+    },
+    {
+      "id": "life_health",
+      "path": "生活日常/健康养生/身体管理",
+      "description": "身体健康、运动锻炼、饮食营养、睡眠管理"
+    },
+    {
+      "id": "life_food",
+      "path": "生活日常/饮食文化/美食与烹饪",
+      "description": "饮食文化、烹饪、美食、饮食习惯与健康"
+    },
+    {
+      "id": "life_travel",
+      "path": "生活日常/旅行见闻/地理与文化",
+      "description": "旅行经历、地理文化、风土人情、旅行感悟"
+    },
+    {
+      "id": "life_humor",
+      "path": "生活日常/幽默与趣味/段子与智慧",
+      "description": "幽默表达、趣味知识、生活智慧、轻松有趣的内容"
+    },
+    {
+      "id": "write_craft",
+      "path": "写作创作/写作技巧/结构与修辞",
+      "description": "文章结构、修辞手法、写作技巧、叙事方法"
+    },
+    {
+      "id": "write_creative",
+      "path": "写作创作/创意灵感/故事构思",
+      "description": "创意写作、故事构思、灵感激发、想象力"
+    },
+    {
+      "id": "write_review",
+      "path": "写作创作/书评影评/文艺评论",
+      "description": "书评、影评、文艺评论、作品分析和批评"
+    }
+  ]
+}

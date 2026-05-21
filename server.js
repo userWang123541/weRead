@@ -13,11 +13,13 @@ const {
   buildCards,
   buildMaterialPack,
 } = require('./lib/card-engine');
+const { classifyNotes } = require('./lib/classifier');
 
 const app = express();
 const DATA_DIR = path.join(__dirname, 'data');
 const RAW_DATA_FILE = path.join(DATA_DIR, 'weread-data.json');
 const CARDS_FILE = path.join(DATA_DIR, 'cards.json');
+const CLASSIFIED_FILE = path.join(DATA_DIR, 'classified.json');
 
 app.use(express.json({ limit: '20mb' }));
 app.use(express.static(__dirname));
@@ -115,6 +117,47 @@ app.post('/api/material-pack', async (req, res) => {
       limit: req.body?.limit || 24,
     });
     res.json(pack);
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.post('/api/classify', async (req, res) => {
+  try {
+    const raw = await loadRawData();
+    if (!raw?.books?.length) {
+      res.status(400).json({ error: '没有数据，请先同步' });
+      return;
+    }
+
+    const notes = [];
+    for (const book of raw.books) {
+      const chapterMap = {};
+      for (const ch of book.chapters || []) chapterMap[ch.chapterUid] = ch.title;
+      for (const h of book.highlights || []) {
+        if (h.markText?.trim()) {
+          notes.push({ type: 'highlight', text: h.markText, bookId: book.bookId, bookTitle: book.book?.title || '', chapter: chapterMap[h.chapterUid] || '', createTime: h.createTime });
+        }
+      }
+      for (const r of book.reviews || []) {
+        if (r.content?.trim()) {
+          notes.push({ type: 'review', text: r.content, bookId: book.bookId, bookTitle: book.book?.title || '', chapter: r.chapterName || '', createTime: r.createTime });
+        }
+      }
+    }
+
+    const { results, stats } = await classifyNotes(notes);
+    await writeJson(CLASSIFIED_FILE, { classifiedAt: new Date().toISOString(), totalNotes: results.length, notes: results, stats });
+    res.json({ ok: true, totalNotes: results.length, stats });
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.get('/api/classified', async (_req, res) => {
+  try {
+    const data = await readJsonIfExists(CLASSIFIED_FILE, { notes: [], stats: {} });
+    res.json(data);
   } catch (err) {
     sendError(res, err);
   }
