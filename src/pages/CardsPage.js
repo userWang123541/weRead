@@ -58,6 +58,8 @@ export default {
       store,
       filteredCards: getters.filteredCards,
       filteredTags: getters.filteredTags,
+      tagTree: getters.tagTree,
+      defaultExpandedKeys: Vue.computed(() => (getters.tagTree.value?.children || []).map(n => n.path)),
       bookOptions: getters.bookOptions,
       classificationMap: getters.classificationMap,
       categoryTree: getters.categoryTree,
@@ -69,6 +71,9 @@ export default {
       clearFilters,
       openCategoryEditor,
       selectTag,
+      onTagNodeClick(data) {
+        if (data.count) selectTag(data.path);
+      },
       categoryAncestors,
       compact,
       formatDate,
@@ -154,17 +159,24 @@ export default {
             <el-input v-model="store.tagSearch" placeholder="搜索标签" clearable size="small" />
           </div>
           <div class="tag-sidebar-list">
-            <div
-              v-for="item in filteredTags"
-              :key="item.tag"
-              class="tag-sidebar-item"
-              :class="{ active: store.selectedTag === item.tag }"
-              @click="selectTag(item.tag)"
+            <el-tree
+              v-if="tagTree.children.length"
+              class="tag-tree"
+              :data="tagTree.children"
+              node-key="path"
+              :props="{ label: 'name', children: 'children' }"
+              :default-expanded-keys="defaultExpandedKeys"
+              highlight-current
+              @node-click="onTagNodeClick"
             >
-              <span class="tag-name" :title="item.tag">{{ item.tag }}</span>
-              <span class="tag-count-pill">{{ item.count }}</span>
-            </div>
-            <div v-if="!filteredTags.length" class="tag-empty">暂无分类。先在仪表盘运行"向量分类"。</div>
+              <template #default="{ node, data }">
+                <div class="tag-tree-label">
+                  <span class="tag-tree-name" :title="data.path">{{ node.label }}</span>
+                  <span class="tag-count-pill" v-if="data.count">{{ data.count }}</span>
+                </div>
+              </template>
+            </el-tree>
+            <div v-else class="tag-empty">暂无分类。先在仪表盘运行"向量分类"。</div>
           </div>
         </aside>
       </div>

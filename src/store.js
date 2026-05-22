@@ -73,6 +73,32 @@ export const getters = {
       .slice(0, 80);
   }),
 
+  tagTree: computed(() => {
+    const tags = getters.filteredTags.value || [];
+    const root = { name: '', path: '', children: [], count: 0 };
+    const map = new Map([['', root]]);
+    for (const { tag, count } of tags) {
+      let parentPath = '';
+      const parts = tag.split('/').map(s => s.trim()).filter(Boolean);
+      parts.forEach((part, i) => {
+        const nodePath = parentPath ? `${parentPath}/${part}` : part;
+        if (!map.has(nodePath)) {
+          const node = { name: part, path: nodePath, children: [], count: 0 };
+          map.set(nodePath, node);
+          map.get(parentPath).children.push(node);
+        }
+        if (i === parts.length - 1) map.get(nodePath).count = count;
+        parentPath = nodePath;
+      });
+    }
+    const sortNode = node => {
+      node.children.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'zh'));
+      node.children.forEach(sortNode);
+    };
+    sortNode(root);
+    return root;
+  }),
+
   filteredCards: computed(() => {
     const q = store.searchInput.trim().toLowerCase();
     return (store.cardsData.cards || []).filter(card => {

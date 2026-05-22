@@ -662,6 +662,56 @@ button:disabled { cursor: not-allowed; opacity: .5; }
   font-size: 13px;
 }
 
+/* tag tree overrides */
+.tag-tree {
+  --el-tree-node-hover-bg-color: var(--green-light);
+  background: transparent;
+}
+
+.tag-tree .el-tree-node__content {
+  height: auto;
+  padding: 6px 4px;
+  border-radius: var(--radius);
+}
+
+.tag-tree .el-tree-node__content:hover {
+  background: var(--green-light);
+}
+
+.tag-tree .el-tree-node.is-current > .el-tree-node__content {
+  background: var(--green-light);
+  color: var(--green);
+  font-weight: 600;
+}
+
+.tag-tree .el-tree-node__expand-icon {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 4px;
+}
+
+.tag-tree .el-tree-node__expand-icon.is-leaf {
+  visibility: hidden;
+  width: 12px;
+}
+
+.tag-tree-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  padding-right: 4px;
+}
+
+.tag-tree-name {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 13px;
+}
+
 .category-manager {
   display: grid;
   grid-template-columns: 360px minmax(0, 1fr);
