@@ -156,17 +156,11 @@ export default {
                   filterable
                   placeholder="留空为一级分类"
                   style="width: 100%"
-                >
-                  <template #default="{ data }">
-                    <span>{{ data.name }}</span>
-                  </template>
-                </el-tree-select>
+                />
+                <div v-if="previewPath" class="category-preview-path">完整路径：{{ previewPath }}</div>
               </el-form-item>
               <el-form-item label="分类名称">
                 <el-input v-model="store.categoryForm.name" placeholder="分类名称" clearable />
-              </el-form-item>
-              <el-form-item label="完整路径">
-                <el-input :model-value="previewPath" readonly />
               </el-form-item>
               <el-form-item label="分类说明">
                 <el-input
