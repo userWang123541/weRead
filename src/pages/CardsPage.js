@@ -5,12 +5,14 @@ export default {
   name: 'CardsPage',
   setup() {
     const categoryPanelStyle = Vue.ref({});
+    const tagTreeRef = Vue.ref(null);
 
     function clearFilters() {
       store.selectedTag = '';
       store.searchInput = '';
       store.typeFilter = '';
       store.bookFilter = '';
+      tagTreeRef.value?.setCurrentKey(null);
     }
 
     function openCategoryEditor(noteIndex, event) {
@@ -56,6 +58,7 @@ export default {
 
     return {
       store,
+      tagTreeRef,
       filteredCards: getters.filteredCards,
       filteredTags: getters.filteredTags,
       tagTree: getters.tagTree,
@@ -161,6 +164,7 @@ export default {
           <div class="tag-sidebar-list">
             <el-tree
               v-if="tagTree.children.length"
+              ref="tagTreeRef"
               class="tag-tree"
               :data="tagTree.children"
               node-key="path"
