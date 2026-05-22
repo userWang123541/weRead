@@ -14,6 +14,7 @@ const {
   buildMaterialPack,
 } = require('./lib/card-engine');
 const { classifyNotes } = require('./lib/classifier');
+const { generateReport, getCachedReports, chatCompletion } = require('./lib/report-engine');
 
 const app = express();
 const DATA_DIR = path.join(__dirname, 'data');
@@ -366,6 +367,79 @@ function summarize(raw, cardsData) {
     taxonomyCount: cardsData.taxonomy?.length || 0,
   };
 }
+
+// ── 阅读报告 API ──
+
+app.get('/api/reports', async (_req, res) => {
+  try {
+    const data = await getCachedReports();
+    res.json(data);
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.post('/api/reports/generate', async (req, res) => {
+  try {
+    const { reportId } = req.body || {};
+    if (!reportId) {
+      res.status(400).json({ error: 'reportId is required' });
+      return;
+    }
+    const result = await generateReport(reportId);
+    res.json(result);
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+// ── 内容工坊 AI 文案 ──
+
+app.post('/api/studio/generate', async (req, res) => {
+  try {
+    const { topic, tone, cards } = req.body || {};
+    if (!cards?.length) {
+      res.status(400).json({ error: '没有素材卡片' });
+      return;
+    }
+
+    const cardTexts = cards.slice(0, 12).map((c, i) => {
+      const parts = [];
+      if (c.bookTitle) parts.push(`《${c.bookTitle}》`);
+      if (c.author) parts.push(c.author);
+      if (c.quote) parts.push(`划线："${c.quote.slice(0, 120)}"`);
+      if (c.note) parts.push(`想法："${c.note.slice(0, 120)}"`);
+      return `${i + 1}. ${parts.join(' | ')}`;
+    }).join('\n');
+
+    const toneMap = {
+      '种草风': '像朋友推荐好物一样，语气亲切、有感染力，适合小红书种草笔记',
+      '学术风': '严谨、有条理、逻辑清晰，适合知识类公众号或读书笔记',
+      '吐槽风': '轻松幽默、带点自嘲，像和朋友聊天，有反差感和真实感',
+      '编辑推荐风': '专业、有洞察力，像资深编辑写推荐语，有策划感',
+    };
+
+    const systemPrompt = '你是一位资深内容创作者和阅读推广人。你会根据用户的真实阅读笔记和划线，生成有温度、有洞察的内容文案。文案必须基于提供的真实素材，不要编造。语言自然真实，不要像AI写的套话。直接输出文案内容，不要加多余说明。';
+
+    const userPrompt = `主题：${topic || '阅读感悟'}
+风格：${toneMap[tone] || toneMap['种草风']}
+
+以下是用户在微信读书中的真实笔记素材：
+${cardTexts}
+
+请基于以上真实素材，生成一篇 200-350 字的内容文案。要求：
+1. 必须引用至少 2 条素材中的原文（用引号标注）
+2. 有真实的观点和感悟，不要空洞的套话
+3. 语言风格符合所选风格
+4. 结构：开头引入 → 素材引用和解读 → 个人观点 → 结尾金句`;
+
+    const result = await chatCompletion(systemPrompt, userPrompt, { json: false });
+    const content = typeof result === 'string' ? result : String(result);
+    res.json({ content });
+  } catch (err) {
+    sendError(res, err);
+  }
+});
 
 app.get('/', (_req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));

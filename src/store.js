@@ -20,6 +20,7 @@ export const store = reactive({
   activeCategoryEdit: null,
   activeCategoryEditCard: null,
   categoryForm: { mode: 'create', path: '', parentPath: '', originalPath: '', name: '', description: '' },
+  reports: {},
 });
 
 export const getters = {
@@ -177,8 +178,37 @@ export async function loadData() {
     store.taxonomy = taxonomy || { categories: [] };
     const clsCount = store.classified?.totalNotes || 0;
     store.status = `本地资料库已载入：${store.stats.totalCards || 0} 张资料卡${clsCount ? `，${clsCount} 条已分类` : ''}。`;
+    loadReports().catch(() => {});
   } catch (err) {
     store.status = `载入失败：${err.message}`;
+  }
+}
+
+export async function loadReports() {
+  try {
+    const data = await request('/api/reports');
+    store.reports = data.reports || {};
+  } catch {
+    store.reports = {};
+  }
+}
+
+export async function generateReport(reportId) {
+  store.loading = true;
+  store.status = `正在生成报告...`;
+  try {
+    const result = await request('/api/reports/generate', {
+      method: 'POST',
+      body: JSON.stringify({ reportId }),
+    });
+    store.reports[reportId] = { generatedAt: new Date().toISOString(), content: result };
+    store.status = '报告已生成。';
+    return result;
+  } catch (err) {
+    store.status = `报告生成失败：${err.message}`;
+    throw err;
+  } finally {
+    store.loading = false;
   }
 }
 
