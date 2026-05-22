@@ -51,11 +51,6 @@ export default {
       startCreateRoot();
     }
 
-    function selectTagAndGoToCards(tag) {
-      store.selectedTag = store.selectedTag === tag ? '' : tag;
-      window.location.hash = '#/cards';
-    }
-
     watch(() => store.tagSearch, value => {
       categoryTreeRef.value?.filter(value);
     });
@@ -67,14 +62,12 @@ export default {
       selectedPath,
       selectedNode,
       manageCategoryTree: getters.manageCategoryTree,
-      taxonomyRows: getters.taxonomyRows,
       saveCategory,
       editSelected,
       addChildToSelected,
       addRoot,
       deleteSelected,
       selectNode,
-      selectTagAndGoToCards,
     };
   },
   template: `
@@ -166,25 +159,6 @@ export default {
             </el-form>
           </div>
         </section>
-      </div>
-
-      <div class="section-header" style="margin-top: 20px;">
-        <h3 class="section-title">分类统计</h3>
-      </div>
-      <div v-if="!taxonomyRows.length" class="empty-state">暂无分类统计。请先在仪表盘运行"向量分类"。</div>
-      <div v-else class="taxonomy-stats">
-        <div
-          v-for="item in taxonomyRows"
-          :key="item.tag"
-          class="tax-row"
-          @click="selectTagAndGoToCards(item.tag)"
-        >
-          <div>
-            <b>{{ item.tag }}</b><br>
-            <small>{{ item.bookCount ? \`覆盖 \${item.bookCount} 本书\` : \`\${item.depth} 级分类\` }}</small>
-          </div>
-          <span class="count-pill">{{ item.count }}</span>
-        </div>
       </div>
     </div>
   `,
