@@ -90,22 +90,22 @@ export default {
       <div class="export-options">
         <div class="export-section">
           <label class="export-label">导出范围</label>
-          <el-radio-group v-model="exportScope">
+          <el-radio-group v-model="exportScope" class="mag-radio-group">
             <el-radio-button value="all">全部</el-radio-button>
             <el-radio-button value="book">按书籍</el-radio-button>
             <el-radio-button value="category">按分类</el-radio-button>
           </el-radio-group>
-          <el-select v-if="exportScope === 'book'" v-model="selectedBook" placeholder="选择书籍" filterable clearable style="width: 240px; margin-left: 10px">
-            <el-option v-for="b in bookOptions" :key="b" :label="b" :value="b" />
+          <el-select v-if="exportScope === 'book'" v-model="selectedBook" placeholder="选择书籍" filterable clearable style="width: 200px; margin-left: 10px" popper-class="book-dropdown">
+            <el-option v-for="b in bookOptions" :key="b" :label="b" :value="b" class="book-option" />
           </el-select>
-          <el-select v-if="exportScope === 'category'" v-model="selectedCategory" placeholder="选择分类" filterable clearable style="width: 240px; margin-left: 10px">
-            <el-option v-for="c in categoryOptions" :key="c" :label="c" :value="c" />
+          <el-select v-if="exportScope === 'category'" v-model="selectedCategory" placeholder="选择分类" filterable clearable style="width: 200px; margin-left: 10px" popper-class="book-dropdown">
+            <el-option v-for="c in categoryOptions" :key="c" :label="c" :value="c" class="book-option" />
           </el-select>
         </div>
 
         <div class="export-section">
           <label class="export-label">导出格式</label>
-          <el-radio-group v-model="exportFormat">
+          <el-radio-group v-model="exportFormat" class="mag-radio-group">
             <el-radio-button value="markdown">Markdown</el-radio-button>
             <el-radio-button value="json">JSON</el-radio-button>
           </el-radio-group>

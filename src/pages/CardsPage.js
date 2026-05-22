@@ -168,7 +168,7 @@ export default {
                   >
                     修改分类
                   </button>
-                  <el-button v-if="card.openUrl" link type="primary" size="small" @click="openOriginal(card.openUrl, card.bookId)">查看原文</el-button>
+                  <el-button v-if="card.openUrl" link size="small" class="view-original-btn" @click="openOriginal(card.openUrl, card.bookId)">查看原文</el-button>
                 </div>
               </div>
             </article>
