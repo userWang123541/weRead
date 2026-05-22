@@ -115,13 +115,13 @@ export default {
           clearable
           style="flex: 1; min-width: 200px"
         />
-        <el-select v-model="store.typeFilter" placeholder="全部类型" clearable style="width: 130px">
+        <el-select v-model="store.typeFilter" placeholder="全部类型" clearable style="width: 130px" popper-class="book-dropdown">
           <el-option label="只看划线" value="highlight" />
           <el-option label="只看想法" value="review" />
           <el-option label="划线+想法" value="linked" />
         </el-select>
-        <el-select v-model="store.bookFilter" placeholder="全部书籍" clearable filterable style="width: 200px">
-          <el-option v-for="book in bookOptions" :key="book" :label="book" :value="book" />
+        <el-select v-model="store.bookFilter" placeholder="全部书籍" clearable filterable style="width: 180px" popper-class="book-dropdown">
+          <el-option v-for="book in bookOptions" :key="book" :label="book" :value="book" class="book-option" />
         </el-select>
         <el-button @click="clearFilters">清空筛选</el-button>
       </div>

@@ -1424,7 +1424,50 @@ button:disabled { cursor: not-allowed; opacity: .4; }
 }
 
 .el-select .el-input__wrapper {
+  border-radius: 999px !important;
+}
+
+/* 书籍下拉框 — 统一杂志风格 */
+.book-dropdown {
+  border: none !important;
+  border-radius: var(--radius-xl) !important;
+  box-shadow: var(--shadow-lg) !important;
+  background: var(--bg-paper) !important;
+  padding: 6px !important;
+}
+
+.book-dropdown .el-select-dropdown__item {
   border-radius: var(--radius-lg) !important;
+  padding: 8px 16px !important;
+  font-size: 13px;
+  color: var(--text-regular);
+  height: auto !important;
+  line-height: 1.6 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+  transition: all var(--transition);
+}
+
+.book-dropdown .el-select-dropdown__item:hover,
+.book-dropdown .el-select-dropdown__item.hover {
+  background: var(--accent-light) !important;
+  color: var(--text-primary) !important;
+}
+
+.book-dropdown .el-select-dropdown__item.selected {
+  font-weight: 500;
+  color: var(--text-primary) !important;
+}
+
+.book-dropdown .el-scrollbar__bar {
+  width: 4px;
+}
+
+.book-dropdown .el-scrollbar__thumb {
+  background: var(--border);
+  border-radius: 2px;
 }
 
 /* ====== 杂志风页面通用背景 ====== */
