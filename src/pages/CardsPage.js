@@ -1,11 +1,11 @@
-import CategoryNode from '../components/CategoryNode.js';
 import { store, getters, cardClassification, updateNoteCategory, openOriginal } from '../store.js';
 import { compact, formatDate, typeLabel } from '../utils.js';
 
 export default {
   name: 'CardsPage',
-  components: { CategoryNode },
   setup() {
+    const categoryPanelStyle = Vue.ref({});
+
     function clearFilters() {
       store.selectedTag = '';
       store.searchInput = '';
@@ -13,12 +13,45 @@ export default {
       store.bookFilter = '';
     }
 
-    function openCategoryEditor(noteIndex) {
-      store.activeCategoryEdit = store.activeCategoryEdit === noteIndex ? null : noteIndex;
+    function openCategoryEditor(noteIndex, event) {
+      const main = document.querySelector('.app-main');
+      const scrollTop = main?.scrollTop || 0;
+      if (store.activeCategoryEdit === noteIndex) {
+        store.activeCategoryEdit = null;
+        return;
+      }
+
+      const rect = event?.currentTarget?.getBoundingClientRect();
+      const panelWidth = 320;
+      const panelHeight = 330;
+      let left = rect ? rect.right + 8 : 280;
+      let top = rect ? rect.top : 120;
+      if (left + panelWidth > window.innerWidth - 12 && rect) {
+        left = rect.left - panelWidth - 8;
+      }
+      top = Math.max(12, Math.min(top, window.innerHeight - panelHeight - 12));
+      categoryPanelStyle.value = {
+        left: `${Math.max(12, left)}px`,
+        top: `${top}px`,
+        width: `${panelWidth}px`,
+      };
+
+      store.activeCategoryEdit = noteIndex;
+      [0, 30, 100, 220].forEach(delay => {
+        setTimeout(() => {
+          if (main) main.scrollTo({ top: scrollTop, behavior: 'auto' });
+        }, delay);
+      });
     }
 
     function selectTag(tag) {
       store.selectedTag = store.selectedTag === tag ? '' : tag;
+    }
+
+    function categoryAncestors(category) {
+      if (!category || category === '未分类') return [];
+      const parts = category.split('/');
+      return parts.map((_, index) => parts.slice(0, index + 1).join('/'));
     }
 
     return {
@@ -29,12 +62,14 @@ export default {
       classificationMap: getters.classificationMap,
       categoryTree: getters.categoryTree,
       currentEditCategory: getters.currentEditCategory,
+      categoryPanelStyle,
       cardClassification,
       updateNoteCategory,
       openOriginal,
       clearFilters,
       openCategoryEditor,
       selectTag,
+      categoryAncestors,
       compact,
       formatDate,
       typeLabel,
@@ -70,7 +105,6 @@ export default {
               v-for="card in filteredCards"
               :key="card.cardId"
               class="card-item"
-              :class="{ editing: store.activeCategoryEdit === cardClassification(card)?._index }"
             >
               <div class="card-meta">
                 <span class="card-book" :title="card.bookTitle">{{ card.bookTitle || '未知书籍' }}</span>
@@ -94,24 +128,17 @@ export default {
               <div class="card-footer">
                 <span>{{ formatDate(card.createTime) }}</span>
                 <div class="card-actions">
-                  <button v-if="cardClassification(card)" class="text-btn" @click="openCategoryEditor(cardClassification(card)._index)">修改分类</button>
-                  <button v-if="card.openUrl" class="text-btn" @click="openOriginal(card.openUrl)">查看原文</button>
-                  <div v-if="store.activeCategoryEdit === cardClassification(card)?._index" class="category-popover">
-                    <div class="category-popover-head">
-                      <span>选择分类</span>
-                      <button class="mini-btn" @click="store.activeCategoryEdit = null">关闭</button>
-                    </div>
-                    <button class="category-choice" :class="{ active: currentEditCategory === '未分类' }" @click="updateNoteCategory('未分类')">
-                      <span></span><span>未分类</span><span class="category-path"></span>
-                    </button>
-                    <category-node
-                      v-for="node in categoryTree.children"
-                      :key="node.path"
-                      :node="node"
-                      :current="currentEditCategory"
-                      @choose="updateNoteCategory"
-                    ></category-node>
-                  </div>
+                  <span
+                    v-if="cardClassification(card)"
+                    class="text-btn"
+                    @pointerdown.prevent
+                    @mousedown.prevent
+                    @mouseup.prevent
+                    @click.stop="openCategoryEditor(cardClassification(card)._index, $event)"
+                  >
+                    修改分类
+                  </span>
+                  <el-button v-if="card.openUrl" link type="primary" size="small" @click="openOriginal(card.openUrl, card.bookId)">查看原文</el-button>
                 </div>
               </div>
             </article>
@@ -141,6 +168,38 @@ export default {
           </div>
         </aside>
       </div>
+
+      <teleport to="body">
+        <div
+          v-if="store.activeCategoryEdit !== null"
+          class="category-fixed-panel"
+          :style="categoryPanelStyle"
+          @click.stop
+        >
+          <div class="category-select-head">
+            <span>选择分类</span>
+            <el-button link type="primary" size="small" @click="store.activeCategoryEdit = null">关闭</el-button>
+          </div>
+          <el-button
+            class="category-unclassified"
+            :type="currentEditCategory === '未分类' ? 'primary' : 'default'"
+            size="small"
+            @click="updateNoteCategory('未分类')"
+          >
+            未分类
+          </el-button>
+          <el-tree
+            class="category-select-tree"
+            :data="categoryTree.children"
+            node-key="path"
+            :props="{ label: 'name', children: 'children' }"
+            :default-expanded-keys="categoryAncestors(currentEditCategory)"
+            :current-node-key="currentEditCategory"
+            highlight-current
+            @node-click="node => updateNoteCategory(node.path)"
+          />
+        </div>
+      </teleport>
     </div>
   `,
 };

@@ -345,11 +345,39 @@ export function resetCategoryForm() {
   store.categoryForm = { mode: 'create', path: '', parentPath: '', originalPath: '', name: '', description: '' };
 }
 
-export function openOriginal(url) {
-  store.status = '正在尝试打开微信读书原文...';
+function buildWereadWebUrl(url, bookId = '') {
+  let resolvedBookId = bookId;
+  try {
+    const parsed = new URL(url);
+    resolvedBookId = resolvedBookId || parsed.searchParams.get('bookId') || parsed.searchParams.get('bId') || '';
+  } catch (_err) {
+    const match = String(url || '').match(/[?&](?:bookId|bId)=([^&]+)/);
+    resolvedBookId = resolvedBookId || (match ? decodeURIComponent(match[1]) : '');
+  }
+  return resolvedBookId ? `https://weread.qq.com/web/reader/${encodeURIComponent(resolvedBookId)}` : '';
+}
+
+export function openOriginal(url, bookId = '') {
+  const webUrl = buildWereadWebUrl(url, bookId);
+  store.status = webUrl ? '正在打开微信读书网页版...' : '正在尝试打开微信读书客户端...';
   if (navigator.clipboard?.writeText) navigator.clipboard.writeText(url).catch(() => {});
-  window.location.href = url;
+  if (window.ElementPlus?.ElMessage) {
+    window.ElementPlus.ElMessage({
+      type: 'info',
+      message: webUrl
+        ? '正在打开微信读书网页版。若已登录网页版，可进入对应书籍；精确定位到划线取决于微信读书 Web 支持。'
+        : '正在唤起微信读书客户端；如果没有反应，说明系统没有注册 weread:// 协议。',
+      duration: 4200,
+    });
+  }
+  if (webUrl) {
+    window.open(webUrl, '_blank', 'noopener');
+  } else {
+    window.location.href = url;
+  }
   setTimeout(() => {
-    store.status = '如果没有跳转，通常是浏览器拦截 weread:// 协议，或本机没有安装/注册微信读书客户端。链接已尝试复制。';
+    store.status = webUrl
+      ? '已尝试打开微信读书网页版。如果没有进入书籍，请确认网页版已登录且该书在你的账号中。'
+      : '查看原文依赖 weread:// 协议。没有安装或没有注册微信读书客户端时，浏览器不能跳到原文；链接已尝试复制。';
   }, 900);
 }
