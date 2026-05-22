@@ -9,8 +9,9 @@ export default {
       { path: '/', icon: 'Reading', label: '概览' },
       { path: '/notes', icon: 'Document', label: '笔记管家' },
       { path: '/radar', icon: 'Aim', label: '选题雷达' },
-      { path: '/studio', icon: 'Brush', label: '内容工坊' },
       { path: '/graph', icon: 'Connection', label: '知识图谱' },
+      { path: '/studio', icon: 'Brush', label: '内容工坊' },
+      { path: '/export', icon: 'Download', label: '导出' },
     ];
 
     return { store, route, menuItems };
