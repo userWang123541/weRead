@@ -134,20 +134,17 @@ export default {
           <h3>笔记管家</h3>
           <p>跨书检索、主题聚类、划线管理</p>
         </article>
-        <article class="mg-scene" @click="go('/radar')">
+        <article class="mg-scene" @click="go('/reports')">
+          <div class="mg-scene-num">6</div>
+          <h3>阅读报告</h3>
+          <p>阅读人格、MBTI 倾向、认知茧房分析</p>
+        </article>
+        <article class="mg-scene" @click="go('/categories')">
           <div class="mg-scene-num">{{ topicCount }}</div>
-          <h3>选题雷达</h3>
-          <p>热度分析、缺口发现、趋势判断</p>
+          <h3>分类管理</h3>
+          <p>管理知识分类体系，调整归类</p>
         </article>
-        <article class="mg-scene" @click="go('/studio')">
-          <div class="mg-scene-num">&mdash;</div>
-          <h3>内容工坊</h3>
-          <p>金句卡片、文案生成、阅读 DNA</p>
-        </article>
-        <article class="mg-scene" @click="go('/graph')">
-          <div class="mg-scene-num">{{ Object.keys(store.classified?.stats || {}).length }}</div>
-          <h3>知识图谱</h3>
-          <p>跨书关联、观点对比、难点预警</p>
+          <p>Markdown / JSON 格式导出笔记</p>
         </article>
       </section>
 
