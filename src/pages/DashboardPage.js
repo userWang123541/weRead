@@ -28,14 +28,64 @@ export default {
       if (!books.length) return 0;
       const dates = new Set();
       books.forEach(book => {
-        (book.bookmarks || []).forEach(b => {
-          if (b.createTime) {
-            const d = new Date(b.createTime * 1000);
+        (book.highlights || []).forEach(h => {
+          if (h.createTime) {
+            const d = new Date(h.createTime * 1000);
+            dates.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+          }
+        });
+        (book.reviews || []).forEach(r => {
+          if (r.createTime) {
+            const d = new Date(r.createTime * 1000);
             dates.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
           }
         });
       });
       return dates.size;
+    });
+
+    // 书架分类
+    const bookshelf = Vue.computed(() => {
+      const books = store.raw?.books || [];
+      const completed = [], reading = [], unread = [];
+      books.forEach(b => {
+        const info = b.book || {};
+        const item = {
+          title: info.title || '未知书名',
+          author: info.author || '',
+          cover: info.cover || '',
+          progress: b.readingProgress || 0,
+          notes: (b.noteCount || 0) + (b.reviewCount || 0),
+        };
+        if (item.progress >= 90) completed.push(item);
+        else if (item.progress > 0) reading.push(item);
+        else unread.push(item);
+      });
+      return {
+        reading: reading.sort((a, b) => b.progress - a.progress).slice(0, 8),
+        completed: completed.sort((a, b) => b.notes - a.notes).slice(0, 8),
+        unread: unread.slice(0, 8),
+      };
+    });
+
+    // 金句轮播
+    const currentQuote = Vue.ref({ text: '', book: '' });
+    let quoteTimer = null;
+
+    function pickRandomQuote() {
+      const cards = (store.cardsData.cards || []).filter(c => c.quote && c.quote.length > 15);
+      if (!cards.length) return;
+      const card = cards[Math.floor(Math.random() * cards.length)];
+      currentQuote.value = { text: card.quote.slice(0, 120), book: card.bookTitle || '' };
+    }
+
+    Vue.onMounted(() => {
+      pickRandomQuote();
+      quoteTimer = setInterval(pickRandomQuote, 5000);
+    });
+
+    Vue.onUnmounted(() => {
+      if (quoteTimer) clearInterval(quoteTimer);
     });
 
     function go(route) {
@@ -51,6 +101,7 @@ export default {
       todayTopic,
       topicCount,
       readingDays,
+      currentQuote,
       go,
       loadData,
       syncData,
@@ -84,8 +135,8 @@ export default {
           <div class="mg-stat-label">想法</div>
         </div>
         <div class="mg-stat">
-          <div class="mg-stat-val">{{ (store.stats.totalCards || 0).toLocaleString() }}</div>
-          <div class="mg-stat-label">资料卡</div>
+          <div class="mg-stat-val">{{ (store.classified?.stats?.['未分类'] || 0).toLocaleString() }}</div>
+          <div class="mg-stat-label">未分类</div>
         </div>
         <div class="mg-stat">
           <div class="mg-stat-val">{{ (store.classified?.totalNotes || 0).toLocaleString() }}</div>
@@ -122,13 +173,18 @@ export default {
         </div>
         <div class="mg-quote-card">
           <div class="mg-quote-icon">&ldquo;</div>
-          <blockquote class="mg-quote-text">真正改变人的，不是读过多少书，而是你如何重新组织自己。</blockquote>
-          <div class="mg-quote-source">&mdash; 阅读工作室</div>
+          <blockquote class="mg-quote-text">{{ currentQuote.text || '加载中...' }}</blockquote>
+          <div class="mg-quote-source">{{ currentQuote.book ? '—— ' + currentQuote.book : '' }}</div>
         </div>
       </section>
 
       <!-- 功能入口 -->
       <section class="mg-scenes">
+        <article class="mg-scene" @click="go('/bookshelf')">
+          <div class="mg-scene-num">{{ (store.stats.totalBooks || 0).toLocaleString() }}</div>
+          <h3>书架</h3>
+          <p>在读、已读完、未读分类展示</p>
+        </article>
         <article class="mg-scene" @click="go('/notes')">
           <div class="mg-scene-num">{{ (store.stats.totalCards || 0).toLocaleString() }}</div>
           <h3>笔记管家</h3>
@@ -136,7 +192,7 @@ export default {
         </article>
         <article class="mg-scene" @click="go('/recall')">
           <div class="mg-scene-num">AI</div>
-          <h3>笔记召回</h3>
+          <h3>拾光</h3>
           <p>描述你想找的内容，AI 从笔记中召回</p>
         </article>
         <article class="mg-scene" @click="go('/reports')">

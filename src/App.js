@@ -13,7 +13,7 @@ export default {
       <el-header class="app-header" height="52px">
         <div class="header-left">
           <div class="brand-mark">阅</div>
-          <h1 class="header-title">阅读工作室</h1>
+          <h1 class="header-title">微读 Read</h1>
         </div>
         <div class="header-right">
           <span class="header-status">{{ store.status }}</span>

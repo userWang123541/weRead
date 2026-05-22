@@ -60,6 +60,15 @@ export default {
       }
     }
 
+    function renderMarkdown(text) {
+      if (!text) return '';
+      try {
+        return marked.parse(text);
+      } catch {
+        return text;
+      }
+    }
+
     return {
       store,
       inputText,
@@ -69,6 +78,7 @@ export default {
       examples,
       onSend,
       onKeyDown,
+      renderMarkdown,
       compact,
     };
   },
@@ -77,8 +87,8 @@ export default {
       <!-- 对话区 -->
       <div class="recall-main">
         <div class="recall-header">
-          <h1 class="page-title">AI 笔记召回</h1>
-          <p class="recall-desc">描述你想找的内容，AI 会从你的阅读笔记中召回相关素材并回答。</p>
+          <h1 class="page-title">拾光</h1>
+          <p class="recall-desc">描述你想找的内容，AI 从你的阅读笔记中召回相关素材并回答。</p>
         </div>
 
         <div ref="chatRef" class="recall-chat">
@@ -101,7 +111,8 @@ export default {
             <div class="recall-msg-avatar">{{ msg.role === 'user' ? '你' : 'AI' }}</div>
             <div class="recall-msg-body">
               <div v-if="msg.loading" class="recall-thinking">正在从笔记中查找...</div>
-              <div v-else class="recall-msg-text" v-html="msg.content"></div>
+              <div v-else-if="msg.role === 'assistant'" class="recall-msg-text recall-markdown" v-html="renderMarkdown(msg.content)"></div>
+              <div v-else class="recall-msg-text">{{ msg.content }}</div>
             </div>
           </div>
         </div>

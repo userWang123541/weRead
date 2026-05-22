@@ -7,8 +7,9 @@ export default {
 
     const menuItems = [
       { path: '/', icon: 'Reading', label: '概览' },
+      { path: '/bookshelf', icon: 'Collection', label: '书架' },
       { path: '/notes', icon: 'Document', label: '笔记管家' },
-      { path: '/recall', icon: 'ChatDotRound', label: 'AI 召回' },
+      { path: '/recall', icon: 'ChatDotRound', label: '拾光' },
       { path: '/categories', icon: 'Folder', label: '分类管理' },
       { path: '/reports', icon: 'DataAnalysis', label: '阅读报告' },
     ];
@@ -32,7 +33,7 @@ export default {
         </el-menu-item>
       </el-menu>
       <div class="side-footer">
-        阅读工作室 v1.0
+        微读 Read v1.0
       </div>
     </div>
   `,
