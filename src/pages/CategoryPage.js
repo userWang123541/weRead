@@ -13,7 +13,8 @@ export default {
   setup() {
     const searchQuery = Vue.ref('');
     const dialogVisible = Vue.ref(false);
-    const expandedPaths = Vue.ref(new Set());
+    const expandLevel = Vue.ref(0); // 0=只看一级, 1=展开到二级, 2=全部
+    const extraExpanded = Vue.ref(new Set()); // ▸ 手动展开的路径
 
     // 构建完整树结构
     const categoryTree = Vue.computed(() => {
@@ -100,108 +101,65 @@ export default {
       return roots;
     });
 
-    // 展开状态控制
-    function isExpanded(path) {
-      return effectiveExpanded.value.has(path);
+    // 展开控制
+    function shouldExpand(node) {
+      // 层级控制：depth < expandLevel 的节点自动展开
+      if (node.depth < expandLevel.value) return true;
+      // 手动展开：通过 ▸ 点击展开的路径
+      return extraExpanded.value.has(node.path);
     }
 
     function toggleExpand(path) {
-      const next = new Set(expandedPaths.value);
+      const next = new Set(extraExpanded.value);
       if (next.has(path)) {
-        // 收起时也收起所有子级
         next.forEach(p => { if (p.startsWith(path + '/')) next.delete(p); });
         next.delete(path);
       } else {
         next.add(path);
       }
-      expandedPaths.value = next;
+      extraExpanded.value = next;
     }
 
     function expandToLevel(level) {
-      const next = new Set();
-      function walk(nodes) {
-        nodes.forEach(node => {
-          if (node.depth < level && node.hasChildren) {
-            next.add(node.path);
-          }
-          walk(node.children);
-        });
-      }
-      walk(categoryTree.value);
-      expandedPaths.value = next;
+      expandLevel.value = level;
+      extraExpanded.value = new Set(); // 清除手动展开，只保留层级控制
     }
 
     function expandAll() {
-      const next = new Set();
-      function walk(nodes) {
-        nodes.forEach(node => {
-          if (node.hasChildren) next.add(node.path);
-          walk(node.children);
-        });
-      }
-      walk(categoryTree.value);
-      expandedPaths.value = next;
+      expandLevel.value = 2;
+      extraExpanded.value = new Set();
     }
 
-    function collapseAll() {
-      expandedPaths.value = new Set();
+    // 判断节点是否应该显示
+    function shouldShow(node, q) {
+      if (!q) return true;
+      if (node.path.toLowerCase().includes(q)) return true;
+      if ((node.description || '').toLowerCase().includes(q)) return true;
+      return hasDescendantMatch(node, q);
     }
 
-    // 搜索时自动展开匹配项的祖先路径
-    const searchExpandedPaths = Vue.computed(() => {
-      const q = searchQuery.value.trim().toLowerCase();
-      if (!q) return null; // null 表示非搜索模式
-      const extra = new Set();
-      function walk(nodes) {
-        nodes.forEach(node => {
-          const hit = node.path.toLowerCase().includes(q) || (node.description || '').toLowerCase().includes(q);
-          if (hit) {
-            // 展开所有祖先
-            const parts = node.path.split('/');
-            for (let i = 1; i < parts.length; i++) {
-              extra.add(parts.slice(0, i).join('/'));
-            }
-          }
-          walk(node.children);
-        });
+    function hasDescendantMatch(node, q) {
+      for (const child of node.children) {
+        if (child.path.toLowerCase().includes(q) || (child.description || '').toLowerCase().includes(q)) return true;
+        if (hasDescendantMatch(child, q)) return true;
       }
-      walk(categoryTree.value);
-      return extra;
-    });
+      return false;
+    }
 
-    // 最终有效展开集合 = 手动展开 + 搜索自动展开
-    const effectiveExpanded = Vue.computed(() => {
-      const base = expandedPaths.value;
-      const extra = searchExpandedPaths.value;
-      if (!extra) return base;
-      return new Set([...base, ...extra]);
-    });
-
-    // 将树展开为可见的扁平列表
+    // 可见行列表
     const filteredRows = Vue.computed(() => {
       const result = [];
       const q = searchQuery.value.trim().toLowerCase();
-      const expanded = effectiveExpanded.value;
 
       function walk(nodes) {
         nodes.forEach(node => {
-          const matchesSearch = !q || node.path.toLowerCase().includes(q) || (node.description || '').toLowerCase().includes(q);
-          const hasMatchedDescendant = q && hasDescendantMatch(node, q);
-          if (!q || matchesSearch || hasMatchedDescendant) {
+          if (shouldShow(node, q)) {
             result.push(node);
           }
-          if (node.hasChildren && expanded.has(node.path)) {
+          if (node.hasChildren && shouldExpand(node)) {
             walk(node.children);
           }
         });
-      }
-
-      function hasDescendantMatch(node, q) {
-        for (const child of node.children) {
-          if (child.path.toLowerCase().includes(q) || (child.description || '').toLowerCase().includes(q)) return true;
-          if (hasDescendantMatch(child, q)) return true;
-        }
-        return false;
       }
 
       walk(categoryTree.value);
@@ -258,8 +216,8 @@ export default {
       dialogVisible,
       filteredRows,
       categoryTree,
-      effectiveExpanded,
-      isExpanded,
+      expandLevel,
+      shouldExpand,
       toggleExpand,
       expandToLevel,
       expandAll,
@@ -312,7 +270,7 @@ export default {
                 <span
                   v-if="row.hasChildren"
                   class="cat-toggle"
-                  :class="{ expanded: isExpanded(row.path) }"
+                  :class="{ expanded: shouldExpand(row) }"
                   @click.stop="toggleExpand(row.path)"
                 >▸</span>
                 <span v-else class="cat-toggle cat-leaf">–</span>

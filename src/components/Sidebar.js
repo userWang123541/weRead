@@ -8,6 +8,7 @@ export default {
     const menuItems = [
       { path: '/', icon: 'Reading', label: '概览' },
       { path: '/notes', icon: 'Document', label: '笔记管家' },
+      { path: '/recall', icon: 'ChatDotRound', label: 'AI 召回' },
       { path: '/categories', icon: 'Folder', label: '分类管理' },
       { path: '/reports', icon: 'DataAnalysis', label: '阅读报告' },
     ];

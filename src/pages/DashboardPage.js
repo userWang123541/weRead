@@ -132,7 +132,12 @@ export default {
         <article class="mg-scene" @click="go('/notes')">
           <div class="mg-scene-num">{{ (store.stats.totalCards || 0).toLocaleString() }}</div>
           <h3>笔记管家</h3>
-          <p>跨书检索、主题聚类、划线管理</p>
+          <p>跨书检索、分类管理、查看原文</p>
+        </article>
+        <article class="mg-scene" @click="go('/recall')">
+          <div class="mg-scene-num">AI</div>
+          <h3>笔记召回</h3>
+          <p>描述你想找的内容，AI 从笔记中召回</p>
         </article>
         <article class="mg-scene" @click="go('/reports')">
           <div class="mg-scene-num">6</div>
@@ -143,8 +148,6 @@ export default {
           <div class="mg-scene-num">{{ topicCount }}</div>
           <h3>分类管理</h3>
           <p>管理知识分类体系，调整归类</p>
-        </article>
-          <p>Markdown / JSON 格式导出笔记</p>
         </article>
       </section>
 

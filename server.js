@@ -13,7 +13,7 @@ const {
   buildCards,
   buildMaterialPack,
 } = require('./lib/card-engine');
-const { classifyNotes } = require('./lib/classifier');
+const { classifyNotes, getEmbeddings, cosineSimilarity, getConfig } = require('./lib/classifier');
 const { generateReport, getCachedReports, chatCompletion } = require('./lib/report-engine');
 
 const app = express();
@@ -436,6 +436,144 @@ ${cardTexts}
     const result = await chatCompletion(systemPrompt, userPrompt, { json: false });
     const content = typeof result === 'string' ? result : String(result);
     res.json({ content });
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+// ── RAG 笔记召回 ──
+
+// 关键词提取（简单中文分词）
+function extractKeywords(text) {
+  if (!text) return [];
+  // 提取 2-4 字的中文片段 + 英文单词
+  const keywords = new Set();
+  const chinese = text.match(/[一-鿿]{2,6}/g) || [];
+  const english = text.match(/[a-zA-Z]{2,}/g) || [];
+  chinese.forEach(w => keywords.add(w));
+  english.forEach(w => keywords.add(w.toLowerCase()));
+  // 也加入单字（高频字）
+  const chars = text.match(/[一-鿿]/g) || [];
+  chars.forEach(c => keywords.add(c));
+  return [...keywords];
+}
+
+// 关键词匹配打分
+function keywordScore(queryKeywords, text) {
+  if (!text || !queryKeywords.length) return 0;
+  let score = 0;
+  const textLower = text.toLowerCase();
+  queryKeywords.forEach(kw => {
+    if (textLower.includes(kw)) {
+      score += kw.length >= 2 ? 3 : 1; // 长词权重更高
+    }
+  });
+  return score;
+}
+
+app.post('/api/recall', async (req, res) => {
+  try {
+    const { query } = req.body || {};
+    if (!query?.trim()) {
+      res.status(400).json({ error: '请输入问题' });
+      return;
+    }
+
+    const raw = await loadRawData();
+    if (!raw?.books?.length) {
+      res.status(400).json({ error: '没有数据，请先同步' });
+      return;
+    }
+
+    const cardsData = await loadCardsData(raw);
+    const cards = (cardsData.cards || []).filter(c => c.text || c.quote || c.note);
+
+    if (!cards.length) {
+      res.status(400).json({ error: '没有笔记素材' });
+      return;
+    }
+
+    const queryText = query.trim();
+    const queryKeywords = extractKeywords(queryText);
+    let topNotes;
+
+    // 尝试用 embedding API 做向量召回
+    try {
+      const embConfig = getConfig();
+      if (embConfig.apiKey && embConfig.baseUrl) {
+        const noteTexts = cards.map(c => (c.text || c.quote || c.note || '').slice(0, 200));
+        const [queryEmb, ...noteEmbs] = await getEmbeddings([queryText, ...noteTexts], embConfig);
+        const scored = noteEmbs.map((emb, i) => ({
+          index: i,
+          score: cosineSimilarity(queryEmb, emb),
+        })).sort((a, b) => b.score - a.score);
+
+        topNotes = scored.slice(0, 10).map(s => {
+          const card = cards[s.index];
+          return {
+            bookTitle: card.bookTitle || '未知书籍',
+            author: card.author || '',
+            quote: (card.quote || '').slice(0, 200),
+            note: (card.note || '').slice(0, 200),
+            category: card.tags?.[0] || '',
+            score: Math.round(s.score * 100),
+            method: 'vector',
+          };
+        });
+      }
+    } catch (embErr) {
+      // embedding 失败，降级到关键词匹配
+    }
+
+    // 降级：关键词匹配
+    if (!topNotes) {
+      const scored = cards.map((card, i) => {
+        const text = [card.quote, card.note, card.bookTitle, card.chapterTitle, ...(card.tags || [])].join(' ');
+        return { index: i, score: keywordScore(queryKeywords, text) };
+      }).filter(s => s.score > 0).sort((a, b) => b.score - a.score);
+
+      // 如果关键词完全无匹配，用模糊包含匹配
+      if (!scored.length) {
+        const qLower = queryText.toLowerCase();
+        cards.forEach((card, i) => {
+          const text = [card.quote, card.note, card.bookTitle].join(' ').toLowerCase();
+          if (text.includes(qLower) || qLower.split('').some(c => c.length > 1 && text.includes(c))) {
+            scored.push({ index: i, score: 1 });
+          }
+        });
+      }
+
+      topNotes = scored.slice(0, 10).map(s => {
+        const card = cards[s.index];
+        return {
+          bookTitle: card.bookTitle || '未知书籍',
+          author: card.author || '',
+          quote: (card.quote || '').slice(0, 200),
+          note: (card.note || '').slice(0, 200),
+          category: card.tags?.[0] || '',
+          score: Math.min(99, Math.round(s.score * 10)),
+          method: 'keyword',
+        };
+      });
+    }
+
+    if (!topNotes?.length) {
+      res.json({ answer: '没有找到与你描述相关的笔记。试试换个关键词？', sources: [] });
+      return;
+    }
+
+    // 用 LLM 生成回答
+    const contextText = topNotes.map((n, i) =>
+      `[${i + 1}]《${n.bookTitle}》${n.author}\n${n.quote ? '划线：' + n.quote : ''}${n.note ? '\n想法：' + n.note : ''}`
+    ).join('\n\n');
+
+    const systemPrompt = '你是一位阅读助手。用户会提出关于阅读内容的问题，你需要根据提供的笔记素材回答。回答要求：1. 基于提供的素材，不要编造；2. 引用具体笔记时用[1][2]等标注来源；3. 语言自然、有洞察力；4. 如果素材中没有相关信息，如实说明。';
+
+    const userPrompt = `用户的问题：${queryText}\n\n以下是相关的阅读笔记：\n\n${contextText}\n\n请基于以上笔记回答用户的问题。`;
+
+    const answer = await chatCompletion(systemPrompt, userPrompt, { json: false });
+
+    res.json({ answer, sources: topNotes });
   } catch (err) {
     sendError(res, err);
   }
