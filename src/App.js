@@ -13,7 +13,10 @@ export default {
       <el-header class="app-header" height="52px">
         <div class="header-left">
           <div class="brand-mark">阅</div>
-          <h1 class="header-title">资料夹</h1>
+          <div>
+            <h1 class="header-title">微信读书阅读工作室</h1>
+            <div class="header-subtitle">Skill API 数据生产力</div>
+          </div>
         </div>
         <div class="header-right">
           <span class="header-status">{{ store.status }}</span>

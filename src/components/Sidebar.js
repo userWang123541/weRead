@@ -6,9 +6,11 @@ export default {
     const route = VueRouter.useRoute();
 
     const menuItems = [
-      { path: '/', icon: 'Odometer', label: '仪表盘' },
-      { path: '/cards', icon: 'Document', label: '资料卡' },
-      { path: '/categories', icon: 'FolderOpened', label: '分类管理' },
+      { path: '/', icon: 'Reading', label: '概览' },
+      { path: '/notes', icon: 'Document', label: '笔记管家' },
+      { path: '/radar', icon: 'Aim', label: '选题雷达' },
+      { path: '/studio', icon: 'Brush', label: '内容工坊' },
+      { path: '/graph', icon: 'Connection', label: '知识图谱' },
     ];
 
     return { store, route, menuItems };
@@ -30,7 +32,7 @@ export default {
         </el-menu-item>
       </el-menu>
       <div class="side-footer">
-        WeRead Workbench v1.0
+        阅读工作室 v1.0
       </div>
     </div>
   `,

@@ -305,18 +305,36 @@ app.get('/api/classified', async (_req, res) => {
 
 app.post('/api/classified/update', async (req, res) => {
   try {
-    const { noteIndex, category } = req.body;
+    const { noteIndex, category, card } = req.body;
     if (noteIndex === undefined || !category) {
       res.status(400).json({ error: 'noteIndex and category are required' });
       return;
     }
     const data = await readJsonIfExists(CLASSIFIED_FILE, { notes: [], stats: {} });
-    if (noteIndex < 0 || noteIndex >= data.notes.length) {
+    let updatedNote;
+    if (noteIndex < 0 && card) {
+      updatedNote = {
+        type: card.type === 'linked' ? (card.note ? 'review' : 'highlight') : card.type,
+        text: card.quote || card.note || card.text || '',
+        bookId: card.bookId || '',
+        bookTitle: card.bookTitle || '',
+        chapter: card.chapterTitle || '',
+        createTime: card.createTime || null,
+        category,
+        categoryId: '',
+        categoryScore: 1,
+        userEdited: true,
+      };
+      data.notes.push(updatedNote);
+      data.totalNotes = data.notes.length;
+    } else if (noteIndex < 0 || noteIndex >= data.notes.length) {
       res.status(400).json({ error: 'noteIndex out of range' });
       return;
+    } else {
+      data.notes[noteIndex].category = category;
+      data.notes[noteIndex].userEdited = true;
+      updatedNote = data.notes[noteIndex];
     }
-    data.notes[noteIndex].category = category;
-    data.notes[noteIndex].userEdited = true;
     // Recalculate stats
     const stats = {};
     for (const note of data.notes) {
@@ -324,7 +342,7 @@ app.post('/api/classified/update', async (req, res) => {
     }
     data.stats = stats;
     await writeJson(CLASSIFIED_FILE, data);
-    res.json({ ok: true, stats });
+    res.json({ ok: true, stats, note: updatedNote });
   } catch (err) {
     sendError(res, err);
   }

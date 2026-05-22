@@ -18,6 +18,7 @@ export const store = reactive({
   bookFilter: '',
   loading: false,
   activeCategoryEdit: null,
+  activeCategoryEditCard: null,
   categoryForm: { mode: 'create', path: '', parentPath: '', originalPath: '', name: '', description: '' },
 });
 
@@ -142,6 +143,7 @@ export const getters = {
 
   currentEditCategory: computed(() => {
     if (store.activeCategoryEdit === null) return '';
+    if (store.activeCategoryEdit < 0) return '未分类';
     return store.classified?.notes?.[store.activeCategoryEdit]?.category || '';
   }),
 };
@@ -239,7 +241,24 @@ export function cardClassification(card) {
     const reviewKey = `${card.bookId}|review|${card.note.slice(0, 60)}`;
     return map.get(reviewKey) || null;
   }
+
+  const cardText = normalizeMatchText(text);
+  if (!cardText || !store.classified?.notes?.length) return null;
+  for (let index = 0; index < store.classified.notes.length; index++) {
+    const note = store.classified.notes[index];
+    if (note.bookId && card.bookId && note.bookId !== card.bookId) continue;
+    if (note.bookTitle && card.bookTitle && note.bookTitle !== card.bookTitle) continue;
+    const noteText = normalizeMatchText(note.text || '');
+    if (!noteText) continue;
+    if (noteText.includes(cardText.slice(0, 48)) || cardText.includes(noteText.slice(0, 48))) {
+      return { ...note, _index: index };
+    }
+  }
   return null;
+}
+
+function normalizeMatchText(value) {
+  return String(value || '').replace(/\s+/g, '').slice(0, 120);
 }
 
 export async function updateNoteCategory(category) {
@@ -249,12 +268,19 @@ export async function updateNoteCategory(category) {
   try {
     const result = await request('/api/classified/update', {
       method: 'POST',
-      body: JSON.stringify({ noteIndex, category }),
+      body: JSON.stringify({ noteIndex, category, card: store.activeCategoryEditCard }),
     });
-    store.classified.notes[noteIndex].category = category;
-    store.classified.notes[noteIndex].userEdited = true;
+    if (!store.classified) store.classified = { notes: [], stats: {}, totalNotes: 0 };
+    if (noteIndex >= 0 && store.classified.notes[noteIndex]) {
+      store.classified.notes[noteIndex].category = category;
+      store.classified.notes[noteIndex].userEdited = true;
+    } else if (result.note) {
+      store.classified.notes.push(result.note);
+      store.classified.totalNotes = store.classified.notes.length;
+    }
     store.classified.stats = result.stats;
     store.activeCategoryEdit = null;
+    store.activeCategoryEditCard = null;
     store.status = '分类已保存。';
   } catch (err) {
     store.status = `保存失败：${err.message}`;

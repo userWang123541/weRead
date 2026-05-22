@@ -30,20 +30,21 @@ export default {
       return -1;
     }
 
-    function onCardCategoryBtn(card, event) {
+    function onCardCategoryBtn(card, target) {
       const idx = findNoteIndex(card);
-      if (idx >= 0) openCategoryEditor(idx, event);
+      openCategoryEditor(idx, target, card);
     }
 
-    function openCategoryEditor(noteIndex, event) {
+    function openCategoryEditor(noteIndex, target, card = null) {
       const main = document.querySelector('.app-main');
       const scrollTop = main?.scrollTop || 0;
       if (store.activeCategoryEdit === noteIndex) {
         store.activeCategoryEdit = null;
+        store.activeCategoryEditCard = null;
         return;
       }
 
-      const rect = event?.currentTarget?.getBoundingClientRect();
+      const rect = target?.getBoundingClientRect?.();
       const panelWidth = 320;
       const panelHeight = 330;
       let left = rect ? rect.right + 8 : 280;
@@ -59,6 +60,7 @@ export default {
       };
 
       store.activeCategoryEdit = noteIndex;
+      store.activeCategoryEditCard = card;
       [0, 30, 100, 220].forEach(delay => {
         setTimeout(() => {
           if (main) main.scrollTo({ top: scrollTop, behavior: 'auto' });
@@ -157,15 +159,15 @@ export default {
               <div class="card-footer">
                 <span>{{ formatDate(card.createTime) }}</span>
                 <div class="card-actions">
-                  <span
+                  <button
+                    type="button"
                     class="text-btn"
-                    @pointerdown.prevent
+                    tabindex="-1"
                     @mousedown.prevent
-                    @mouseup.prevent
-                    @click.stop="onCardCategoryBtn(card, $event)"
+                    @click.stop.prevent="onCardCategoryBtn(card, $event.currentTarget)"
                   >
                     修改分类
-                  </span>
+                  </button>
                   <el-button v-if="card.openUrl" link type="primary" size="small" @click="openOriginal(card.openUrl, card.bookId)">查看原文</el-button>
                 </div>
               </div>
