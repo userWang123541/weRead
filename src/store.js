@@ -356,7 +356,13 @@ export function startCreateRoot() {
 export async function deleteCategoryNode(node) {
   const affected = (store.taxonomy.categories || []).filter(item => item.path === node.path || item.path.startsWith(`${node.path}/`));
   if (!affected.length) return;
-  if (!confirm(`删除「${node.path}」及其 ${affected.length} 个分类？`)) return;
+  try {
+    await ElementPlus.ElMessageBox.confirm(
+      `删除「${node.path}」及其 ${affected.length} 个分类？`,
+      '确认删除',
+      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' }
+    );
+  } catch { return; }
   const nextCategories = (store.taxonomy.categories || [])
     .map(item => ({ ...item }))
     .filter(item => item.path !== node.path && !item.path.startsWith(`${node.path}/`));
