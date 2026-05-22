@@ -34,6 +34,14 @@ export default {
       selectedPath.value = node.path;
     }
 
+    const previewPath = computed(() => {
+      const name = store.categoryForm.name.trim();
+      const parent = store.categoryForm.parentPath;
+      if (!name && !parent) return '';
+      if (!name) return parent;
+      return parent ? `${parent}/${name}` : name;
+    });
+
     function editSelected() {
       if (selectedNode.value) editCategoryNode(selectedNode.value);
     }
@@ -62,6 +70,7 @@ export default {
       selectedPath,
       selectedNode,
       manageCategoryTree: getters.manageCategoryTree,
+      previewPath,
       saveCategory,
       editSelected,
       addChildToSelected,
@@ -137,17 +146,33 @@ export default {
           <div class="category-editor">
             <h3>{{ store.categoryForm.mode === 'edit' ? '编辑分类' : '新增分类' }}</h3>
             <el-form label-position="top">
+              <el-form-item label="父级分类">
+                <el-tree-select
+                  v-model="store.categoryForm.parentPath"
+                  :data="manageCategoryTree.children"
+                  :props="{ label: 'name', value: 'path', children: 'children' }"
+                  check-strictly
+                  clearable
+                  filterable
+                  placeholder="留空为一级分类"
+                  style="width: 100%"
+                >
+                  <template #default="{ data }">
+                    <span>{{ data.name }}</span>
+                  </template>
+                </el-tree-select>
+              </el-form-item>
               <el-form-item label="分类名称">
                 <el-input v-model="store.categoryForm.name" placeholder="分类名称" clearable />
               </el-form-item>
-              <el-form-item label="父级路径">
-                <el-input v-model="store.categoryForm.parentPath" placeholder="留空为一级分类" readonly />
+              <el-form-item label="完整路径">
+                <el-input :model-value="previewPath" readonly />
               </el-form-item>
               <el-form-item label="分类说明">
                 <el-input
                   v-model="store.categoryForm.description"
                   type="textarea"
-                  :rows="4"
+                  :rows="3"
                   placeholder="分类说明，用于向量分类时匹配语义"
                 />
               </el-form-item>
