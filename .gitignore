@@ -4,3 +4,5 @@ models/
 .env
 .claude/
 *.log
+
+.mcp.json

@@ -345,39 +345,115 @@ export function resetCategoryForm() {
   store.categoryForm = { mode: 'create', path: '', parentPath: '', originalPath: '', name: '', description: '' };
 }
 
+function wereadEncrypt(value) {
+  const str = typeof value === 'number' ? String(value) : value;
+  if (typeof str !== 'string') return '';
+
+  function md5hex(msg) {
+    const T = [];
+    for (let i = 0; i < 64; i++) T[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 4294967296) | 0;
+    const S = [
+      7,12,17,22, 7,12,17,22, 7,12,17,22, 7,12,17,22,
+      5, 9,14,20, 5, 9,14,20, 5, 9,14,20, 5, 9,14,20,
+      4,11,16,23, 4,11,16,23, 4,11,16,23, 4,11,16,23,
+      6,10,15,21, 6,10,15,21, 6,10,15,21, 6,10,15,21,
+    ];
+    const bytes = [];
+    for (let i = 0; i < msg.length; i++) {
+      const c = msg.charCodeAt(i);
+      if (c < 128) bytes.push(c);
+      else if (c < 2048) { bytes.push((c >> 6) | 192, (c & 63) | 128); }
+      else { bytes.push((c >> 12) | 224, ((c >> 6) & 63) | 128, (c & 63) | 128); }
+    }
+    const bitLen = bytes.length * 8;
+    bytes.push(0x80);
+    while (bytes.length % 64 !== 56) bytes.push(0);
+    for (let i = 0; i < 8; i++) bytes.push((i < 4 ? bitLen : 0) >>> (8 * (i % 4)) & 0xff);
+    let a0 = 0x67452301, b0 = 0xefcdab89, c0 = 0x98badcfe, d0 = 0x10325476;
+    for (let off = 0; off < bytes.length; off += 64) {
+      const M = [];
+      for (let j = 0; j < 16; j++) M[j] = bytes[off+j*4]|(bytes[off+j*4+1]<<8)|(bytes[off+j*4+2]<<16)|(bytes[off+j*4+3]<<24)>>>0;
+      let A = a0, B = b0, C = c0, D = d0;
+      for (let i = 0; i < 64; i++) {
+        let F, g;
+        if (i < 16)      { F = (B & C) | (~B & D) & 0xffffffff; g = i; }
+        else if (i < 32) { F = (D & B) | (~D & C) & 0xffffffff; g = (5*i+1) % 16; }
+        else if (i < 48) { F = B ^ C ^ D; g = (3*i+5) % 16; }
+        else              { F = (C ^ (B | ~D)) & 0xffffffff; g = (7*i) % 16; }
+        F = (F + A + T[i] + M[g]) | 0;
+        A = D; D = C; C = B; B = (B + ((F << S[i]) | (F >>> (32 - S[i])))) | 0;
+      }
+      a0 = (a0 + A) | 0; b0 = (b0 + B) | 0; c0 = (c0 + C) | 0; d0 = (d0 + D) | 0;
+    }
+    const h = n => ('00000000' + (n >>> 0).toString(16)).slice(-8);
+    const r = n => h(n).replace(/(..)(..)(..)(..)/, '$4$3$2$1');
+    return r(a0) + r(b0) + r(c0) + r(d0);
+  }
+
+  function encode16(e) {
+    if (/^\d*$/.test(e)) {
+      const parts = [];
+      for (let c = 0; c < e.length; c += 9) parts.push(parseInt(e.slice(c, Math.min(c + 9, e.length))).toString(16));
+      return ['3', parts];
+    }
+    let r = '';
+    for (let s = 0; s < e.length; s++) r += e.charCodeAt(s).toString(16);
+    return ['4', [r]];
+  }
+
+  const t = md5hex(str);
+  const n = encode16(str);
+  let o = t.substr(0, 3) + n[0] + '2' + t.substr(t.length - 2, 2);
+  for (let r = 0; r < n[1].length; r++) {
+    const s = n[1][r].length.toString(16).padStart(2, '0');
+    o += s + n[1][r];
+    if (r < n[1].length - 1) o += 'g';
+  }
+  if (o.length < 20) o += t.substr(0, 20 - o.length);
+  o += md5hex(o).substr(0, 3);
+  return o;
+}
+
 function buildWereadWebUrl(url, bookId = '') {
   let resolvedBookId = bookId;
+  let chapterUid = '';
   try {
     const parsed = new URL(url);
     resolvedBookId = resolvedBookId || parsed.searchParams.get('bookId') || parsed.searchParams.get('bId') || '';
+    chapterUid = parsed.searchParams.get('chapterUid') || '';
   } catch (_err) {
-    const match = String(url || '').match(/[?&](?:bookId|bId)=([^&]+)/);
-    resolvedBookId = resolvedBookId || (match ? decodeURIComponent(match[1]) : '');
+    const m = String(url || '').match(/[?&](?:bookId|bId)=([^&]+)/);
+    resolvedBookId = resolvedBookId || (m ? decodeURIComponent(m[1]) : '');
+    const ch = String(url || '').match(/[?&]chapterUid=([^&]+)/);
+    chapterUid = ch ? ch[1] : '';
   }
-  return resolvedBookId ? `https://weread.qq.com/web/reader/${encodeURIComponent(resolvedBookId)}` : '';
+  if (!resolvedBookId) return { webUrl: '', chapterUid };
+  const encBookId = wereadEncrypt(resolvedBookId);
+  if (!encBookId) return { webUrl: '', chapterUid };
+  let webUrl = `https://weread.qq.com/web/appreader/${encBookId}`;
+  if (chapterUid) {
+    const encChapter = wereadEncrypt(chapterUid);
+    if (encChapter) webUrl += `k${encChapter}`;
+  }
+  return { webUrl, chapterUid };
 }
 
 export function openOriginal(url, bookId = '') {
-  const webUrl = buildWereadWebUrl(url, bookId);
-  store.status = webUrl ? '正在打开微信读书网页版...' : '正在尝试打开微信读书客户端...';
-  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(url).catch(() => {});
-  if (window.ElementPlus?.ElMessage) {
-    window.ElementPlus.ElMessage({
-      type: 'info',
-      message: webUrl
-        ? '正在打开微信读书网页版。若已登录网页版，可进入对应书籍；精确定位到划线取决于微信读书 Web 支持。'
-        : '正在唤起微信读书客户端；如果没有反应，说明系统没有注册 weread:// 协议。',
-      duration: 4200,
-    });
-  }
+  const { webUrl, chapterUid } = buildWereadWebUrl(url, bookId);
   if (webUrl) {
+    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(webUrl).catch(() => {});
+    if (window.ElementPlus?.ElMessage) {
+      window.ElementPlus.ElMessage({
+        type: 'info',
+        message: chapterUid ? '正在打开微信读书对应章节...' : '正在打开微信读书...',
+        duration: 2000,
+      });
+    }
     window.open(webUrl, '_blank', 'noopener');
+    store.status = '已打开微信读书网页版。';
   } else {
+    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(url).catch(() => {});
     window.location.href = url;
+    store.status = '正在唤起微信读书客户端。链接已复制到剪贴板。';
   }
-  setTimeout(() => {
-    store.status = webUrl
-      ? '已尝试打开微信读书网页版。如果没有进入书籍，请确认网页版已登录且该书在你的账号中。'
-      : '查看原文依赖 weread:// 协议。没有安装或没有注册微信读书客户端时，浏览器不能跳到原文；链接已尝试复制。';
-  }, 900);
 }
