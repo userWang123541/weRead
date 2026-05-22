@@ -5,7 +5,7 @@ const { reactive, computed } = Vue;
 export const store = reactive({
   apiKey: localStorage.getItem('weread_api_key') || '',
   status: '等待载入本地数据。',
-  categoryStatus: '分类会写入 config/taxonomy.json。',
+  categoryStatus: '',
   raw: { books: [] },
   cardsData: { cards: [], taxonomy: [] },
   taxonomy: { categories: [] },
@@ -153,7 +153,9 @@ export async function request(path, options = {}) {
   };
   if (store.apiKey.trim()) headers['X-Weread-Key'] = store.apiKey.trim();
   const response = await fetch(path, { ...options, headers });
-  const data = await response.json();
+  const text = await response.text();
+  let data;
+  try { data = text ? JSON.parse(text) : {}; } catch { data = { error: `HTTP ${response.status}` }; }
   if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
   return data;
 }
