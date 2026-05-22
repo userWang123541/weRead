@@ -6,17 +6,15 @@ import {
   startCreateChild,
   startCreateRoot,
   deleteCategoryNode,
-  resetCategoryForm,
 } from '../store.js';
 
-const { ref, computed, watch, nextTick } = Vue;
+const { ref, computed, watch } = Vue;
 
 export default {
   name: 'CategoryPage',
   setup() {
-    const categoryTreeRef = ref(null);
     const selectedPath = ref('');
-    const showEditor = ref(false);
+    const categoryTreeRef = ref(null);
     const treeProps = { label: 'name', children: 'children' };
 
     const selectedNode = computed(() => {
@@ -32,6 +30,10 @@ export default {
       return walk(getters.manageCategoryTree.value.children);
     });
 
+    function selectNode(node) {
+      selectedPath.value = node.path;
+    }
+
     const previewPath = computed(() => {
       const name = store.categoryForm.name.trim();
       const parent = store.categoryForm.parentPath;
@@ -40,52 +42,25 @@ export default {
       return parent ? `${parent}/${name}` : name;
     });
 
-    function selectNode(node) {
-      selectedPath.value = node.path;
+    function editSelected() {
+      if (selectedNode.value) editCategoryNode(selectedNode.value);
     }
 
-    function onAddRoot() {
+    function addChildToSelected() {
+      if (selectedNode.value) startCreateChild(selectedNode.value);
+    }
+
+    function deleteSelected() {
+      if (selectedNode.value) deleteCategoryNode(selectedNode.value);
+    }
+
+    function addRoot() {
       selectedPath.value = '';
       startCreateRoot();
-      showEditor.value = true;
-      nextTick(() => categoryTreeRef.value?.setCurrentKey(null));
-    }
-
-    function onEdit() {
-      if (!selectedNode.value) return;
-      editCategoryNode(selectedNode.value);
-      showEditor.value = true;
-    }
-
-    function onAddChild() {
-      if (!selectedNode.value) return;
-      startCreateChild(selectedNode.value);
-      showEditor.value = true;
-    }
-
-    async function onDelete() {
-      if (!selectedNode.value) return;
-      await deleteCategoryNode(selectedNode.value);
-      selectedPath.value = '';
-      showEditor.value = false;
-    }
-
-    async function onSave() {
-      await saveCategory();
-      showEditor.value = false;
-    }
-
-    function onCloseEditor() {
-      showEditor.value = false;
-      resetCategoryForm();
     }
 
     watch(() => store.tagSearch, value => {
       categoryTreeRef.value?.filter(value);
-    });
-
-    watch(selectedPath, () => {
-      showEditor.value = false;
     });
 
     return {
@@ -94,114 +69,115 @@ export default {
       categoryTreeRef,
       selectedPath,
       selectedNode,
-      showEditor,
       manageCategoryTree: getters.manageCategoryTree,
       previewPath,
+      saveCategory,
+      editSelected,
+      addChildToSelected,
+      addRoot,
+      deleteSelected,
       selectNode,
-      onAddRoot,
-      onEdit,
-      onAddChild,
-      onDelete,
-      onSave,
-      onCloseEditor,
     };
   },
   template: `
     <div class="page-container">
-      <div class="catm-toolbar">
-        <h1 class="catm-title">分类管理</h1>
-        <el-input
-          v-model="store.tagSearch"
-          placeholder="搜索分类…"
-          clearable
-          size="default"
-          class="catm-search"
-        />
-        <el-button type="primary" size="default" @click="onAddRoot">
-          <el-icon style="margin-right:4px"><Plus /></el-icon>新增一级
-        </el-button>
-      </div>
+      <div class="page-title">分类管理</div>
 
-      <div class="catm-panel">
-        <el-tree
-          ref="categoryTreeRef"
-          class="catm-tree"
-          :data="manageCategoryTree.children"
-          node-key="path"
-          :props="treeProps"
-          :filter-node-method="(value, data) => !value || data.path.includes(value)"
-          :default-expand-all="false"
-          highlight-current
-          @node-click="selectNode"
-        >
-          <template #default="{ data }">
-            <div class="catm-node" :class="{ 'is-selected': selectedPath === data.path }">
-              <div class="catm-node-main">
-                <span class="catm-node-name">{{ data.name }}</span>
-                <span v-if="data.children?.length" class="catm-node-count">{{ data.children.length }}</span>
-              </div>
-              <div v-if="data.description" class="catm-node-desc">{{ data.description }}</div>
-              <div class="catm-node-actions" v-if="selectedPath === data.path">
-                <el-button size="small" text @click.stop="onEdit">编辑</el-button>
-                <el-button size="small" text @click.stop="onAddChild">新增下级</el-button>
-                <el-button size="small" text type="danger" @click.stop="onDelete">删除</el-button>
-              </div>
+      <div class="category-manager">
+        <section class="category-tree-card">
+          <div class="category-panel-head">
+            <div>
+              <h3>分类树</h3>
+              <p>先选中分类，再在右侧编辑或新增下级。</p>
             </div>
-          </template>
-        </el-tree>
+            <el-button type="primary" size="small" @click="addRoot">新增一级</el-button>
+          </div>
 
-        <div v-if="!manageCategoryTree.children?.length" class="catm-empty">
-          还没有分类。点击右上角「新增一级」开始创建。
-        </div>
+          <el-input v-model="store.tagSearch" placeholder="搜索分类" clearable class="category-tree-search" />
 
-        <!-- 内嵌编辑区 -->
-        <transition name="catm-slide">
-          <div v-if="showEditor" class="catm-editor">
-            <div class="catm-editor-head">
-              <span class="catm-editor-title">{{ store.categoryForm.mode === 'edit' ? '编辑' : '新增' }}分类</span>
-              <el-button text size="small" @click="onCloseEditor">
-                <el-icon><Close /></el-icon>
-              </el-button>
+          <el-tree
+            class="category-manage-tree"
+            :data="manageCategoryTree.children"
+            node-key="path"
+            :props="treeProps"
+            :filter-node-method="(value, data) => !value || data.path.includes(value)"
+            :default-expand-all="false"
+            highlight-current
+            @node-click="selectNode"
+            ref="categoryTreeRef"
+          >
+            <template #default="{ data }">
+              <span class="category-tree-node">
+                <span class="category-tree-name">{{ data.name }}</span>
+                <span v-if="data.children?.length" class="category-tree-count">{{ data.children.length }}</span>
+              </span>
+            </template>
+          </el-tree>
+        </section>
+
+        <section class="category-detail-card">
+          <div class="category-panel-head">
+            <div>
+              <h3>{{ selectedNode ? selectedNode.name : '选择一个分类' }}</h3>
+              <p>{{ selectedNode ? selectedNode.path : '也可以直接新增一级分类。' }}</p>
             </div>
-            <el-form label-position="top" class="catm-editor-form" @submit.prevent>
-              <div class="catm-editor-grid">
-                <el-form-item label="父级分类" class="catm-editor-field">
-                  <el-tree-select
-                    v-model="store.categoryForm.parentPath"
-                    :data="manageCategoryTree.children"
-                    :props="{ label: 'name', value: 'path', children: 'children' }"
-                    check-strictly
-                    clearable
-                    filterable
-                    placeholder="无（一级分类）"
-                    style="width:100%"
-                  />
-                </el-form-item>
-                <el-form-item label="分类名称" class="catm-editor-field">
-                  <el-input v-model="store.categoryForm.name" placeholder="输入名称" clearable />
-                </el-form-item>
-              </div>
-              <div v-if="previewPath" class="catm-preview">
-                <el-icon style="margin-right:4px"><Right /></el-icon>{{ previewPath }}
-              </div>
-              <el-form-item label="说明" class="catm-editor-field">
+            <div class="category-detail-actions">
+              <el-button :disabled="!selectedNode" @click="addChildToSelected">新增下级</el-button>
+              <el-button :disabled="!selectedNode" @click="editSelected">编辑</el-button>
+              <el-button :disabled="!selectedNode" type="danger" plain @click="deleteSelected">删除</el-button>
+            </div>
+          </div>
+
+          <div class="category-detail-grid">
+            <div class="category-info-box">
+              <span>层级</span>
+              <b>{{ selectedNode ? selectedNode.path.split('/').length : '-' }}</b>
+            </div>
+            <div class="category-info-box">
+              <span>下级</span>
+              <b>{{ selectedNode?.children?.length || 0 }}</b>
+            </div>
+            <div class="category-info-box wide">
+              <span>说明</span>
+              <b>{{ selectedNode?.description || '暂无说明' }}</b>
+            </div>
+          </div>
+
+          <div class="category-editor">
+            <h3>{{ store.categoryForm.mode === 'edit' ? '编辑分类' : '新增分类' }}</h3>
+            <el-form label-position="top">
+              <el-form-item label="父级分类">
+                <el-tree-select
+                  v-model="store.categoryForm.parentPath"
+                  :data="manageCategoryTree.children"
+                  :props="{ label: 'name', value: 'path', children: 'children' }"
+                  check-strictly
+                  clearable
+                  filterable
+                  placeholder="留空为一级分类"
+                  style="width: 100%"
+                />
+                <div v-if="previewPath" class="category-preview-path">完整路径：{{ previewPath }}</div>
+              </el-form-item>
+              <el-form-item label="分类名称">
+                <el-input v-model="store.categoryForm.name" placeholder="分类名称" clearable />
+              </el-form-item>
+              <el-form-item label="分类说明">
                 <el-input
                   v-model="store.categoryForm.description"
                   type="textarea"
-                  :rows="2"
-                  placeholder="用于向量分类时匹配语义"
+                  :rows="3"
+                  placeholder="分类说明，用于向量分类时匹配语义"
                 />
               </el-form-item>
-              <div class="catm-editor-footer">
-                <span v-if="store.categoryStatus" class="catm-status">{{ store.categoryStatus }}</span>
-                <div class="catm-editor-btns">
-                  <el-button @click="onCloseEditor">取消</el-button>
-                  <el-button type="primary" :disabled="store.loading" @click="onSave">保存</el-button>
-                </div>
+              <div class="category-form-actions">
+                <el-button type="primary" :disabled="store.loading" @click="saveCategory">保存分类</el-button>
+                <el-button @click="addRoot">新增一级</el-button>
               </div>
+              <div class="category-status">{{ store.categoryStatus }}</div>
             </el-form>
           </div>
-        </transition>
+        </section>
       </div>
     </div>
   `,
