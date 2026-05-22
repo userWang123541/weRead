@@ -10,10 +10,10 @@ export default {
   },
   template: `
     <el-container class="app-container" v-cloak>
-      <el-header class="app-header" height="56px">
+      <el-header class="app-header" height="52px">
         <div class="header-left">
           <div class="brand-mark">阅</div>
-          <h1 class="header-title">微信读书资料夹工作台</h1>
+          <h1 class="header-title">资料夹</h1>
         </div>
         <div class="header-right">
           <span class="header-status">{{ store.status }}</span>
