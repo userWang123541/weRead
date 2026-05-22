@@ -108,23 +108,21 @@ export default {
   },
   template: `
     <div class="page-container">
-      <div class="catm-header">
+      <div class="catm-toolbar">
         <h1 class="catm-title">分类管理</h1>
-        <div class="catm-header-actions">
-          <el-input
-            v-model="store.tagSearch"
-            placeholder="搜索分类…"
-            clearable
-            prefix-icon="Search"
-            class="catm-search"
-          />
-          <el-button type="primary" @click="onAddRoot">
-            <el-icon style="margin-right:4px"><Plus /></el-icon>新增一级
-          </el-button>
-        </div>
+        <el-input
+          v-model="store.tagSearch"
+          placeholder="搜索分类…"
+          clearable
+          size="default"
+          class="catm-search"
+        />
+        <el-button type="primary" size="default" @click="onAddRoot">
+          <el-icon style="margin-right:4px"><Plus /></el-icon>新增一级
+        </el-button>
       </div>
 
-      <div class="catm-tree-card">
+      <div class="catm-panel">
         <el-tree
           ref="categoryTreeRef"
           class="catm-tree"
@@ -138,9 +136,11 @@ export default {
         >
           <template #default="{ data }">
             <div class="catm-node" :class="{ 'is-selected': selectedPath === data.path }">
-              <span class="catm-node-name">{{ data.name }}</span>
-              <span v-if="data.description" class="catm-node-desc" :title="data.description">{{ data.description }}</span>
-              <span v-if="data.children?.length" class="catm-node-count">{{ data.children.length }}</span>
+              <div class="catm-node-main">
+                <span class="catm-node-name">{{ data.name }}</span>
+                <span v-if="data.children?.length" class="catm-node-count">{{ data.children.length }}</span>
+              </div>
+              <div v-if="data.description" class="catm-node-desc">{{ data.description }}</div>
               <div class="catm-node-actions" v-if="selectedPath === data.path">
                 <el-button size="small" text @click.stop="onEdit">编辑</el-button>
                 <el-button size="small" text @click.stop="onAddChild">新增下级</el-button>
@@ -151,51 +151,58 @@ export default {
         </el-tree>
 
         <div v-if="!manageCategoryTree.children?.length" class="catm-empty">
-          还没有分类。点击「新增一级」开始创建。
+          还没有分类。点击右上角「新增一级」开始创建。
         </div>
-      </div>
 
-      <transition name="catm-slide">
-        <div v-if="showEditor" class="catm-editor-card">
-          <div class="catm-editor-head">
-            <span>{{ store.categoryForm.mode === 'edit' ? '编辑分类' : '新增分类' }}</span>
-            <el-button text @click="onCloseEditor">
-              <el-icon><Close /></el-icon>
-            </el-button>
-          </div>
-          <el-form label-position="top" class="catm-editor-form">
-            <el-form-item label="父级分类">
-              <el-tree-select
-                v-model="store.categoryForm.parentPath"
-                :data="manageCategoryTree.children"
-                :props="{ label: 'name', value: 'path', children: 'children' }"
-                check-strictly
-                clearable
-                filterable
-                placeholder="无（一级分类）"
-                style="width:100%"
-              />
-              <div v-if="previewPath" class="catm-preview">→ {{ previewPath }}</div>
-            </el-form-item>
-            <el-form-item label="分类名称">
-              <el-input v-model="store.categoryForm.name" placeholder="输入分类名称" clearable />
-            </el-form-item>
-            <el-form-item label="说明">
-              <el-input
-                v-model="store.categoryForm.description"
-                type="textarea"
-                :rows="2"
-                placeholder="用于向量分类时匹配语义"
-              />
-            </el-form-item>
-            <div class="catm-editor-footer">
-              <el-button @click="onCloseEditor">取消</el-button>
-              <el-button type="primary" :disabled="store.loading" @click="onSave">保存</el-button>
+        <!-- 内嵌编辑区 -->
+        <transition name="catm-slide">
+          <div v-if="showEditor" class="catm-editor">
+            <div class="catm-editor-head">
+              <span class="catm-editor-title">{{ store.categoryForm.mode === 'edit' ? '编辑' : '新增' }}分类</span>
+              <el-button text size="small" @click="onCloseEditor">
+                <el-icon><Close /></el-icon>
+              </el-button>
             </div>
-            <div v-if="store.categoryStatus" class="catm-status">{{ store.categoryStatus }}</div>
-          </el-form>
-        </div>
-      </transition>
+            <el-form label-position="top" class="catm-editor-form" @submit.prevent>
+              <div class="catm-editor-grid">
+                <el-form-item label="父级分类" class="catm-editor-field">
+                  <el-tree-select
+                    v-model="store.categoryForm.parentPath"
+                    :data="manageCategoryTree.children"
+                    :props="{ label: 'name', value: 'path', children: 'children' }"
+                    check-strictly
+                    clearable
+                    filterable
+                    placeholder="无（一级分类）"
+                    style="width:100%"
+                  />
+                </el-form-item>
+                <el-form-item label="分类名称" class="catm-editor-field">
+                  <el-input v-model="store.categoryForm.name" placeholder="输入名称" clearable />
+                </el-form-item>
+              </div>
+              <div v-if="previewPath" class="catm-preview">
+                <el-icon style="margin-right:4px"><Right /></el-icon>{{ previewPath }}
+              </div>
+              <el-form-item label="说明" class="catm-editor-field">
+                <el-input
+                  v-model="store.categoryForm.description"
+                  type="textarea"
+                  :rows="2"
+                  placeholder="用于向量分类时匹配语义"
+                />
+              </el-form-item>
+              <div class="catm-editor-footer">
+                <span v-if="store.categoryStatus" class="catm-status">{{ store.categoryStatus }}</span>
+                <div class="catm-editor-btns">
+                  <el-button @click="onCloseEditor">取消</el-button>
+                  <el-button type="primary" :disabled="store.loading" @click="onSave">保存</el-button>
+                </div>
+              </div>
+            </el-form>
+          </div>
+        </transition>
+      </div>
     </div>
   `,
 };
