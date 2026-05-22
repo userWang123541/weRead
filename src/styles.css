@@ -354,77 +354,14 @@ button:disabled { cursor: not-allowed; opacity: .45; }
   gap: 10px;
   flex-wrap: wrap;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
-.cards-tag-bar {
-  margin-bottom: 14px;
-  background: var(--bg-white);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-
-.cards-tag-bar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.cards-tag-bar-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.cards-tag-bar-scroll {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  padding: 10px 12px;
-}
-
-.cards-tag-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  color: var(--text-regular);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  transition: all var(--transition);
-  line-height: 1.4;
-}
-
-.cards-tag-chip:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.cards-tag-chip.active {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-}
-
-.cards-tag-chip.active .cards-tag-chip-count {
-  color: rgba(255,255,255,.7);
-}
-
-.cards-tag-chip-sub {
-  color: var(--text-secondary);
-  font-size: 11.5px;
-}
-
-.cards-tag-chip-count {
-  font-size: 10px;
-  color: var(--text-secondary);
-  font-weight: 600;
+.cards-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 14px;
+  align-items: start;
 }
 
 .cards-main {
@@ -1043,8 +980,13 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 /* ====== 响应式 ====== */
 
 @media (max-width: 1024px) {
-  .cards-grid {
+  .cards-layout {
     grid-template-columns: 1fr;
+  }
+
+  .tag-sidebar {
+    position: static;
+    max-height: 280px;
   }
 
   .catm-search {
