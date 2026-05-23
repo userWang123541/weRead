@@ -808,7 +808,7 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   display: grid;
   grid-template-columns: minmax(0, 1fr) 260px;
   gap: 14px;
-  align-items: stretch;
+  align-items: start;
 }
 
 .cards-main { min-width: 0; }
@@ -1011,7 +1011,9 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  position: sticky;
+  top: 0;
+  max-height: calc(100vh - 52px - 80px);
 }
 
 .tag-sidebar-header {
