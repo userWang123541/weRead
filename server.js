@@ -6,8 +6,9 @@ const {
   callWeread,
   getApiKey,
   readJsonIfExists,
+  readJson,
   syncWereadData,
-  writeJson,
+  writeJsonByKey,
 } = require('./lib/weread-service');
 const {
   buildCards,
@@ -15,7 +16,7 @@ const {
 } = require('./lib/card-engine');
 const { classifyNotes, getEmbeddings, cosineSimilarity, getConfig } = require('./lib/classifier');
 const { generateReport, getCachedReports, chatCompletion } = require('./lib/report-engine');
-const { getUserDataDir, getUserFilePath } = require('./lib/user-data');
+const { isPostgres, initDatabase } = require('./lib/postgres');
 
 const app = express();
 const TAXONOMY_FILE_DEFAULT = path.join(__dirname, 'config', 'taxonomy.json');
@@ -30,13 +31,8 @@ function sendError(res, err) {
   });
 }
 
-// 用户数据文件路径
-function userFile(apiKey, name) {
-  return getUserFilePath(apiKey, name);
-}
-
 async function loadRawData(apiKey) {
-  return readJsonIfExists(userFile(apiKey, 'weread-data.json'), {
+  return readJson(apiKey, 'weread-data.json', {
     fetchedAt: '',
     totalBooks: 0,
     books: [],
@@ -44,7 +40,7 @@ async function loadRawData(apiKey) {
 }
 
 async function loadCardsData(apiKey, rawData) {
-  const existing = await readJsonIfExists(userFile(apiKey, 'cards.json'), null);
+  const existing = await readJson(apiKey, 'cards.json', null);
   if (existing?.cards?.length) return existing;
   return buildCards(rawData);
 }
@@ -89,7 +85,7 @@ function normalizeTaxonomy(taxonomy) {
 }
 
 async function loadTaxonomyData(apiKey) {
-  const userTaxonomy = await readJsonIfExists(userFile(apiKey, 'taxonomy.json'), null);
+  const userTaxonomy = await readJson(apiKey, 'taxonomy.json', null);
   if (userTaxonomy) return normalizeTaxonomy(userTaxonomy);
   // 首次使用，从默认配置复制
   const defaultTaxonomy = await readJsonIfExists(TAXONOMY_FILE_DEFAULT, {
@@ -101,7 +97,7 @@ async function loadTaxonomyData(apiKey) {
 }
 
 async function saveTaxonomyData(apiKey, taxonomy) {
-  await writeJson(userFile(apiKey, 'taxonomy.json'), normalizeTaxonomy(taxonomy));
+  await writeJsonByKey(apiKey, 'taxonomy.json', normalizeTaxonomy(taxonomy));
 }
 
 app.post('/api/gateway', async (req, res) => {
@@ -140,8 +136,8 @@ app.post('/api/sync', async (req, res) => {
     const maxBooks = Number(req.body?.maxBooks || 0) || undefined;
     const raw = await syncWereadData(apiKey, { maxBooks });
     const cards = buildCards(raw);
-    await writeJson(userFile(apiKey, 'weread-data.json'), raw);
-    await writeJson(userFile(apiKey, 'cards.json'), cards);
+    await writeJsonByKey(apiKey, 'weread-data.json', raw);
+    await writeJsonByKey(apiKey, 'cards.json', cards);
     res.json({
       ok: true,
       raw,
@@ -158,7 +154,7 @@ app.post('/api/cards/rebuild', async (req, res) => {
     const apiKey = getApiKey(req);
     const raw = await loadRawData(apiKey);
     const cards = buildCards(raw);
-    await writeJson(userFile(apiKey, 'cards.json'), cards);
+    await writeJsonByKey(apiKey, 'cards.json', cards);
     res.json({
       ok: true,
       cards,
@@ -303,7 +299,7 @@ app.post('/api/classify', async (req, res) => {
     }
 
     const { results, stats } = await classifyNotes(notes);
-    await writeJson(userFile(apiKey, 'classified.json'), { classifiedAt: new Date().toISOString(), totalNotes: results.length, notes: results, stats });
+    await writeJsonByKey(apiKey, 'classified.json', { classifiedAt: new Date().toISOString(), totalNotes: results.length, notes: results, stats });
     res.json({ ok: true, totalNotes: results.length, stats });
   } catch (err) {
     sendError(res, err);
@@ -313,7 +309,7 @@ app.post('/api/classify', async (req, res) => {
 app.get('/api/classified', async (req, res) => {
   try {
     const apiKey = getApiKey(req);
-    const data = await readJsonIfExists(userFile(apiKey, 'classified.json'), { notes: [], stats: {} });
+    const data = await readJson(apiKey, 'classified.json', { notes: [], stats: {} });
     res.json(data);
   } catch (err) {
     sendError(res, err);
@@ -328,7 +324,7 @@ app.post('/api/classified/update', async (req, res) => {
       res.status(400).json({ error: 'noteIndex and category are required' });
       return;
     }
-    const data = await readJsonIfExists(userFile(apiKey, 'classified.json'), { notes: [], stats: {} });
+    const data = await readJson(apiKey, 'classified.json', { notes: [], stats: {} });
     let updatedNote;
     if (noteIndex < 0 && card) {
       updatedNote = {
@@ -359,7 +355,7 @@ app.post('/api/classified/update', async (req, res) => {
       stats[note.category] = (stats[note.category] || 0) + 1;
     }
     data.stats = stats;
-    await writeJson(userFile(apiKey, 'classified.json'), data);
+    await writeJsonByKey(apiKey, 'classified.json', data);
     res.json({ ok: true, stats, note: updatedNote });
   } catch (err) {
     sendError(res, err);
@@ -606,9 +602,21 @@ if (require.main === module) {
   startServer(Number(PORT));
 }
 
-function startServer(port) {
+async function startServer(port) {
+  if (isPostgres()) {
+    try {
+      await initDatabase();
+    } catch (err) {
+      console.error('Failed to initialize PostgreSQL:', err.message);
+      process.exit(1);
+    }
+  } else {
+    console.log('No DATABASE_URL found, using file storage.');
+  }
+
   const server = app.listen(port, () => {
-    console.log(`WeRead Knowledge Workbench running at http://localhost:${port}`);
+    const mode = isPostgres() ? 'PostgreSQL' : 'file storage';
+    console.log(`WeRead Knowledge Workbench running at http://localhost:${port} [${mode}]`);
   });
 
   server.on('error', err => {
