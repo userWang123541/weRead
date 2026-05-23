@@ -15,13 +15,10 @@ const {
 } = require('./lib/card-engine');
 const { classifyNotes, getEmbeddings, cosineSimilarity, getConfig } = require('./lib/classifier');
 const { generateReport, getCachedReports, chatCompletion } = require('./lib/report-engine');
+const { getUserDataDir, getUserFilePath } = require('./lib/user-data');
 
 const app = express();
-const DATA_DIR = path.join(__dirname, 'data');
-const RAW_DATA_FILE = path.join(DATA_DIR, 'weread-data.json');
-const CARDS_FILE = path.join(DATA_DIR, 'cards.json');
-const CLASSIFIED_FILE = path.join(DATA_DIR, 'classified.json');
-const TAXONOMY_FILE = path.join(__dirname, 'config', 'taxonomy.json');
+const TAXONOMY_FILE_DEFAULT = path.join(__dirname, 'config', 'taxonomy.json');
 
 app.use(express.json({ limit: '20mb' }));
 app.use(express.static(__dirname));
@@ -33,16 +30,21 @@ function sendError(res, err) {
   });
 }
 
-async function loadRawData() {
-  return readJsonIfExists(RAW_DATA_FILE, {
+// 用户数据文件路径
+function userFile(apiKey, name) {
+  return getUserFilePath(apiKey, name);
+}
+
+async function loadRawData(apiKey) {
+  return readJsonIfExists(userFile(apiKey, 'weread-data.json'), {
     fetchedAt: '',
     totalBooks: 0,
     books: [],
   });
 }
 
-async function loadCardsData(rawData) {
-  const existing = await readJsonIfExists(CARDS_FILE, null);
+async function loadCardsData(apiKey, rawData) {
+  const existing = await readJsonIfExists(userFile(apiKey, 'cards.json'), null);
   if (existing?.cards?.length) return existing;
   return buildCards(rawData);
 }
@@ -86,16 +88,20 @@ function normalizeTaxonomy(taxonomy) {
   };
 }
 
-async function loadTaxonomyData() {
-  return normalizeTaxonomy(await readJsonIfExists(TAXONOMY_FILE, {
+async function loadTaxonomyData(apiKey) {
+  const userTaxonomy = await readJsonIfExists(userFile(apiKey, 'taxonomy.json'), null);
+  if (userTaxonomy) return normalizeTaxonomy(userTaxonomy);
+  // 首次使用，从默认配置复制
+  const defaultTaxonomy = await readJsonIfExists(TAXONOMY_FILE_DEFAULT, {
     version: '1.0.0',
     description: '预建分类体系',
     categories: [],
-  }));
+  });
+  return normalizeTaxonomy(defaultTaxonomy);
 }
 
-async function saveTaxonomyData(taxonomy) {
-  await writeJson(TAXONOMY_FILE, normalizeTaxonomy(taxonomy));
+async function saveTaxonomyData(apiKey, taxonomy) {
+  await writeJson(userFile(apiKey, 'taxonomy.json'), normalizeTaxonomy(taxonomy));
 }
 
 app.post('/api/gateway', async (req, res) => {
@@ -113,10 +119,11 @@ app.post('/api/gateway', async (req, res) => {
   }
 });
 
-app.get('/api/data', async (_req, res) => {
+app.get('/api/data', async (req, res) => {
   try {
-    const raw = await loadRawData();
-    const cards = await loadCardsData(raw);
+    const apiKey = getApiKey(req);
+    const raw = await loadRawData(apiKey);
+    const cards = await loadCardsData(apiKey, raw);
     res.json({
       raw,
       cards,
@@ -133,8 +140,8 @@ app.post('/api/sync', async (req, res) => {
     const maxBooks = Number(req.body?.maxBooks || 0) || undefined;
     const raw = await syncWereadData(apiKey, { maxBooks });
     const cards = buildCards(raw);
-    await writeJson(RAW_DATA_FILE, raw);
-    await writeJson(CARDS_FILE, cards);
+    await writeJson(userFile(apiKey, 'weread-data.json'), raw);
+    await writeJson(userFile(apiKey, 'cards.json'), cards);
     res.json({
       ok: true,
       raw,
@@ -146,11 +153,12 @@ app.post('/api/sync', async (req, res) => {
   }
 });
 
-app.post('/api/cards/rebuild', async (_req, res) => {
+app.post('/api/cards/rebuild', async (req, res) => {
   try {
-    const raw = await loadRawData();
+    const apiKey = getApiKey(req);
+    const raw = await loadRawData(apiKey);
     const cards = buildCards(raw);
-    await writeJson(CARDS_FILE, cards);
+    await writeJson(userFile(apiKey, 'cards.json'), cards);
     res.json({
       ok: true,
       cards,
@@ -163,8 +171,9 @@ app.post('/api/cards/rebuild', async (_req, res) => {
 
 app.post('/api/material-pack', async (req, res) => {
   try {
-    const raw = await loadRawData();
-    const cardsData = await loadCardsData(raw);
+    const apiKey = getApiKey(req);
+    const raw = await loadRawData(apiKey);
+    const cardsData = await loadCardsData(apiKey, raw);
     const pack = buildMaterialPack(cardsData.cards || [], req.body?.query || '', {
       tags: req.body?.tags || [],
       limit: req.body?.limit || 24,
@@ -175,9 +184,10 @@ app.post('/api/material-pack', async (req, res) => {
   }
 });
 
-app.get('/api/taxonomy', async (_req, res) => {
+app.get('/api/taxonomy', async (req, res) => {
   try {
-    res.json(await loadTaxonomyData());
+    const apiKey = getApiKey(req);
+    res.json(await loadTaxonomyData(apiKey));
   } catch (err) {
     sendError(res, err);
   }
@@ -185,13 +195,14 @@ app.get('/api/taxonomy', async (_req, res) => {
 
 app.put('/api/taxonomy', async (req, res) => {
   try {
+    const apiKey = getApiKey(req);
     const taxonomy = normalizeTaxonomy({
       version: req.body?.version,
       description: req.body?.description,
       categories: req.body?.categories || [],
     });
-    await saveTaxonomyData(taxonomy);
-    res.json(await loadTaxonomyData());
+    await saveTaxonomyData(apiKey, taxonomy);
+    res.json(await loadTaxonomyData(apiKey));
   } catch (err) {
     sendError(res, err);
   }
@@ -199,12 +210,13 @@ app.put('/api/taxonomy', async (req, res) => {
 
 app.post('/api/taxonomy/categories', async (req, res) => {
   try {
+    const apiKey = getApiKey(req);
     const categoryPath = normalizeCategoryPath(req.body?.path);
     if (!categoryPath) {
       res.status(400).json({ error: '分类路径不能为空' });
       return;
     }
-    const taxonomy = await loadTaxonomyData();
+    const taxonomy = await loadTaxonomyData(apiKey);
     if (taxonomy.categories.some(item => item.path === categoryPath)) {
       res.status(409).json({ error: '分类已存在' });
       return;
@@ -214,8 +226,8 @@ app.post('/api/taxonomy/categories', async (req, res) => {
       path: categoryPath,
       description: String(req.body?.description || '').trim(),
     });
-    await saveTaxonomyData(taxonomy);
-    res.json(await loadTaxonomyData());
+    await saveTaxonomyData(apiKey, taxonomy);
+    res.json(await loadTaxonomyData(apiKey));
   } catch (err) {
     sendError(res, err);
   }
@@ -223,12 +235,13 @@ app.post('/api/taxonomy/categories', async (req, res) => {
 
 app.put('/api/taxonomy/categories/:id', async (req, res) => {
   try {
+    const apiKey = getApiKey(req);
     const categoryPath = normalizeCategoryPath(req.body?.path);
     if (!categoryPath) {
       res.status(400).json({ error: '分类路径不能为空' });
       return;
     }
-    const taxonomy = await loadTaxonomyData();
+    const taxonomy = await loadTaxonomyData(apiKey);
     const category = taxonomy.categories.find(item => item.id === req.params.id);
     if (!category) {
       res.status(404).json({ error: '分类不存在' });
@@ -240,8 +253,8 @@ app.put('/api/taxonomy/categories/:id', async (req, res) => {
     }
     category.path = categoryPath;
     category.description = String(req.body?.description || '').trim();
-    await saveTaxonomyData(taxonomy);
-    res.json(await loadTaxonomyData());
+    await saveTaxonomyData(apiKey, taxonomy);
+    res.json(await loadTaxonomyData(apiKey));
   } catch (err) {
     sendError(res, err);
   }
@@ -249,15 +262,16 @@ app.put('/api/taxonomy/categories/:id', async (req, res) => {
 
 app.delete('/api/taxonomy/categories/:id', async (req, res) => {
   try {
-    const taxonomy = await loadTaxonomyData();
+    const apiKey = getApiKey(req);
+    const taxonomy = await loadTaxonomyData(apiKey);
     const nextCategories = taxonomy.categories.filter(item => item.id !== req.params.id);
     if (nextCategories.length === taxonomy.categories.length) {
       res.status(404).json({ error: '分类不存在' });
       return;
     }
     taxonomy.categories = nextCategories;
-    await saveTaxonomyData(taxonomy);
-    res.json(await loadTaxonomyData());
+    await saveTaxonomyData(apiKey, taxonomy);
+    res.json(await loadTaxonomyData(apiKey));
   } catch (err) {
     sendError(res, err);
   }
@@ -265,7 +279,8 @@ app.delete('/api/taxonomy/categories/:id', async (req, res) => {
 
 app.post('/api/classify', async (req, res) => {
   try {
-    const raw = await loadRawData();
+    const apiKey = getApiKey(req);
+    const raw = await loadRawData(apiKey);
     if (!raw?.books?.length) {
       res.status(400).json({ error: '没有数据，请先同步' });
       return;
@@ -288,16 +303,17 @@ app.post('/api/classify', async (req, res) => {
     }
 
     const { results, stats } = await classifyNotes(notes);
-    await writeJson(CLASSIFIED_FILE, { classifiedAt: new Date().toISOString(), totalNotes: results.length, notes: results, stats });
+    await writeJson(userFile(apiKey, 'classified.json'), { classifiedAt: new Date().toISOString(), totalNotes: results.length, notes: results, stats });
     res.json({ ok: true, totalNotes: results.length, stats });
   } catch (err) {
     sendError(res, err);
   }
 });
 
-app.get('/api/classified', async (_req, res) => {
+app.get('/api/classified', async (req, res) => {
   try {
-    const data = await readJsonIfExists(CLASSIFIED_FILE, { notes: [], stats: {} });
+    const apiKey = getApiKey(req);
+    const data = await readJsonIfExists(userFile(apiKey, 'classified.json'), { notes: [], stats: {} });
     res.json(data);
   } catch (err) {
     sendError(res, err);
@@ -306,12 +322,13 @@ app.get('/api/classified', async (_req, res) => {
 
 app.post('/api/classified/update', async (req, res) => {
   try {
+    const apiKey = getApiKey(req);
     const { noteIndex, category, card } = req.body;
     if (noteIndex === undefined || !category) {
       res.status(400).json({ error: 'noteIndex and category are required' });
       return;
     }
-    const data = await readJsonIfExists(CLASSIFIED_FILE, { notes: [], stats: {} });
+    const data = await readJsonIfExists(userFile(apiKey, 'classified.json'), { notes: [], stats: {} });
     let updatedNote;
     if (noteIndex < 0 && card) {
       updatedNote = {
@@ -342,7 +359,7 @@ app.post('/api/classified/update', async (req, res) => {
       stats[note.category] = (stats[note.category] || 0) + 1;
     }
     data.stats = stats;
-    await writeJson(CLASSIFIED_FILE, data);
+    await writeJson(userFile(apiKey, 'classified.json'), data);
     res.json({ ok: true, stats, note: updatedNote });
   } catch (err) {
     sendError(res, err);
@@ -370,9 +387,10 @@ function summarize(raw, cardsData) {
 
 // ── 阅读报告 API ──
 
-app.get('/api/reports', async (_req, res) => {
+app.get('/api/reports', async (req, res) => {
   try {
-    const data = await getCachedReports();
+    const apiKey = getApiKey(req);
+    const data = await getCachedReports(apiKey);
     res.json(data);
   } catch (err) {
     sendError(res, err);
@@ -381,12 +399,13 @@ app.get('/api/reports', async (_req, res) => {
 
 app.post('/api/reports/generate', async (req, res) => {
   try {
+    const apiKey = getApiKey(req);
     const { reportId } = req.body || {};
     if (!reportId) {
       res.status(400).json({ error: 'reportId is required' });
       return;
     }
-    const result = await generateReport(reportId);
+    const result = await generateReport(apiKey, reportId);
     res.json(result);
   } catch (err) {
     sendError(res, err);
@@ -446,13 +465,11 @@ ${cardTexts}
 // 关键词提取（简单中文分词）
 function extractKeywords(text) {
   if (!text) return [];
-  // 提取 2-4 字的中文片段 + 英文单词
   const keywords = new Set();
   const chinese = text.match(/[一-鿿]{2,6}/g) || [];
   const english = text.match(/[a-zA-Z]{2,}/g) || [];
   chinese.forEach(w => keywords.add(w));
   english.forEach(w => keywords.add(w.toLowerCase()));
-  // 也加入单字（高频字）
   const chars = text.match(/[一-鿿]/g) || [];
   chars.forEach(c => keywords.add(c));
   return [...keywords];
@@ -465,7 +482,7 @@ function keywordScore(queryKeywords, text) {
   const textLower = text.toLowerCase();
   queryKeywords.forEach(kw => {
     if (textLower.includes(kw)) {
-      score += kw.length >= 2 ? 3 : 1; // 长词权重更高
+      score += kw.length >= 2 ? 3 : 1;
     }
   });
   return score;
@@ -473,19 +490,20 @@ function keywordScore(queryKeywords, text) {
 
 app.post('/api/recall', async (req, res) => {
   try {
+    const apiKey = getApiKey(req);
     const { query } = req.body || {};
     if (!query?.trim()) {
       res.status(400).json({ error: '请输入问题' });
       return;
     }
 
-    const raw = await loadRawData();
+    const raw = await loadRawData(apiKey);
     if (!raw?.books?.length) {
       res.status(400).json({ error: '没有数据，请先同步' });
       return;
     }
 
-    const cardsData = await loadCardsData(raw);
+    const cardsData = await loadCardsData(apiKey, raw);
     const cards = (cardsData.cards || []).filter(c => c.text || c.quote || c.note);
 
     if (!cards.length) {
@@ -532,7 +550,6 @@ app.post('/api/recall', async (req, res) => {
         return { index: i, score: keywordScore(queryKeywords, text) };
       }).filter(s => s.score > 0).sort((a, b) => b.score - a.score);
 
-      // 如果关键词完全无匹配，用模糊包含匹配
       if (!scored.length) {
         const qLower = queryText.toLowerCase();
         cards.forEach((card, i) => {
