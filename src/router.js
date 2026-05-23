@@ -24,3 +24,11 @@ export const router = createRouter({
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 });
+
+// 未设置 Key 时跳转设置页
+router.beforeEach((to) => {
+  const hasKey = !!localStorage.getItem('weread_api_key');
+  if (!hasKey && to.path !== '/settings') {
+    return '/settings';
+  }
+});
