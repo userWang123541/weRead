@@ -12,6 +12,7 @@ export default {
       { path: '/recall', icon: 'ChatDotRound', label: '拾光' },
       { path: '/categories', icon: 'Folder', label: '分类管理' },
       { path: '/reports', icon: 'DataAnalysis', label: '阅读报告' },
+      { path: '/settings', icon: 'Setting', label: '设置' },
     ];
 
     return { store, route, menuItems };

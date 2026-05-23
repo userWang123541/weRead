@@ -3839,3 +3839,244 @@ button:disabled { cursor: not-allowed; opacity: .4; }
     grid-template-columns: 1fr;
   }
 }
+
+/* ====== 设置页面 ====== */
+
+.settings-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+.settings-card {
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  padding: 40px;
+  margin-bottom: 32px;
+  box-shadow: var(--shadow-card);
+}
+
+.settings-header h1 {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--text-primary);
+}
+
+.settings-sub {
+  color: var(--text-secondary);
+  font-size: 15px;
+  margin: 0 0 32px;
+  line-height: 1.6;
+}
+
+.settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-regular);
+}
+
+.settings-input-row {
+  display: flex;
+  gap: 12px;
+}
+
+.settings-input {
+  flex: 1;
+}
+
+.settings-input .el-input__wrapper {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow var(--transition);
+}
+
+.settings-input .el-input__wrapper:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.settings-input .el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 2px rgba(26, 26, 26, 0.08);
+}
+
+.settings-hint {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.settings-actions .el-button {
+  border-radius: var(--radius);
+  font-weight: 500;
+  min-width: 100px;
+}
+
+.settings-actions .el-button--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.settings-actions .el-button--primary:hover {
+  background: var(--accent-dark);
+  border-color: var(--accent-dark);
+}
+
+.settings-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.result-ok {
+  background: #f0f9eb;
+  color: #67c23a;
+}
+
+.result-fail {
+  background: #fef0f0;
+  color: #f56c6c;
+}
+
+.result-icon {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.settings-sync-section {
+  margin-top: 8px;
+}
+
+.settings-sync-section h3 {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0 0 4px;
+}
+
+.sync-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.sync-row .el-button {
+  border-radius: var(--radius);
+  min-width: 120px;
+}
+
+/* 获取指南 */
+
+.settings-guide {
+  padding: 36px 40px;
+}
+
+.settings-guide h2 {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 28px;
+  color: var(--text-primary);
+}
+
+.guide-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.guide-step {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.step-num {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-cream);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.guide-step h4 {
+  font-size: 15px;
+  font-weight: 500;
+  margin: 0 0 4px;
+  color: var(--text-primary);
+}
+
+.guide-step p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.guide-step a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.guide-step a:hover {
+  color: var(--accent-dark);
+}
+
+.settings-footer-status {
+  text-align: center;
+  padding: 16px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* 设置页响应式 */
+
+@media (max-width: 768px) {
+  .settings-page {
+    padding: 24px 16px 60px;
+  }
+
+  .settings-card {
+    padding: 24px;
+  }
+
+  .settings-header h1 {
+    font-size: 24px;
+  }
+
+  .sync-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+

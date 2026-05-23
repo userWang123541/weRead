@@ -5,6 +5,7 @@ import RecallPage from './pages/RecallPage.js';
 import BookshelfPage from './pages/BookshelfPage.js';
 import ReportListPage from './pages/ReportListPage.js';
 import ReportDetailPage from './pages/ReportDetailPage.js';
+import SettingsPage from './pages/SettingsPage.js';
 
 const { createRouter, createWebHashHistory } = VueRouter;
 
@@ -19,6 +20,7 @@ export const router = createRouter({
     { path: '/categories', component: CategoryPage },
     { path: '/reports', component: ReportListPage },
     { path: '/reports/:id', component: ReportDetailPage },
+    { path: '/settings', component: SettingsPage },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 });
