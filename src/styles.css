@@ -4080,3 +4080,73 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   }
 }
 
+/* ====== 新手引导 ====== */
+
+.mg-guide {
+  padding: 0 24px 24px;
+}
+
+.mg-guide-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 28px 32px;
+  box-shadow: var(--shadow-card);
+}
+
+.mg-guide-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--bg-paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--font-serif);
+}
+
+.mg-guide-content {
+  flex: 1;
+}
+
+.mg-guide-content h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  color: var(--text-primary);
+}
+
+.mg-guide-content p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.mg-guide-card .el-button {
+  flex-shrink: 0;
+  border-radius: var(--radius);
+  min-width: 120px;
+}
+
+.mg-guide-card .el-button--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .mg-guide-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 24px;
+  }
+}
+
+

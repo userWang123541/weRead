@@ -6,6 +6,9 @@ export default {
   setup() {
     const router = VueRouter.useRouter();
 
+    const hasData = Vue.computed(() => (store.stats.totalBooks || 0) > 0);
+    const hasClassified = Vue.computed(() => (store.classified?.totalNotes || 0) > 0);
+
     const topCategories = Vue.computed(() => Object.entries(store.classified?.stats || {})
       .filter(([tag]) => tag !== '未分类')
       .map(([tag, count]) => ({ tag, count }))
@@ -102,6 +105,8 @@ export default {
       topicCount,
       readingDays,
       currentQuote,
+      hasData,
+      hasClassified,
       go,
       loadData,
       syncData,
@@ -113,6 +118,33 @@ export default {
   },
   template: `
     <div class="magazine-home">
+
+      <!-- 新手引导 -->
+      <section v-if="!hasData" class="mg-guide">
+        <div class="mg-guide-card">
+          <div class="mg-guide-icon">1</div>
+          <div class="mg-guide-content">
+            <h3>连接微信读书</h3>
+            <p>输入你的微信读书 API Key，同步书架和笔记数据。</p>
+          </div>
+          <el-button type="primary" size="large" @click="go('/settings')">
+            去设置
+          </el-button>
+        </div>
+      </section>
+
+      <section v-else-if="!hasClassified" class="mg-guide">
+        <div class="mg-guide-card">
+          <div class="mg-guide-icon">2</div>
+          <div class="mg-guide-content">
+            <h3>智能分类你的笔记</h3>
+            <p>已同步 {{ store.stats.totalBooks || 0 }} 本书，{{ store.stats.totalCards || 0 }} 张资料卡。现在进行 AI 向量分类，让知识更有条理。</p>
+          </div>
+          <el-button type="primary" size="large" :loading="store.loading" @click="classifyData">
+            开始分类
+          </el-button>
+        </div>
+      </section>
 
       <!-- Slogan Hero -->
       <section class="mg-hero">
