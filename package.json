@@ -1,22 +1,19 @@
 {
-  "name": "we",
+  "name": "weread-studio-miniprogram",
   "version": "1.0.0",
-  "main": "server.js",
+  "private": true,
+  "description": "WeRead Studio WeChat Mini Program",
   "scripts": {
-    "start": "node server.js",
+    "start": "echo \"Open this folder with WeChat DevTools.\"",
     "sync": "node fetch-data.js",
     "sync:sample": "node fetch-data.js --max-books=5",
-    "classify": "node classify.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "classify": "node classify.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "openai": "^6.38.0",
-    "pg": "^8.21.0"
+    "openai": "^6.38.0"
   }
 }

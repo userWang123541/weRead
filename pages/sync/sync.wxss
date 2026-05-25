@@ -1,0 +1,43 @@
+.sync-page {
+  text-align: center;
+}
+
+.sync-card {
+  padding: 46rpx 30rpx 30rpx;
+}
+
+.sync-icon {
+  width: 128rpx;
+  height: 128rpx;
+  margin: 0 auto 26rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #d8e9d7;
+  color: #2c8b45;
+  font-size: 58rpx;
+}
+
+.sync-title {
+  font-size: 30rpx;
+  font-weight: 800;
+  margin-bottom: 16rpx;
+}
+
+.sync-list {
+  margin-top: 34rpx;
+  text-align: left;
+}
+
+.sync-list view {
+  display: flex;
+  justify-content: space-between;
+  min-height: 58rpx;
+  color: #584b3f;
+  font-size: 24rpx;
+}
+
+.sync-list text {
+  color: #2c8b45;
+}

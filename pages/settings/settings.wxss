@@ -1,0 +1,35 @@
+.profile-strip {
+  padding: 22rpx;
+  display: flex;
+  gap: 18rpx;
+  align-items: center;
+}
+
+.name {
+  font-size: 28rpx;
+  font-weight: 800;
+}
+
+.settings-list {
+  margin-top: 22rpx;
+  padding: 0 22rpx;
+}
+
+.settings-item {
+  min-height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1rpx solid #eee1d1;
+  font-size: 26rpx;
+}
+
+.settings-item:last-child {
+  border-bottom: 0;
+}
+
+.logout {
+  margin-top: 34rpx;
+  color: #e25035;
+  font-size: 26rpx;
+}

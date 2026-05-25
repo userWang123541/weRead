@@ -1,0 +1,23 @@
+<view class="screen">
+  <view class="nav">
+    <button class="icon-button" bindtap="back">‹</button>
+    <view class="nav-title">设置</view>
+    <view></view>
+  </view>
+  <view class="profile-strip card">
+    <view class="avatar"></view>
+    <view>
+      <view class="name">Jafar</view>
+      <view class="muted">微信读书工作室</view>
+    </view>
+  </view>
+  <view class="settings-list card">
+    <block wx:for="{{items}}" wx:key="*this">
+      <view class="settings-item" data-item="{{item}}" bindtap="openSync">
+        <text>{{item}}</text>
+        <text class="muted">›</text>
+      </view>
+    </block>
+  </view>
+  <button class="logout">退出登录</button>
+</view>

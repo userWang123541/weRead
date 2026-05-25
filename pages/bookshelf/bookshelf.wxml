@@ -1,0 +1,29 @@
+<view class="screen">
+  <view class="nav">
+    <view class="nav-title">书架</view>
+    <view class="nav-actions">
+      <button class="icon-button" bindtap="goSearch">⌕</button>
+      <button class="icon-button">···</button>
+    </view>
+  </view>
+
+  <view class="tabs">
+    <block wx:for="{{tabs}}" wx:key="*this">
+      <view class="tab {{active === index ? 'active' : ''}}" data-index="{{index}}" bindtap="setTab">{{item}}</view>
+    </block>
+  </view>
+
+  <view class="book-grid">
+    <block wx:for="{{books}}" wx:key="id">
+      <view class="book-card card" data-id="{{item.id}}" bindtap="openBook">
+        <view class="book-cover cover {{item.palette}}">
+          <text class="cover-title">{{item.title}}</text>
+        </view>
+        <view class="book-title">{{item.title}}</view>
+        <view class="book-author">{{item.author}}</view>
+        <view class="progress-line"><view style="width: {{item.progress}}%;"></view></view>
+        <view class="progress-text">{{item.progress}}%</view>
+      </view>
+    </block>
+  </view>
+</view>

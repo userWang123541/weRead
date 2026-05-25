@@ -1,0 +1,189 @@
+page {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 82% 8%, rgba(221, 126, 39, 0.16), transparent 26%),
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.9), transparent 32%),
+    #f5ede1;
+  color: #181512;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  letter-spacing: 0;
+}
+
+view, text, button, input {
+  box-sizing: border-box;
+}
+
+button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  line-height: 1;
+  background: transparent;
+}
+
+button::after {
+  border: 0;
+}
+
+.screen {
+  min-height: 100vh;
+  padding: 76rpx 28rpx 36rpx;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56rpx;
+  margin-bottom: 26rpx;
+}
+
+.nav-title {
+  font-size: 42rpx;
+  font-weight: 700;
+  color: #14110f;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+}
+
+.icon-button {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 250, 242, 0.86);
+  color: #171412;
+  font-size: 28rpx;
+  box-shadow: 0 10rpx 28rpx rgba(62, 45, 25, 0.08);
+}
+
+.avatar {
+  width: 58rpx;
+  height: 58rpx;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #1d2324, #d89f5f);
+  border: 4rpx solid #fff8ee;
+}
+
+.card {
+  background: rgba(255, 250, 242, 0.92);
+  border: 1rpx solid rgba(76, 55, 30, 0.08);
+  border-radius: 24rpx;
+  box-shadow: 0 18rpx 48rpx rgba(82, 58, 29, 0.1);
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1c1712;
+}
+
+.muted {
+  color: #8f8378;
+}
+
+.pill-row {
+  display: flex;
+  gap: 16rpx;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding: 4rpx 0 12rpx;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52rpx;
+  padding: 0 24rpx;
+  border-radius: 999rpx;
+  color: #766858;
+  background: rgba(255, 250, 242, 0.88);
+  font-size: 24rpx;
+}
+
+.pill.active {
+  color: #2c1c0f;
+  background: #f2dcc1;
+  font-weight: 700;
+}
+
+.primary-button {
+  height: 64rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #111;
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.secondary-button {
+  height: 64rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 250, 242, 0.95);
+  color: #392c1f;
+  border: 1rpx solid rgba(70, 47, 23, 0.16);
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.cover {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10rpx;
+  background: linear-gradient(160deg, #f8f4ed, #d9c1a0);
+  box-shadow: 0 16rpx 30rpx rgba(45, 30, 15, 0.18);
+}
+
+.cover.dark {
+  background: linear-gradient(160deg, #111, #36312a 58%, #d46c20);
+}
+
+.cover.blue {
+  background: linear-gradient(160deg, #eef5ff, #3175a8);
+}
+
+.cover.orange {
+  background: linear-gradient(160deg, #fff4e0, #e17222);
+}
+
+.cover-title {
+  position: absolute;
+  left: 12rpx;
+  right: 12rpx;
+  bottom: 14rpx;
+  color: #18130e;
+  font-size: 22rpx;
+  font-weight: 800;
+  line-height: 1.22;
+}
+
+.cover.dark .cover-title,
+.cover.blue .cover-title,
+.cover.orange .cover-title {
+  color: #fff;
+}
+
+.search-box {
+  height: 60rpx;
+  border-radius: 18rpx;
+  padding: 0 22rpx;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  background: rgba(255, 250, 242, 0.92);
+  color: #998c7d;
+  font-size: 24rpx;
+}

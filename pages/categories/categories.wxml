@@ -1,0 +1,17 @@
+<view class="screen">
+  <view class="nav">
+    <button class="icon-button" bindtap="back">‹</button>
+    <view class="nav-title">分类管理</view>
+    <button class="icon-button">＋</button>
+  </view>
+  <view class="category-list card">
+    <block wx:for="{{categories}}" wx:key="name">
+      <view class="category-item">
+        <view class="folder">▰</view>
+        <view class="category-name">{{item.name}}</view>
+        <view class="muted">{{item.count}}</view>
+        <view class="muted">···</view>
+      </view>
+    </block>
+  </view>
+</view>

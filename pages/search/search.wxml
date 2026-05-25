@@ -1,0 +1,20 @@
+<view class="screen">
+  <view class="search-top">
+    <view class="search-box grow">⌕ 搜索观点、书名、标签</view>
+    <text bindtap="back">取消</text>
+  </view>
+  <view class="section-title">搜索历史</view>
+  <view class="pill-row">
+    <block wx:for="{{keywords}}" wx:key="*this">
+      <view class="pill">{{item}}</view>
+    </block>
+  </view>
+  <view class="section-title hot-title">热门搜索</view>
+  <block wx:for="{{notes}}" wx:key="id">
+    <view class="hot-item card">
+      <text>{{index + 1}}</text>
+      <view>{{item.title}}</view>
+      <text>›</text>
+    </view>
+  </block>
+</view>

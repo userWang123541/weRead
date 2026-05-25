@@ -1,0 +1,24 @@
+.category-list {
+  padding: 12rpx 20rpx;
+}
+
+.category-item {
+  min-height: 78rpx;
+  display: grid;
+  grid-template-columns: 42rpx 1fr 60rpx 46rpx;
+  align-items: center;
+  border-bottom: 1rpx solid #eee1d1;
+  font-size: 25rpx;
+}
+
+.category-item:last-child {
+  border-bottom: 0;
+}
+
+.folder {
+  color: #dfa45f;
+}
+
+.category-name {
+  font-weight: 700;
+}

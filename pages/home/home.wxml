@@ -1,0 +1,49 @@
+<view class="screen home">
+  <view class="nav">
+    <view>
+      <view class="hello">晚上好，Jafar</view>
+      <view class="muted small">你已经阅读了 {{stats.readingDays}} 天</view>
+    </view>
+    <view class="nav-actions">
+      <button class="icon-button" bindtap="goSearch">⌕</button>
+      <button class="avatar" bindtap="goProfile"></button>
+    </view>
+  </view>
+
+  <view class="headline">阅读不是记录，<br />是再组织</view>
+  <view class="subline">今天你的思想宇宙新增了 12 条连接 →</view>
+
+  <view class="stat-grid">
+    <view class="stat card"><text>{{stats.books}}</text><view>本书</view></view>
+    <view class="stat card"><text>{{stats.highlights}}</text><view>划线</view></view>
+    <view class="stat card"><text>{{stats.notes}}</text><view>想法</view></view>
+    <view class="stat card"><text>{{stats.readingDays}}</text><view>阅读日</view></view>
+  </view>
+
+  <view class="quote-card card">
+    <view class="quote-mark">“</view>
+    <view class="quote-text">因为总有那么一群不识时务的人，无论时间形势如何，无论对手有多强大，无论希望多么渺茫，坚定地挺身而出。</view>
+    <view class="quote-source">《雷雨前的黎明》</view>
+  </view>
+
+  <view class="section-head">
+    <text class="section-title">最近素材</text>
+    <text class="muted" bindtap="goNotes">查看全部</text>
+  </view>
+  <view class="recent-list">
+    <block wx:for="{{recentNotes}}" wx:key="id">
+      <view class="recent-item card">
+        <view class="mini-cover cover {{item.id === 'n1' ? 'dark' : 'orange'}}">
+          <text class="cover-title">{{item.book}}</text>
+        </view>
+        <view class="recent-main">
+          <view class="recent-book">{{item.book}}</view>
+          <view class="recent-text">{{item.title}}</view>
+          <view class="muted tiny">05/21 17:21 · {{item.tags[0]}}</view>
+        </view>
+      </view>
+    </block>
+  </view>
+
+  <button class="floating-add" bindtap="goNotes">+</button>
+</view>

@@ -1,0 +1,22 @@
+<view class="screen ai-page">
+  <view class="nav">
+    <view class="nav-title">抬光 · AI 助手</view>
+    <button class="icon-button">?</button>
+  </view>
+  <view class="orb-card">
+    <view class="orb"></view>
+  </view>
+  <view class="ask-box card">
+    <input placeholder="问问你的阅读宇宙..." placeholder-class="placeholder" />
+    <text>⌕</text>
+  </view>
+  <view class="section-title ask-title">推荐问题</view>
+  <view class="question-list">
+    <block wx:for="{{questions}}" wx:key="*this">
+      <view class="question card" data-question="{{item}}" bindtap="ask">
+        <text>{{item}}</text>
+        <text>›</text>
+      </view>
+    </block>
+  </view>
+</view>

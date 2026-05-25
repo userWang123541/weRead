@@ -1,0 +1,42 @@
+<view class="screen detail">
+  <view class="nav">
+    <button class="icon-button" bindtap="back">‹</button>
+    <button class="icon-button">···</button>
+  </view>
+
+  <view class="hero">
+    <view class="detail-cover cover {{book.palette}}">
+      <text class="cover-title">{{book.title}}</text>
+    </view>
+    <view class="book-name">{{book.title}}</view>
+    <view class="muted">{{book.author}} · 在读中 · 进度 {{book.progress}}%</view>
+    <view class="ring">
+      <view class="ring-score">{{book.progress}}%</view>
+    </view>
+  </view>
+
+  <view class="read-stats card">
+    <view><text>{{book.readTime}}</text><label>已读时长</label></view>
+    <view><text>{{book.lastRead}}</text><label>最近阅读</label></view>
+  </view>
+
+  <view class="action-row">
+    <button class="primary-button">继续阅读</button>
+    <button class="secondary-button" bindtap="addNote">添加笔记</button>
+  </view>
+
+  <view class="section-title block-title">你的阅读轨迹</view>
+  <view class="timeline card">
+    <block wx:for="{{timeline}}" wx:key="date">
+      <view class="timeline-item">
+        <view class="dot"></view>
+        <text class="date">{{item.date}}</text>
+        <text class="action">{{item.action}}</text>
+        <text wx:if="{{item.tag}}" class="tag">{{item.tag}}</text>
+      </view>
+    </block>
+  </view>
+
+  <view class="section-title block-title">AI 理解这本书</view>
+  <view class="ai-box card">你的观点让这本书从说服术，变成一组可复用的行为设计框架。</view>
+</view>

@@ -1,0 +1,144 @@
+.home {
+  position: relative;
+  padding-bottom: 150rpx;
+}
+
+.hello {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.small {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+}
+
+.headline {
+  margin-top: 36rpx;
+  font-size: 56rpx;
+  line-height: 1.18;
+  font-weight: 800;
+  color: #15110d;
+}
+
+.subline {
+  margin: 28rpx 0 26rpx;
+  font-size: 26rpx;
+  color: #4d4134;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14rpx;
+}
+
+.stat {
+  min-height: 104rpx;
+  padding: 18rpx 8rpx;
+  text-align: center;
+}
+
+.stat text {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+.stat view {
+  margin-top: 8rpx;
+  font-size: 20rpx;
+  color: #8e8377;
+}
+
+.quote-card {
+  margin-top: 24rpx;
+  padding: 30rpx;
+  min-height: 176rpx;
+  background: linear-gradient(145deg, #111, #252018);
+  color: #fff8ec;
+}
+
+.quote-mark {
+  font-size: 58rpx;
+  line-height: 40rpx;
+  color: #a99a83;
+}
+
+.quote-text {
+  margin-top: 8rpx;
+  font-size: 27rpx;
+  line-height: 1.62;
+  font-weight: 600;
+}
+
+.quote-source {
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  color: #c8bcae;
+}
+
+.section-head {
+  margin: 34rpx 0 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.recent-item {
+  min-height: 128rpx;
+  padding: 14rpx;
+  display: flex;
+  gap: 18rpx;
+}
+
+.mini-cover {
+  width: 76rpx;
+  height: 104rpx;
+  flex: none;
+}
+
+.recent-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.recent-book {
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.recent-text {
+  margin: 10rpx 0;
+  font-size: 23rpx;
+  line-height: 1.35;
+  color: #55483c;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.tiny {
+  font-size: 20rpx;
+}
+
+.floating-add {
+  position: fixed;
+  right: 38rpx;
+  bottom: 132rpx;
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 50%;
+  background: #0f0f0f;
+  color: #fff;
+  font-size: 46rpx;
+  box-shadow: 0 16rpx 36rpx rgba(0, 0, 0, 0.24);
+}

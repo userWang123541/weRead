@@ -1,0 +1,64 @@
+{
+  "pages": [
+    "pages/home/home",
+    "pages/bookshelf/bookshelf",
+    "pages/book-detail/book-detail",
+    "pages/notes/notes",
+    "pages/ai/ai",
+    "pages/reports/reports",
+    "pages/report-detail/report-detail",
+    "pages/breakout/breakout",
+    "pages/poster/poster",
+    "pages/categories/categories",
+    "pages/settings/settings",
+    "pages/sync/sync",
+    "pages/search/search",
+    "pages/profile/profile"
+  ],
+  "window": {
+    "navigationStyle": "custom",
+    "backgroundColor": "#f6efe4",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "custom": false,
+    "color": "#8d8377",
+    "selectedColor": "#111111",
+    "backgroundColor": "#fffaf2",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "首页",
+        "iconPath": "assets/tab/home-off.png",
+        "selectedIconPath": "assets/tab/home-on.png"
+      },
+      {
+        "pagePath": "pages/bookshelf/bookshelf",
+        "text": "书架",
+        "iconPath": "assets/tab/books-off.png",
+        "selectedIconPath": "assets/tab/books-on.png"
+      },
+      {
+        "pagePath": "pages/notes/notes",
+        "text": "笔记",
+        "iconPath": "assets/tab/notes-off.png",
+        "selectedIconPath": "assets/tab/notes-on.png"
+      },
+      {
+        "pagePath": "pages/ai/ai",
+        "text": "AI",
+        "iconPath": "assets/tab/ai-off.png",
+        "selectedIconPath": "assets/tab/ai-on.png"
+      },
+      {
+        "pagePath": "pages/reports/reports",
+        "text": "报告",
+        "iconPath": "assets/tab/reports-off.png",
+        "selectedIconPath": "assets/tab/reports-on.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

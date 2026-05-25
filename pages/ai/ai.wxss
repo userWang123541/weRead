@@ -1,0 +1,57 @@
+.ai-page {
+  text-align: center;
+}
+
+.orb-card {
+  height: 300rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orb {
+  width: 210rpx;
+  height: 210rpx;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 40% 34%, #fffdf7, #e7c28a 35%, #9a6a37 70%, #281d15);
+  box-shadow: 0 0 60rpx rgba(223, 139, 49, 0.35), inset 0 0 34rpx rgba(255, 255, 255, 0.45);
+}
+
+.ask-box {
+  height: 72rpx;
+  padding: 0 22rpx;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.ask-box input {
+  flex: 1;
+  text-align: left;
+  font-size: 25rpx;
+}
+
+.placeholder {
+  color: #a79a8d;
+}
+
+.ask-title {
+  margin: 34rpx 0 16rpx;
+  text-align: left;
+}
+
+.question-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.question {
+  min-height: 76rpx;
+  padding: 0 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 25rpx;
+}

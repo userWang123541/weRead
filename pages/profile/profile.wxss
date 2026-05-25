@@ -1,0 +1,81 @@
+.profile-page {
+  min-height: 100vh;
+  padding: 70rpx 28rpx 40rpx;
+  background: #f5ede1;
+}
+
+.profile-top {
+  margin: -70rpx -28rpx 0;
+  padding: 86rpx 28rpx 34rpx;
+  color: #fff8ec;
+  background: linear-gradient(145deg, #111, #27231e);
+}
+
+.profile-name {
+  margin-top: 12rpx;
+  font-size: 32rpx;
+  font-weight: 900;
+}
+
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10rpx;
+  margin-top: 30rpx;
+  text-align: center;
+}
+
+.profile-stats text {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 900;
+}
+
+.profile-stats label {
+  color: #d3c5b4;
+  font-size: 20rpx;
+}
+
+.member-card {
+  margin-top: -4rpx;
+  min-height: 112rpx;
+  padding: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(90deg, #f1d09e, #fff0d6);
+  color: #2d1b0a;
+}
+
+.member-title {
+  font-size: 28rpx;
+  font-weight: 900;
+  margin-bottom: 8rpx;
+}
+
+.member-card button {
+  height: 52rpx;
+  padding: 0 24rpx;
+  border-radius: 999rpx;
+  background: #111;
+  color: #fff;
+  font-size: 22rpx;
+}
+
+.profile-menu {
+  margin-top: 24rpx;
+  padding: 0 24rpx;
+}
+
+.profile-menu view {
+  min-height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1rpx solid #eee1d1;
+  font-size: 26rpx;
+}
+
+.profile-menu view:last-child {
+  border-bottom: 0;
+}

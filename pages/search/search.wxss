@@ -1,0 +1,29 @@
+.search-top {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  margin-bottom: 28rpx;
+}
+
+.grow {
+  flex: 1;
+}
+
+.hot-title {
+  margin: 30rpx 0 16rpx;
+}
+
+.hot-item {
+  min-height: 78rpx;
+  padding: 0 20rpx;
+  display: grid;
+  grid-template-columns: 42rpx 1fr 32rpx;
+  gap: 12rpx;
+  align-items: center;
+  margin-bottom: 14rpx;
+  font-size: 25rpx;
+}
+
+.hot-item text:first-child {
+  font-weight: 900;
+}
