@@ -1,10 +1,4 @@
 <view class="screen sync-page">
-  <view class="category-nav">
-    <button class="top-icon" bindtap="back">‹</button>
-    <view class="top-title">同步数据</view>
-    <view></view>
-  </view>
-
   <view class="sync-card card">
     <view wx:if="{{syncStatus === 'idle'}}" class="sync-icon">✓</view>
     <view wx:elif="{{syncStatus === 'syncing'}}" class="sync-icon">↻</view>

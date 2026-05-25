@@ -94,6 +94,7 @@ function processBook(bookEntry) {
 
   return {
     id: bookEntry.bookId,
+    bookId: bookEntry.bookId,
     title: book.title || '',
     author: book.author || '',
     cover: book.cover || '',
@@ -115,6 +116,7 @@ function computeStats(rawData, cardsResult) {
 
   const totalHighlights = books.reduce((sum, b) => sum + (b.highlights || []).length, 0);
   const totalReviews = books.reduce((sum, b) => sum + (b.reviews || []).length, 0);
+  const noteCards = cards.filter(card => card.note && card.note.trim()).length;
   const completedBooks = books.filter(b => {
     const progress = b.readingProgress || 0;
     return b.markedStatus === 2 || progress >= 90;
@@ -125,6 +127,14 @@ function computeStats(rawData, cardsResult) {
   const topTags = taxonomy.slice(0, 10).map(t => ({ tag: t.tag, count: t.count }));
 
   return {
+    books: books.length,
+    cards: cards.length,
+    highlights: totalHighlights,
+    notes: totalReviews || noteCards,
+    reviews: totalReviews,
+    classified: 0,
+    unclassified: cards.length,
+    readingDays: 0,
     totalBooks: books.length,
     totalCards: cards.length,
     totalHighlights,
@@ -141,6 +151,7 @@ function buildQuotes(cards) {
     .filter(c => c.quote && c.quote.trim().length >= 10)
     .map(c => ({
       text: c.quote.trim(),
+      book: c.bookTitle || '',
       bookTitle: c.bookTitle || '',
       author: c.author || '',
     }));
@@ -163,8 +174,12 @@ exports.main = async (event, context) => {
   const openid = wxContext.OPENID;
 
   try {
-    // 1. Get API key
-    const apiKey = event.apiKey;
+    // 1. Get API key (from event or saved in DB)
+    let apiKey = event.apiKey;
+    if (!apiKey) {
+      const userRes = await db.collection('users').where({ _openid: openid }).limit(1).get();
+      apiKey = (userRes.data[0] && userRes.data[0].apiKey) || '';
+    }
     if (!apiKey) {
       return { success: false, error: '请提供 API Key' };
     }
@@ -181,12 +196,21 @@ exports.main = async (event, context) => {
 
     // 4. Fetch all WeRead data
     const rawData = await syncWereadData(apiKey, { maxBooks: event.maxBooks || 0 });
+    console.log('Raw data - totalBooks:', rawData.totalBooks, 'sourceBookCount:', rawData.sourceBookCount);
+    if (rawData.books.length > 0) {
+      console.log('First book keys:', Object.keys(rawData.books[0]));
+      console.log('First book title:', (rawData.books[0].book || {}).title);
+      console.log('First book highlights:', (rawData.books[0].highlights || []).length);
+      console.log('First book reviews:', (rawData.books[0].reviews || []).length);
+    }
 
     // 5. Build cards
     const cardsResult = buildCards(rawData);
+    console.log('Cards built:', cardsResult.cards.length);
 
     // 6. Process books for storage
     const books = rawData.books.map(b => processBook(b));
+    console.log('Books processed:', books.length);
 
     // 7. Delete old data and insert new
     await deleteCollection(db, openid, 'books');
@@ -210,7 +234,7 @@ exports.main = async (event, context) => {
     // 10. Trigger classification (async, don't await)
     cloud.callFunction({ name: 'classifyData', data: {} }).catch(() => {});
 
-    return { success: true, stats, bookCount: books.length, cardCount: cardsResult.cards.length };
+    return { success: true, stats, bookCount: books.length, cardCount: cardsResult.cards.length, debug: { sourceBookCount: rawData.sourceBookCount, totalBooks: rawData.totalBooks, firstBookTitle: rawData.books[0] ? (rawData.books[0].book || {}).title : 'N/A', firstBookHighlights: rawData.books[0] ? (rawData.books[0].highlights || []).length : 0, firstBookReviews: rawData.books[0] ? (rawData.books[0].reviews || []).length : 0, respKeysSample: rawData.books[0] ? Object.keys(rawData.books[0]) : [] } };
 
   } catch (err) {
     await upsertUser(db, openid, { syncStatus: 'error', syncError: err.message });

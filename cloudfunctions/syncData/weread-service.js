@@ -1,8 +1,32 @@
+const https = require('https');
 const API_BASE = 'https://i.weread.qq.com/api/agent/gateway';
 const SKILL_VERSION = process.env.WEREAD_SKILL_VERSION || '1.0.3';
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function httpPost(urlStr, body, headers) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(urlStr);
+    const options = {
+      hostname: url.hostname,
+      port: 443,
+      path: url.pathname + url.search,
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+      timeout: 30000
+    };
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => resolve({ status: res.statusCode, body: data }));
+    });
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new Error('请求超时')); });
+    req.write(JSON.stringify(body));
+    req.end();
+  });
 }
 
 async function callWeread(apiName, params = {}, apiKey = '') {
@@ -12,21 +36,16 @@ async function callWeread(apiName, params = {}, apiKey = '') {
     throw err;
   }
   const body = { api_name: apiName, skill_version: SKILL_VERSION, ...params };
-  const response = await fetch(API_BASE, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify(body),
-  });
-  const text = await response.text();
+  const resp = await httpPost(API_BASE, body, { Authorization: 'Bearer ' + apiKey });
   let data;
-  try { data = text ? JSON.parse(text) : {}; } catch (err) {
-    const parseErr = new Error(`WeRead returned non-JSON: ${text.slice(0, 120)}`);
-    parseErr.statusCode = response.status;
+  try { data = resp.body ? JSON.parse(resp.body) : {}; } catch (err) {
+    const parseErr = new Error('WeRead returned non-JSON: ' + resp.body.slice(0, 120));
+    parseErr.statusCode = resp.status;
     throw parseErr;
   }
-  if (!response.ok) {
-    const err = new Error(data.errmsg || `WeRead HTTP ${response.status}`);
-    err.statusCode = response.status; err.payload = data; throw err;
+  if (resp.status !== 200) {
+    const err = new Error(data.errmsg || 'WeRead HTTP ' + resp.status);
+    err.statusCode = resp.status; err.payload = data; throw err;
   }
   if (data.upgrade_info) {
     const err = new Error(data.upgrade_info.message || 'WeRead skill requires upgrade');
@@ -39,14 +58,18 @@ async function fetchAllNotebooks(apiKey, options = {}) {
   const books = []; const count = options.count || 50; let lastSort = 0; let hasMore = true;
   while (hasMore) {
     const params = { count }; if (lastSort) params.lastSort = lastSort;
-    const data = await callWeread('/user/notebooks', params, apiKey);
-    if (data.errcode) throw new Error(data.errmsg || `WeRead error ${data.errcode}`);
-    const pageBooks = data.books || [];
+    const resp = await callWeread('/user/notebooks', params, apiKey);
+    console.log('WeRead response keys:', Object.keys(resp));
+    // 兼容两种格式：resp.data.books 或 resp.books
+    const payload = resp.data || resp;
+    if (payload.errcode) throw new Error(payload.errmsg || 'WeRead error ' + payload.errcode);
+    const pageBooks = payload.books || [];
     books.push(...pageBooks);
-    hasMore = data.hasMore === 1;
+    hasMore = payload.hasMore === 1;
     if (hasMore && pageBooks.length) { lastSort = pageBooks[pageBooks.length - 1].sort; } else { hasMore = false; }
     await sleep(options.pageDelayMs || 250);
   }
+  console.log('Total notebooks fetched:', books.length);
   return books;
 }
 
@@ -54,22 +77,24 @@ async function fetchBookReviews(apiKey, bookId, options = {}) {
   const reviews = []; const count = options.count || 100; let synckey = 0; let hasMore = true; let guard = 0;
   while (hasMore && guard < 50) {
     const params = { bookid: bookId, count }; if (synckey) params.synckey = synckey;
-    const data = await callWeread('/review/list/mine', params, apiKey);
-    if (data.errcode) throw new Error(data.errmsg || `WeRead review error ${data.errcode}`);
-    reviews.push(...((data.reviews || []).map(item => item.review || item).filter(Boolean)));
-    hasMore = data.hasMore === 1 && data.synckey && data.synckey !== synckey;
-    synckey = data.synckey || synckey; guard += 1;
+    const resp = await callWeread('/review/list/mine', params, apiKey);
+    const payload = resp.data || resp;
+    if (payload.errcode) throw new Error(payload.errmsg || 'WeRead review error ' + payload.errcode);
+    reviews.push(...((payload.reviews || []).map(item => item.review || item).filter(Boolean)));
+    hasMore = payload.hasMore === 1 && payload.synckey && payload.synckey !== synckey;
+    synckey = payload.synckey || synckey; guard += 1;
     if (hasMore) await sleep(options.pageDelayMs || 160);
   }
   return reviews;
 }
 
 async function fetchBookNotes(apiKey, bookId, options = {}) {
-  const [bookmarks, reviews] = await Promise.all([
+  const [bookmarksResp, reviews] = await Promise.all([
     callWeread('/book/bookmarklist', { bookId }, apiKey),
     fetchBookReviews(apiKey, bookId, options),
   ]);
-  return { highlights: bookmarks.updated || [], chapters: bookmarks.chapters || [], book: bookmarks.book || null, reviews };
+  const bm = bookmarksResp.data || bookmarksResp;
+  return { highlights: bm.updated || [], chapters: bm.chapters || [], book: bm.book || null, reviews };
 }
 
 async function syncWereadData(apiKey, options = {}) {

@@ -2,142 +2,153 @@
   padding-bottom: 160rpx;
 }
 
+/* ---- header ---- */
+.profile-header {
+  padding: 18rpx 0 10rpx;
+  text-align: center;
+}
+
+.profile-header-title {
+  font-family: Georgia, "Songti SC", serif;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #050505;
+}
+
+/* ---- reader card ---- */
 .reader-card {
-  min-height: 252rpx;
-  padding: 46rpx;
+  margin-top: 24rpx;
+  padding: 44rpx;
   display: flex;
   align-items: center;
-  gap: 36rpx;
+  gap: 32rpx;
 }
 
 .reader-avatar {
-  width: 136rpx;
-  height: 136rpx;
+  width: 112rpx;
+  height: 112rpx;
   border-radius: 50%;
   flex: none;
-  background: linear-gradient(135deg, #efe4d0, #8f765b);
-  box-shadow: inset 0 0 0 6rpx #fff, 0 8rpx 22rpx rgba(0, 0, 0, 0.12);
+  background: linear-gradient(135deg, #efe4d0, #c4a882);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
 }
 
-.reader-info {
-  min-width: 0;
+.avatar-text {
+  font-size: 40rpx;
+  font-weight: 900;
+  color: #fff;
 }
 
 .reader-name {
-  font-size: 42rpx;
-  line-height: 1.2;
+  font-size: 38rpx;
   font-weight: 900;
-  white-space: nowrap;
+  color: #050505;
 }
 
 .reader-sub {
-  margin-top: 18rpx;
-  color: #343838;
-  font-size: 28rpx;
+  margin-top: 12rpx;
+  color: #9b9690;
+  font-size: 26rpx;
 }
 
-.reader-badge {
-  width: fit-content;
-  margin-top: 24rpx;
-  padding: 12rpx 28rpx;
-  border-radius: 999rpx;
-  background: #e9e1d8;
-  font-size: 25rpx;
-  font-weight: 800;
-}
-
+/* ---- stats ---- */
 .profile-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 22rpx;
-  margin-top: 58rpx;
+  gap: 20rpx;
+  margin-top: 28rpx;
 }
 
 .profile-stat {
-  height: 200rpx;
+  padding: 32rpx 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
 }
 
-.stat-icon {
-  font-size: 36rpx;
-  margin-bottom: 16rpx;
-}
-
-.profile-stat text {
+.stat-num {
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 46rpx;
-  font-weight: 800;
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #050505;
 }
 
 .profile-stat label {
-  margin-top: 10rpx;
-  font-size: 24rpx;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #9b9690;
+}
+
+/* ---- menu ---- */
+.menu-card {
+  margin-top: 28rpx;
+  padding: 8rpx 36rpx 12rpx;
+}
+
+.menu-section-label {
+  font-size: 22rpx;
   font-weight: 700;
-  color: #343838;
+  color: #b9b0a5;
+  text-transform: uppercase;
+  letter-spacing: 2rpx;
+  padding: 28rpx 0 12rpx;
 }
 
-.settings-card {
-  margin-top: 58rpx;
-  padding: 0 34rpx;
-}
-
-.setting-row {
-  min-height: 100rpx;
-  display: grid;
-  grid-template-columns: 48rpx 1fr auto auto;
-  gap: 24rpx;
+.menu-row {
+  min-height: 96rpx;
+  display: flex;
   align-items: center;
-  border-bottom: 2rpx solid #e5ddd4;
-  font-size: 30rpx;
+  gap: 22rpx;
+  border-bottom: 1rpx solid #ece6de;
+  padding: 4rpx 0;
 }
 
-.setting-row:last-child {
+.menu-row:last-child {
   border-bottom: 0;
 }
 
-.setting-icon {
-  font-size: 34rpx;
+.menu-icon {
+  font-size: 32rpx;
+  color: #6b6560;
+  width: 40rpx;
+  text-align: center;
 }
 
-.setting-row label {
+.menu-text {
+  flex: 1;
+  font-size: 29rpx;
+  color: #2d2a26;
+}
+
+.menu-status {
+  font-size: 22rpx;
+  color: #9b9690;
   padding: 4rpx 14rpx;
   border-radius: 8rpx;
-  background: #e6ded5;
-  color: #8a8178;
-  font-size: 22rpx;
+  background: #f0e8dd;
 }
 
-.switch {
-  width: 78rpx;
-  height: 44rpx;
-  border-radius: 999rpx;
-  background: #e6ded5;
-  position: relative;
+.menu-arrow {
+  font-size: 32rpx;
+  color: #ccc5bb;
 }
 
-.switch::before {
-  content: "";
-  position: absolute;
-  width: 36rpx;
-  height: 36rpx;
-  left: 4rpx;
-  top: 4rpx;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,.12);
-}
-
-.logout-button {
-  width: 100%;
-  height: 92rpx;
-  margin-top: 64rpx;
-  border-radius: 22rpx;
-  border: 2rpx solid #b9bbb8;
-  background: #fffefd;
+/* ---- logout ---- */
+.logout-btn {
+  margin: 56rpx 36rpx 0;
+  height: 88rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 600;
   color: #c1121f;
-  font-size: 30rpx;
-  font-weight: 700;
+  background: #fff;
+  border: 1rpx solid #e8e0d6;
 }

@@ -2,6 +2,15 @@
   text-align: center;
 }
 
+.page-title-bar {
+  padding: 18rpx 36rpx 10rpx;
+  font-family: Georgia, "Songti SC", serif;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #050505;
+  text-align: left;
+}
+
 .sync-card {
   padding: 46rpx 30rpx 30rpx;
 }

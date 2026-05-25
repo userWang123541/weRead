@@ -1,4 +1,12 @@
 <view class="screen overview-page">
+  <!-- 等待鉴权 -->
+  <view wx:if="{{!ready}}" class="loading-gate">
+    <view class="loading-spinner"></view>
+  </view>
+
+  <!-- 主内容 -->
+  <block wx:if="{{ready}}">
+
   <view class="hero-copy">
     <view class="hero-top">
       <view class="hero-title">阅读不是记录，<br />是再组织</view>
@@ -9,7 +17,7 @@
   <view class="black-note">
     <view class="quote-ghost">“</view>
     <view class="black-note-text">{{quote.text || '阅读好书，就像是和过去最伟大的智者交谈。'}}</view>
-    <view class="black-note-book">— {{quote.book || 'René Descartes'}}</view>
+    <view class="black-note-book">— {{quote.book || quote.bookTitle || '未知书籍'}}</view>
   </view>
 
   <view class="wide-stats card">
@@ -21,22 +29,16 @@
     <view class="wide-stat"><text>{{stats.readingDays || 0}}</text><view>阅读日</view></view>
   </view>
 
-  <view class="feature-grid">
-    <view class="feature-card card" bindtap="goBookshelf">
-      <view class="feature-num">{{stats.books || 0}}</view>
-      <view class="feature-title">书架</view>
-      <view class="feature-desc">在读、已读完、未读分类展示</view>
+  <!-- 今日主题 -->
+  <view class="topic-card card">
+    <view class="topic-label">今日主题</view>
+    <view class="topic-tags">
+      <block wx:for="{{topCategories}}" wx:key="*this">
+        <view class="topic-tag">{{item}}</view>
+      </block>
+      <view wx:if="{{!topCategories.length}}" class="topic-tag">等待分类数据</view>
     </view>
-    <view class="feature-card card" bindtap="goNotes">
-      <view class="feature-num">{{stats.cards || stats.notes || 0}}</view>
-      <view class="feature-title">笔记管家</view>
-      <view class="feature-desc">跨书检索、分类管理、查看原文</view>
-    </view>
-    <view class="feature-card card" bindtap="goAi">
-      <view class="feature-num">AI</view>
-      <view class="feature-title">拾光</view>
-      <view class="feature-desc">描述你想找的内容，AI 从笔记中召回</view>
-    </view>
+    <view class="topic-summary">{{topicCount}} 个知识主题 · {{classifiedCount}} 条已归类笔记</view>
   </view>
 
   <view class="recent-head">
@@ -54,4 +56,5 @@
       </view>
     </block>
   </view>
+  </block>
 </view>

@@ -15,6 +15,20 @@ var _cache = {
 var CACHE_TTL = 60000;
 var _loading = null;
 
+function normalizeStats(stats) {
+  var source = stats || {};
+  return Object.assign({}, source, {
+    books: source.books || source.totalBooks || 0,
+    cards: source.cards || source.totalCards || 0,
+    highlights: source.highlights || source.totalHighlights || 0,
+    notes: source.notes || source.totalReviews || 0,
+    reviews: source.reviews || source.totalReviews || 0,
+    classified: source.classified || 0,
+    unclassified: source.unclassified || source.totalCards || source.cards || 0,
+    readingDays: source.readingDays || 0
+  });
+}
+
 function getDb() {
   if (!db) db = wx.cloud.database();
   return db;
@@ -51,11 +65,11 @@ function _doLoad() {
     if (userRes.data.length > 0) {
       var user = userRes.data[0];
       _cache.userDoc = user;
-      _cache.stats = user.stats || {};
+      _cache.stats = normalizeStats(user.stats);
       _cache.quotes = user.quotes || [];
       _cache.fetchedAt = user.fetchedAt || '';
     } else {
-      _cache.stats = {};
+      _cache.stats = normalizeStats({});
       _cache.quotes = [];
     }
 
@@ -160,7 +174,10 @@ function getRecentCards(n) {
 
 function getRandomQuote() {
   if (!_cache.quotes.length) return { text: '', book: '', bookId: '' };
-  return _cache.quotes[Math.floor(Math.random() * _cache.quotes.length)];
+  var quote = _cache.quotes[Math.floor(Math.random() * _cache.quotes.length)] || {};
+  return Object.assign({}, quote, {
+    book: quote.book || quote.bookTitle || ''
+  });
 }
 
 function searchCards(query) {
@@ -207,6 +224,14 @@ function getUserDoc() {
 }
 
 function invalidateCache() {
+  _cache.stats = null;
+  _cache.books = null;
+  _cache.bookMap = {};
+  _cache.cards = [];
+  _cache.taxonomy = null;
+  _cache.topCategories = [];
+  _cache.quotes = [];
+  _cache.userDoc = null;
   _cache.lastLoad = 0;
 }
 

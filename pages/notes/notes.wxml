@@ -12,22 +12,45 @@
 
   <view class="note-list">
     <block wx:for="{{cards}}" wx:key="id">
-      <view class="note-card card" data-bookid="{{item.bookId}}" bindtap="goBook">
+      <view class="note-card card">
         <view class="note-head">
-          <view>
+          <view class="note-title-wrap">
             <view class="note-book">{{item.bookTitle}}</view>
             <view class="note-chapter">{{item.chapter || item.author}}</view>
           </view>
-          <text class="more">⋮</text>
+          <text class="note-type">{{item.type === 'review' ? '想法' : (item.type === 'linked' ? '划线+想法' : '划线')}}</text>
         </view>
         <view class="note-quote">"{{item.quote || item.note}}"</view>
         <view class="note-note" wx:if="{{item.note && item.quote}}">{{item.note}}</view>
         <view class="note-tags">
+          <text class="tag category-tag">{{item.category || '未分类'}}</text>
           <block wx:for="{{item.tags}}" wx:key="*this">
             <text class="tag">{{item}}</text>
           </block>
         </view>
+        <view class="note-actions">
+          <button class="note-action" data-cardid="{{item.cardId}}" bindtap="openCategorySheet">修改分类</button>
+        </view>
       </view>
     </block>
+  </view>
+
+  <view wx:if="{{categorySheetVisible}}" class="sheet-mask" bindtap="closeCategorySheet">
+    <view class="category-sheet" catchtap="noop">
+      <view class="sheet-head">
+        <view>
+          <view class="sheet-title">修改分类</view>
+          <view class="sheet-sub">{{editingCard.bookTitle}}</view>
+        </view>
+        <view class="sheet-close" bindtap="closeCategorySheet">×</view>
+      </view>
+      <scroll-view scroll-y class="category-options">
+        <block wx:for="{{categoryOptions}}" wx:key="id">
+          <view class="category-option {{editingCard.category === item.path ? 'active' : ''}}" data-id="{{item.id}}" data-path="{{item.path}}" bindtap="selectCategory">
+            {{item.name}}
+          </view>
+        </block>
+      </scroll-view>
+    </view>
   </view>
 </view>

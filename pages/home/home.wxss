@@ -2,6 +2,54 @@
   padding-bottom: 160rpx;
 }
 
+/* ---- loading gate ---- */
+.loading-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 5rpx solid #e0d8ce;
+  border-top-color: #050505;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- sync banner ---- */
+.sync-banner {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  padding: 18rpx 32rpx;
+  background: #050505;
+  color: #fff;
+  font-size: 25rpx;
+  font-weight: 600;
+  border-radius: 0 0 20rpx 20rpx;
+  margin: 0 0 20rpx;
+}
+
+.sync-banner-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: #4ade80;
+  animation: blink 1.2s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
 .hero-copy {
   padding-bottom: 46rpx;
   border-bottom: 1rpx solid #e9e1d8;
@@ -90,8 +138,7 @@
   border-right: 0;
 }
 
-.wide-stat text,
-.feature-num {
+.wide-stat text {
   font-family: Georgia, "Times New Roman", serif;
   font-size: 44rpx;
   font-weight: 500;
@@ -103,29 +150,38 @@
   font-size: 22rpx;
 }
 
-.feature-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 24rpx;
-  margin-top: 32rpx;
+.topic-card {
+  margin-top: 48rpx;
+  padding: 38rpx 36rpx;
 }
 
-.feature-card {
-  min-height: 220rpx;
-  padding: 34rpx 32rpx;
+.topic-label {
+  font-family: Georgia, "Songti SC", "STSong", serif;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #050505;
+  margin-bottom: 24rpx;
 }
 
-.feature-title {
+.topic-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+}
+
+.topic-tag {
+  padding: 10rpx 26rpx;
+  border-radius: 999rpx;
+  background: #f0e8dd;
+  color: #5a5047;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.topic-summary {
   margin-top: 24rpx;
-  font-size: 27rpx;
-  color: #171717;
-}
-
-.feature-desc {
-  margin-top: 16rpx;
-  color: #73706b;
-  font-size: 22rpx;
-  line-height: 1.55;
+  color: #9b9690;
+  font-size: 23rpx;
 }
 
 .recent-head {

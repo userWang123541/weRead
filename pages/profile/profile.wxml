@@ -1,33 +1,50 @@
 <view class="screen profile-page">
-  <view class="topbar">
-    <button class="top-icon" bindtap="goSearch">⌕</button>
-    <view class="top-title">我的</view>
-    <button class="top-icon right">◎</button>
-  </view>
-
   <view class="reader-card card">
-    <view class="reader-avatar"></view>
+    <view class="reader-avatar">
+      <text class="avatar-text">读</text>
+    </view>
     <view class="reader-info">
       <view class="reader-name">沉思的读者</view>
-      <view class="reader-sub">终身阅读者 · 第 1,024 位会员</view>
-      <view class="reader-badge">◉ 高级版订阅中</view>
+      <view class="reader-sub">终身阅读者</view>
     </view>
   </view>
 
   <view class="profile-stats">
-    <view class="profile-stat card"><view class="stat-icon">▰</view><text>{{stats.books || 0}}</text><label>已读（本）</label></view>
-    <view class="profile-stat card"><view class="stat-icon">◌</view><text>15</text><label>连续（天）</label></view>
-    <view class="profile-stat card"><view class="stat-icon">▱</view><text>{{stats.notes || 0}}</text><label>笔记（条）</label></view>
+    <view class="profile-stat card">
+      <text class="stat-num">{{stats.books || 0}}</text>
+      <label>已读（本）</label>
+    </view>
+    <view class="profile-stat card">
+      <text class="stat-num">{{stats.highlights || 0}}</text>
+      <label>划线（条）</label>
+    </view>
+    <view class="profile-stat card">
+      <text class="stat-num">{{stats.notes || 0}}</text>
+      <label>笔记（条）</label>
+    </view>
   </view>
 
-  <view class="settings-card card">
-    <view class="setting-row" bindtap="goCategories"><text class="setting-icon">▤</text><text>分类管理</text><text>›</text></view>
-    <view class="setting-row"><text class="setting-icon">▥</text><text>我的等级/勋章</text><text>›</text></view>
-    <view class="setting-row" bindtap="goSettings"><text class="setting-icon">☷</text><text>阅读偏好设置</text><text>›</text></view>
-    <view class="setting-row" bindtap="goSync"><text class="setting-icon">↻</text><text>同步与备份</text><label>已开启</label><text>›</text></view>
-    <view class="setting-row"><text class="setting-icon">☾</text><text>夜间模式</text><view class="switch"></view></view>
-    <view class="setting-row"><text class="setting-icon">ⓘ</text><text>关于微读</text><text>›</text></view>
+  <view class="menu-card card">
+    <view class="menu-section-label">知识管理</view>
+    <view class="menu-row" bindtap="goCategories">
+      <text class="menu-icon">▤</text>
+      <text class="menu-text">分类管理</text>
+      <text class="menu-arrow">›</text>
+    </view>
+
+    <view class="menu-section-label">数据与账号</view>
+    <view class="menu-row" bindtap="goSync">
+      <text class="menu-icon">↻</text>
+      <text class="menu-text">同步与备份</text>
+      <text class="menu-status">已开启</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-row" bindtap="openAbout">
+      <text class="menu-icon">ⓘ</text>
+      <text class="menu-text">关于微读</text>
+      <text class="menu-arrow">›</text>
+    </view>
   </view>
 
-  <button class="logout-button">↪ 退出登录</button>
+  <view class="logout-btn" bindtap="logout">退出登录</view>
 </view>

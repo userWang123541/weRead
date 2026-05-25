@@ -1,5 +1,15 @@
 var store = require('../../utils/store');
 
+function normalizeStats(stats) {
+  var source = stats || {};
+  return Object.assign({}, source, {
+    books: source.books || source.totalBooks || 0,
+    highlights: source.highlights || source.totalHighlights || 0,
+    notes: source.notes || source.totalReviews || 0,
+    cards: source.cards || source.totalCards || 0
+  });
+}
+
 Page({
   data: {
     apiKey: '',
@@ -17,10 +27,11 @@ Page({
 
     store.getUserDoc().then(function(doc) {
       if (doc) {
+        var stats = normalizeStats(doc.stats);
         that.setData({
-          hasData: !!(doc.stats && doc.stats.books),
+          hasData: !!stats.books,
           syncStatus: doc.syncStatus || 'idle',
-          stats: doc.stats || {}
+          stats: stats
         });
       }
     });
@@ -58,7 +69,7 @@ Page({
       wx.hideLoading();
       var result = res.result || {};
       if (result.success) {
-        that.setData({ syncing: false, syncStatus: 'idle', hasData: true, stats: result.stats || {} });
+        that.setData({ syncing: false, syncStatus: 'idle', hasData: true, stats: normalizeStats(result.stats) });
         store.invalidateCache();
         wx.showToast({ title: '同步成功！', icon: 'success' });
         // 同步成功后 1.5 秒自动跳转首页
@@ -106,10 +117,11 @@ Page({
     var that = this;
     store.getUserDoc().then(function(doc) {
       if (doc) {
+        var stats = normalizeStats(doc.stats);
         that.setData({
           syncStatus: doc.syncStatus || 'idle',
-          hasData: !!(doc.stats && doc.stats.books),
-          stats: doc.stats || {}
+          hasData: !!stats.books,
+          stats: stats
         });
       }
     });
@@ -121,8 +133,8 @@ Page({
 
   openAbout: function () {
     wx.showModal({
-      title: '关于微读 Read',
-      content: '微读 Read v1.0.0\n基于微信读书数据的个人阅读知识管理工具。\n数据存储在微信云开发环境中。',
+      title: '关于微读工作室',
+      content: '微读工作室 v1.0.0\n基于微信读书数据的个人阅读知识管理工具。\n数据存储在微信云开发环境中。',
       showCancel: false
     });
   },

@@ -1,53 +1,85 @@
 var store = require('../../utils/store');
+var auth = require('../../utils/auth');
 var fmt = require('../../utils/format');
 
 Page({
   data: {
-    loading: true,
-    hasApiKey: false,
-    hasData: false,
-    avatarUrl: '',
-    greeting: '',
+    ready: false,
+    syncing: false,
     stats: {},
     quote: {},
-    recentCards: []
+    recentCards: [],
+    topCategories: [],
+    topicCount: 0,
+    classifiedCount: 0
   },
   _quoteTimer: null,
 
   onShow: function () {
-    var app = getApp();
-    var hasKey = !!wx.getStorageSync('weread_api_key');
-    var avatarUrl = wx.getStorageSync('user_avatar') || app.globalData.user.avatar || '';
-    this.setData({ hasApiKey: hasKey, avatarUrl: avatarUrl });
+    var self = this;
+    self.setData({ ready: false });
 
-    if (hasKey) {
-      this._loadData();
-      this._startQuoteRotation();
-    } else {
-      this.setData({ loading: false });
-    }
+    auth.fetchStatus().then(function (status) {
+      if (!status.hasKey) {
+        wx.reLaunch({ url: '/pages/setup/setup' });
+        return;
+      }
+
+      if (status.syncStatus === 'syncing' || status.syncStatus === 'classifying') {
+        if (!status.hasData) {
+          wx.reLaunch({ url: '/pages/setup/setup?status=' + status.syncStatus });
+          return;
+        }
+        status.syncStatus = 'idle';
+        getApp().globalData.userStatus = status;
+      }
+
+      if (status.syncStatus === 'error') {
+        wx.reLaunch({ url: '/pages/setup/setup?status=error' });
+        return;
+      }
+
+      self.setData({ ready: true });
+      self._loadData();
+      self._startQuoteRotation();
+
+      var syncedAt = status.syncedAt ? new Date(status.syncedAt).getTime() : 0;
+      if (syncedAt && Date.now() - syncedAt > 3600000) {
+        self._backgroundRefresh();
+      }
+    });
   },
 
-  onHide: function () {
-    this._stopQuoteRotation();
-  },
-
-  onUnload: function () {
-    this._stopQuoteRotation();
+  _backgroundRefresh: function () {
+    var self = this;
+    wx.cloud.callFunction({
+      name: 'syncData',
+      data: {},
+      config: { timeout: 180000 }
+    }).then(function (res) {
+      var result = res.result || {};
+      if (result.success) {
+        store.invalidateCache();
+        self._loadData();
+      }
+    }).catch(function () {});
   },
 
   _loadData: function () {
     var self = this;
-    var greeting = store.getTimeGreeting();
-    var quote = store.getRandomQuote();
-    self.setData({ greeting: greeting, quote: quote });
+    self.setData({ quote: store.getRandomQuote() });
 
     Promise.all([
       store.getStats(),
-      store.getRecentCards(3)
+      store.getRecentCards(3),
+      store.getCategories(),
+      store.getTopCategories()
     ]).then(function (results) {
       var stats = results[0];
       var rawCards = results[1];
+      var taxonomy = results[2];
+      var topCategories = results[3];
+      var domains = (taxonomy && taxonomy.domains) || [];
 
       var bookPromises = rawCards.map(function (card) {
         if (card.bookId) {
@@ -66,43 +98,40 @@ Page({
             bookTitle: card.bookTitle || '',
             quote: fmt.truncate(card.quote || '', 60),
             timeAgo: fmt.timeAgo(card.time),
-            firstTag: (card.tags && card.tags.length > 0) ? card.tags[0] : '',
             palette: palettes[i]
           };
         });
 
+        var classifiedCount = 0;
+        domains.forEach(function (d) {
+          classifiedCount += (d.subs ? d.subs.length : 0);
+        });
+
         self.setData({
-          loading: false,
-          hasData: !!(stats && stats.books),
           stats: stats || {},
-          recentCards: recentCards
+          recentCards: recentCards,
+          topCategories: topCategories.slice(0, 5),
+          topicCount: domains.length,
+          classifiedCount: classifiedCount
         });
       });
-    }).catch(function () {
-      self.setData({ loading: false });
-    });
-  },
-
-  goSetup: function () {
-    wx.switchTab({ url: '/pages/profile/profile' });
+    }).catch(function () {});
   },
 
   _startQuoteRotation: function () {
     var self = this;
+    if (this._quoteTimer) clearInterval(this._quoteTimer);
     this._quoteTimer = setInterval(function () {
       self.setData({ quote: store.getRandomQuote() });
     }, 3000);
   },
 
-  _stopQuoteRotation: function () {
-    if (this._quoteTimer) {
-      clearInterval(this._quoteTimer);
-      this._quoteTimer = null;
-    }
+  onHide: function () {
+    if (this._quoteTimer) { clearInterval(this._quoteTimer); this._quoteTimer = null; }
   },
 
-  goBookshelf: function () {
-    wx.switchTab({ url: '/pages/bookshelf/bookshelf' });
+  onUnload: function () {
+    if (this._quoteTimer) { clearInterval(this._quoteTimer); this._quoteTimer = null; }
   },
 
   goNotes: function () {
@@ -111,17 +140,5 @@ Page({
 
   goSearch: function () {
     wx.navigateTo({ url: '/pages/search/search' });
-  },
-
-  goProfile: function () {
-    wx.switchTab({ url: '/pages/profile/profile' });
-  },
-
-  goAi: function () {
-    wx.navigateTo({ url: '/pages/ai/ai' });
-  },
-
-  goCategories: function () {
-    wx.switchTab({ url: '/pages/categories/categories' });
   }
 });

@@ -1,38 +1,79 @@
-<view class="screen category-page">
-  <view class="search-pill">
-    <text>⌕</text>
-    <input value="{{searchQuery}}" bindinput="onSearch" placeholder="搜索分类..." placeholder-class="search-placeholder" />
+<view class="screen cat-page">
+  <!-- 搜索 + 新增 -->
+  <view class="cat-header">
+    <view class="cat-search">
+      <text class="cat-search-icon">⌕</text>
+      <input class="cat-search-input" value="{{searchQuery}}" bindinput="onSearch" placeholder="搜索分类..." />
+    </view>
+    <view class="cat-add-btn" bindtap="onAdd">＋ 新增</view>
   </view>
 
-  <button class="add-category">＋ 新增分类</button>
+  <!-- 展开控制 -->
+  <view class="cat-expand-bar">
+    <text class="cat-expand-label">展开</text>
+    <view class="cat-expand-btn {{expandLevel === 0 ? 'active' : ''}}" bindtap="expandToLevel" data-level="0">一级</view>
+    <view class="cat-expand-btn {{expandLevel === 1 ? 'active' : ''}}" bindtap="expandToLevel" data-level="1">二级</view>
+    <view class="cat-expand-btn {{expandLevel === 2 ? 'active' : ''}}" bindtap="expandAll">全部</view>
+  </view>
 
-  <view class="category-list">
-    <block wx:for="{{filteredDomains || domains}}" wx:key="name">
-      <view class="category-card card">
-        <view class="category-main" data-index="{{index}}" bindtap="toggleDomain">
-          <view class="category-mark"></view>
-          <view class="category-copy">
-            <view class="category-title">{{item.name}}</view>
-            <view class="category-desc">{{item.subs[0].description || '阅读主题与知识结构整理'}}</view>
-          </view>
-          <view class="count-pill">{{item.count || item.subs.length}} 笔记</view>
+  <!-- 分类列表 -->
+  <view class="cat-list" wx:if="{{rows.length}}">
+    <block wx:for="{{rows}}" wx:key="path">
+      <view class="cat-row depth-{{item.depth}}" bindtap="toggleExpand" data-path="{{item.path}}">
+        <!-- 展开箭头 -->
+        <text class="cat-toggle {{item.hasChildren ? (item.expanded ? 'expanded' : '') : 'leaf'}}">
+          {{item.hasChildren ? (item.expanded ? '▾' : '▸') : '–'}}
+        </text>
+        <!-- 名称 -->
+        <view class="cat-name-col">
+          <text class="cat-name">{{item.name}}</text>
+          <text class="cat-path" wx:if="{{item.depth > 0}}">{{item.path}}</text>
         </view>
-
-        <view class="sub-list" wx:if="{{expandedDomain === index}}">
-          <block wx:for="{{item.subs}}" wx:key="id" wx:for-item="sub">
-            <view class="sub-item" data-id="{{sub.id}}" bindtap="tapCategory">
-              <view>{{sub.name}}</view>
-              <text>✎</text>
-            </view>
-          </block>
-        </view>
-
-        <view class="category-actions">
-          <text>✎</text>
-          <text>⌘</text>
-          <text class="danger">▢</text>
+        <!-- 笔记数 -->
+        <view class="cat-count {{item.childNoteCount > 0 ? 'active' : ''}}">{{item.childNoteCount}}</view>
+        <!-- 操作 -->
+        <view class="cat-ops">
+          <text class="cat-op" catchtap="onEdit" data-path="{{item.path}}">编辑</text>
+          <text class="cat-op" catchtap="onAddChild" data-path="{{item.path}}">子级</text>
+          <text class="cat-op danger" catchtap="onDelete" data-path="{{item.path}}">删除</text>
         </view>
       </view>
     </block>
+  </view>
+
+  <view wx:else class="cat-empty">
+    <text wx:if="{{loading}}">加载中...</text>
+    <text wx:elif="{{searchQuery}}">未找到匹配的分类</text>
+    <text wx:else>还没有分类，点击「新增」开始创建</text>
+  </view>
+
+  <!-- 弹窗：新增/编辑 -->
+  <view class="cat-dialog-mask" wx:if="{{dialogVisible}}" bindtap="closeDialog"></view>
+  <view class="cat-dialog" wx:if="{{dialogVisible}}">
+    <view class="cat-dialog-title">{{form.mode === 'edit' ? '编辑分类' : '新增分类'}}</view>
+
+    <view class="cat-dialog-field">
+      <text class="cat-dialog-label">父级分类</text>
+      <view class="cat-dialog-disabled">{{form.parentPath || '（一级分类）'}}</view>
+    </view>
+
+    <view class="cat-dialog-field">
+      <text class="cat-dialog-label">分类名称</text>
+      <input class="cat-dialog-input" value="{{form.name}}" bindinput="onFormName" placeholder="输入分类名称" focus="{{dialogVisible}}" />
+    </view>
+
+    <view class="cat-dialog-field">
+      <text class="cat-dialog-label">说明</text>
+      <textarea class="cat-dialog-textarea" value="{{form.description}}" bindinput="onFormDesc" placeholder="用于向量分类时匹配语义（可选）" />
+    </view>
+
+    <view class="cat-dialog-preview" wx:if="{{form.name}}">
+      完整路径：{{form.parentPath ? form.parentPath + '/' + form.name : form.name}}
+    </view>
+
+    <view class="cat-dialog-actions">
+      <view class="cat-dialog-btn cancel" bindtap="closeDialog">取消</view>
+      <view class="cat-dialog-btn confirm {{form.name ? '' : 'disabled'}}" bindtap="onSave">保存</view>
+    </view>
   </view>
 </view>

@@ -1,0 +1,53 @@
+<view class="setup-page">
+  <!-- 状态：输入 key -->
+  <view wx:if="{{step === 'input'}}" class="setup-center">
+    <view class="setup-logo">✦</view>
+    <view class="setup-title">欢迎使用微读工作室</view>
+    <view class="setup-sub">连接你的微信读书，将划线、想法变成可检索的知识素材。</view>
+
+    <view class="setup-form">
+      <input class="setup-input" value="{{apiKey}}" bindinput="onInput" placeholder="请输入微信读书 API Key" password="{{!showKey}}" />
+      <view class="setup-toggle" bindtap="toggleShowKey">{{showKey ? '隐藏' : '显示'}}</view>
+    </view>
+
+    <view class="setup-hint" bindtap="showTutorial">
+      <text>如何获取 API Key？</text>
+    </view>
+
+    <view class="setup-btn {{apiKey ? '' : 'disabled'}}" bindtap="startSync">
+      开始同步
+    </view>
+
+    <view wx:if="{{errorMsg}}" class="setup-error">{{errorMsg}}</view>
+  </view>
+
+  <!-- 状态：同步/分类中 -->
+  <view wx:elif="{{step === 'syncing'}}" class="setup-center">
+    <view class="setup-spinner"></view>
+    <view class="setup-title">{{statusText}}</view>
+    <view class="setup-sub">{{detailText}}</view>
+
+    <view wx:if="{{classifyTotal > 0}}" class="setup-progress">
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{classifyPercent}}%;"></view>
+      </view>
+      <text class="progress-text">{{classifyDone}} / {{classifyTotal}}</text>
+    </view>
+  </view>
+
+  <!-- 状态：完成 -->
+  <view wx:elif="{{step === 'done'}}" class="setup-center">
+    <view class="setup-check">✓</view>
+    <view class="setup-title">准备就绪</view>
+    <view class="setup-sub">已同步 {{stats.books || 0}} 本书，{{stats.highlights || 0}} 条划线，{{stats.notes || 0}} 条想法。</view>
+    <view class="setup-btn" bindtap="goHome">进入微读工作室</view>
+  </view>
+
+  <!-- 状态：错误 -->
+  <view wx:elif="{{step === 'error'}}" class="setup-center">
+    <view class="setup-error-icon">!</view>
+    <view class="setup-title">同步失败</view>
+    <view class="setup-sub">{{errorMsg}}</view>
+    <view class="setup-btn" bindtap="retry">重新尝试</view>
+  </view>
+</view>

@@ -1,4 +1,5 @@
 var store = require('../../utils/store');
+var auth = require('../../utils/auth');
 
 Page({
   data: {
@@ -12,8 +13,16 @@ Page({
     unreadCount: 0
   },
 
-  onLoad: function () {
+  onShow: function () {
     var self = this;
+    auth.ensureHasKey(function () {
+      self._loadData();
+    });
+  },
+
+  _loadData: function () {
+    var self = this;
+    self.setData({ loading: true });
     Promise.all([
       store.getBooks('all'),
       store.getBooks('reading'),

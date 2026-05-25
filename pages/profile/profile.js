@@ -1,29 +1,59 @@
 var store = require('../../utils/store');
+var auth = require('../../utils/auth');
 
 Page({
   data: {
-    stats: {},
-    user: {}
+    stats: {}
   },
-  onLoad: function () {
-    var that = this;
-    var app = getApp();
-    this.setData({ user: app.globalData.user || {} });
 
+  onShow: function () {
+    var that = this;
     store.getStats().then(function (stats) {
       that.setData({ stats: stats });
     });
   },
+
+  goCategories: function () {
+    wx.navigateTo({ url: '/pages/categories/categories' });
+  },
+
   goSettings: function () {
     wx.navigateTo({ url: '/pages/settings/settings' });
   },
+
   goSync: function () {
     wx.navigateTo({ url: '/pages/sync/sync' });
   },
-  goCategories: function () {
-    wx.switchTab({ url: '/pages/categories/categories' });
+
+  openAbout: function () {
+    wx.showModal({
+      title: '关于微读工作室',
+      content: '微读工作室 v1.0\n基于微信读书数据的个人阅读知识管理工具。',
+      showCancel: false
+    });
   },
-  goSearch: function () {
-    wx.navigateTo({ url: '/pages/search/search' });
+
+  logout: function () {
+    wx.showModal({
+      title: '确认退出',
+      content: '退出后需要重新设置 API Key 才能同步数据。',
+      success: function (res) {
+        if (res.confirm) {
+          wx.showLoading({ title: '退出中...' });
+          // 清除云数据库中的 apiKey 和状态
+          wx.cloud.callFunction({
+            name: 'categoryCRUD',
+            data: { action: 'resetUser' },
+            config: { timeout: 10000 }
+          }).catch(function () {}).then(function () {
+            wx.hideLoading();
+            store.invalidateCache();
+            auth.setLoggedOutStatus();
+            wx.removeStorageSync('weread_api_key');
+            wx.reLaunch({ url: '/pages/setup/setup' });
+          });
+        }
+      }
+    });
   }
 });

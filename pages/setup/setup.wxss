@@ -1,0 +1,167 @@
+.setup-page {
+  min-height: 100vh;
+  background: #fbf4ed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60rpx 48rpx;
+  box-sizing: border-box;
+}
+
+.setup-center {
+  width: 100%;
+  text-align: center;
+}
+
+.setup-logo {
+  font-size: 72rpx;
+  color: #8f765b;
+  margin-bottom: 32rpx;
+}
+
+.setup-check {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: #050505;
+  color: #fff;
+  font-size: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 32rpx;
+}
+
+.setup-error-icon {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: #c1121f;
+  color: #fff;
+  font-size: 52rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 32rpx;
+}
+
+.setup-title {
+  font-family: Georgia, "Songti SC", serif;
+  font-size: 42rpx;
+  font-weight: 700;
+  color: #050505;
+  margin-bottom: 18rpx;
+}
+
+.setup-sub {
+  font-size: 27rpx;
+  color: #73706b;
+  line-height: 1.65;
+  margin-bottom: 56rpx;
+}
+
+/* ---- form ---- */
+.setup-form {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 6rpx 6rpx 6rpx 28rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
+  margin-bottom: 24rpx;
+}
+
+.setup-input {
+  flex: 1;
+  height: 80rpx;
+  font-size: 28rpx;
+  color: #050505;
+}
+
+.setup-toggle {
+  height: 68rpx;
+  padding: 0 24rpx;
+  border-radius: 16rpx;
+  background: #f0e8dd;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #6b6560;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.setup-hint {
+  font-size: 25rpx;
+  color: #8f765b;
+  margin-bottom: 48rpx;
+  text-decoration: underline;
+}
+
+/* ---- button ---- */
+.setup-btn {
+  width: 100%;
+  height: 96rpx;
+  border-radius: 22rpx;
+  background: #050505;
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.setup-btn.disabled {
+  opacity: 0.3;
+}
+
+/* ---- spinner ---- */
+.setup-spinner {
+  width: 80rpx;
+  height: 80rpx;
+  border: 6rpx solid #e0d8ce;
+  border-top-color: #050505;
+  border-radius: 50%;
+  margin: 0 auto 36rpx;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- progress ---- */
+.setup-progress {
+  margin-top: 32rpx;
+}
+
+.progress-bar {
+  height: 12rpx;
+  border-radius: 999rpx;
+  background: #e9e1d8;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999rpx;
+  background: #050505;
+  transition: width 0.3s;
+}
+
+.progress-text {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #9b9690;
+}
+
+/* ---- error ---- */
+.setup-error {
+  margin-top: 28rpx;
+  font-size: 26rpx;
+  color: #c1121f;
+  line-height: 1.5;
+}

@@ -4,17 +4,31 @@
  * Config is passed as a parameter instead of reading from env/file.
  */
 
+const https = require('https');
 const MAX_BATCH = 32;
 const MAX_RETRIES = 3;
 
-/**
- * Get embeddings for an array of texts via SiliconFlow API.
- * Splits into batches of 32 and retries on failure.
- *
- * @param {string[]} texts
- * @param {{ baseUrl: string, apiKey: string, model: string }} config
- * @returns {Promise<number[][]>}
- */
+function httpPost(urlStr, body, headers) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(urlStr);
+    const options = {
+      hostname: url.hostname, port: 443,
+      path: url.pathname + url.search, method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+      timeout: 30000
+    };
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => resolve({ status: res.statusCode, body: data }));
+    });
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new Error('请求超时')); });
+    req.write(JSON.stringify(body));
+    req.end();
+  });
+}
+
 async function getEmbeddings(texts, config) {
   const { baseUrl, apiKey, model } = config;
   const url = baseUrl.replace(/\/+$/, '') + '/embeddings';
@@ -22,43 +36,29 @@ async function getEmbeddings(texts, config) {
 
   for (let i = 0; i < texts.length; i += MAX_BATCH) {
     const batch = texts.slice(i, i + MAX_BATCH);
-    let res;
+    let resp;
 
     for (let retry = 0; retry < MAX_RETRIES; retry++) {
       try {
-        res = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: model,
-            input: batch,
-          }),
-        });
-        if (res.ok) break;
-        // Retry on 429 / 5xx
+        resp = await httpPost(url, { model: model, input: batch }, { Authorization: 'Bearer ' + apiKey });
+        if (resp.status === 200) break;
         if (retry < MAX_RETRIES - 1) {
           await new Promise(r => setTimeout(r, 1000 * Math.pow(2, retry)));
         }
-      } catch (fetchErr) {
-        // Network error — retry
+      } catch (err) {
         if (retry < MAX_RETRIES - 1) {
           await new Promise(r => setTimeout(r, 1000 * Math.pow(2, retry)));
         } else {
-          throw fetchErr;
+          throw err;
         }
       }
     }
 
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`Embedding API error ${res.status}: ${body.slice(0, 200)}`);
+    if (!resp || resp.status !== 200) {
+      throw new Error('Embedding API error ' + (resp ? resp.status : 'NETWORK') + ': ' + (resp ? resp.body.slice(0, 200) : ''));
     }
 
-    const data = await res.json();
-    // Sort by original index in case the API reorders
+    const data = JSON.parse(resp.body);
     const sorted = data.data.sort((a, b) => a.index - b.index);
     allEmbeddings.push(...sorted.map(d => d.embedding));
   }

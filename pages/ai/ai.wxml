@@ -1,19 +1,50 @@
-<view class="screen light-page">
-  <view class="light-header">
-    <view class="page-title center">拾光</view>
-    <view class="light-sub">描述你想找的内容，AI 从你的阅读笔记中召回相关素材并回答。</view>
-  </view>
+<view class="chat-page">
+  <!-- 消息列表 -->
+  <scroll-view class="chat-messages" scroll-y scroll-into-view="{{scrollToId}}" scroll-with-animation enhanced show-scrollbar="{{false}}">
+    <!-- 欢迎区 -->
+    <view class="chat-welcome" wx:if="{{!messages.length}}">
+      <view class="welcome-icon">✦</view>
+      <view class="welcome-title">拾光</view>
+      <view class="welcome-sub">从你的阅读笔记中召回记忆，回答你的问题。</view>
+    </view>
 
-  <view class="spark-card">
-    <view class="spark">✦</view>
-  </view>
-  <view class="try-text">试试问我...</view>
+    <!-- 消息列表 -->
+    <block wx:for="{{messages}}" wx:key="id">
+      <!-- 用户消息 -->
+      <view wx:if="{{item.role === 'user'}}" class="msg-row user">
+        <view class="msg-bubble user-bubble">{{item.content}}</view>
+      </view>
 
-  <view class="question-list">
-    <block wx:for="{{questions}}" wx:key="*this">
-      <view class="question card" data-question="{{item}}" bindtap="ask">
-        <text>{{item}}</text>
+      <!-- AI 消息 -->
+      <view wx:if="{{item.role === 'assistant'}}" class="msg-row assistant" id="msg-{{item.id}}">
+        <view class="msg-avatar">✦</view>
+        <view class="msg-content">
+          <!-- 加载中 -->
+          <view wx:if="{{item.loading}}" class="typing-dots">
+            <view class="dot"></view><view class="dot"></view><view class="dot"></view>
+          </view>
+          <!-- markdown 渲染 -->
+          <rich-text wx:else class="msg-bubble ai-bubble" nodes="{{item.html}}"></rich-text>
+          <!-- 来源 -->
+          <view wx:if="{{item.sources && item.sources.length}}" class="msg-sources">
+            <view class="source-label">引用来源</view>
+            <view class="source-item" wx:for="{{item.sources}}" wx:for-item="src" wx:key="bookTitle">
+              <text class="source-book">{{src.bookTitle}}</text>
+              <text class="source-quote">{{src.quote}}</text>
+            </view>
+          </view>
+        </view>
       </view>
     </block>
+
+    <view id="chat-bottom" style="height: 20rpx;"></view>
+  </scroll-view>
+
+  <!-- 输入栏 -->
+  <view class="chat-input-bar">
+    <input class="chat-input" placeholder="问我关于你的笔记..." value="{{inputValue}}" bindinput="onInput" bindconfirm="sendMessage" confirm-type="send" disabled="{{sending}}" />
+    <view class="send-btn {{inputValue ? 'active' : ''}}" bindtap="sendMessage">
+      <text>↑</text>
+    </view>
   </view>
 </view>

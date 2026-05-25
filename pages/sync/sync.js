@@ -1,4 +1,5 @@
 var store = require('../../utils/store');
+var auth = require('../../utils/auth');
 var fmt = require('../../utils/format');
 
 Page({
@@ -11,8 +12,18 @@ Page({
     cards: 0,
     classified: 0,
     syncStatus: 'idle',
-    errorMsg: '',
-    polling: false
+    errorMsg: ''
+  },
+
+  _normalizeStats: function (stats) {
+    var source = stats || {};
+    return Object.assign({}, source, {
+      books: source.books || source.totalBooks || 0,
+      highlights: source.highlights || source.totalHighlights || 0,
+      notes: source.notes || source.totalReviews || 0,
+      cards: source.cards || source.totalCards || 0,
+      classified: source.classified || 0
+    });
   },
 
   onLoad: function () {
@@ -20,45 +31,46 @@ Page({
   },
 
   onShow: function () {
-    this.startPolling();
+    var self = this;
+    auth.ensureHasKey(function () {
+      self.refresh();
+      self._startPoll();
+    });
   },
 
   onHide: function () {
-    this.stopPolling();
+    this._stopPoll();
   },
 
   onUnload: function () {
-    this.stopPolling();
+    this._stopPoll();
   },
 
-  startPolling: function () {
-    var that = this;
-    this.stopPolling();
-    this.setData({ polling: true });
+  _startPoll: function () {
+    var self = this;
+    this._stopPoll();
     this._pollTimer = setInterval(function () {
-      that.refresh();
+      self.refresh();
     }, 3000);
   },
 
-  stopPolling: function () {
+  _stopPoll: function () {
     if (this._pollTimer) {
       clearInterval(this._pollTimer);
       this._pollTimer = null;
     }
-    this.setData({ polling: false });
   },
 
   refresh: function () {
-    var that = this;
+    var self = this;
     store.getUserDoc().then(function (userDoc) {
       if (!userDoc) return;
-      var stats = userDoc.stats || {};
-      var fetchedAt = userDoc.fetchedAt || '';
+      var stats = self._normalizeStats(userDoc.stats);
       var status = userDoc.syncStatus || 'idle';
 
-      that.setData({
+      self.setData({
         stats: stats,
-        syncTime: fetchedAt ? fmt.formatDateTime(fetchedAt) : '未知',
+        syncTime: userDoc.syncedAt ? fmt.formatDateTime(userDoc.syncedAt) : '未知',
         books: stats.books || 0,
         highlights: stats.highlights || 0,
         notes: stats.notes || 0,
@@ -69,40 +81,33 @@ Page({
       });
 
       if (status === 'idle' || status === 'error') {
-        that.stopPolling();
-      }
-    });
-
-    var d = wx.cloud.database();
-    d.collection('sync_status').limit(1).get().then(function (res) {
-      if (res.data && res.data.length > 0) {
-        var s = res.data[0];
-        var status = s.status || 'idle';
-        that.setData({
-          syncStatus: status,
-          syncTime: s.updatedAt ? fmt.formatDateTime(s.updatedAt) : that.data.syncTime,
-          errorMsg: status === 'error' ? (s.error || '同步失败，请重试') : ''
-        });
+        self._stopPoll();
       }
     });
   },
 
   doSync: function () {
-    var that = this;
-    this.setData({ syncStatus: 'syncing', errorMsg: '' });
-    this.startPolling();
+    var self = this;
+    self.setData({ syncStatus: 'syncing', errorMsg: '' });
+    self._startPoll();
 
+    store.invalidateCache();
     wx.cloud.callFunction({
-      name: 'syncData'
-    }).then(function () {
-      that.refresh();
+      name: 'syncData',
+      data: {},
+      config: { timeout: 180000 }
+    }).then(function (res) {
+      var result = res.result || {};
+      if (result.success) {
+        store.invalidateCache();
+        self.refresh();
+      } else {
+        self.setData({ syncStatus: 'error', errorMsg: result.error || '同步失败' });
+        self._stopPoll();
+      }
     }).catch(function (err) {
-      console.error('sync error:', err);
-      that.setData({
-        syncStatus: 'error',
-        errorMsg: err.message || '同步请求失败'
-      });
-      that.stopPolling();
+      self.setData({ syncStatus: 'error', errorMsg: err.message || '同步请求失败' });
+      self._stopPoll();
     });
   },
 

@@ -2,34 +2,26 @@
   padding-bottom: 140rpx;
 }
 
-.reader-card {
-  min-height: 160rpx;
-  padding: 30rpx;
-  display: flex;
-  align-items: center;
-  gap: 24rpx;
-}
-
-.reader-avatar {
-  width: 88rpx;
-  height: 88rpx;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #efe4d0, #8f765b);
-}
-
-.reader-name.small {
+.page-title-bar {
+  padding: 18rpx 36rpx 10rpx;
+  font-family: Georgia, "Songti SC", serif;
   font-size: 34rpx;
-  font-weight: 900;
+  font-weight: 700;
+  color: #050505;
 }
 
+/* ---- sections ---- */
 .settings-section {
-  margin-top: 30rpx;
-  padding: 0 30rpx;
+  margin-top: 28rpx;
+  padding: 4rpx 36rpx;
 }
 
-.section-label.inner {
-  margin: 0;
-  padding: 28rpx 0 8rpx;
+.section-label {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #b9b0a5;
+  letter-spacing: 2rpx;
+  padding: 28rpx 0 12rpx;
 }
 
 .settings-item {
@@ -38,20 +30,27 @@
   align-items: center;
   justify-content: space-between;
   gap: 24rpx;
-  border-bottom: 2rpx solid #e5ddd4;
+  border-bottom: 1rpx solid #ece6de;
   font-size: 29rpx;
+  color: #2d2a26;
 }
 
 .settings-item:last-child {
   border-bottom: 0;
 }
 
-.key-status {
+.item-right {
   display: flex;
   gap: 12rpx;
   align-items: center;
 }
 
+.muted {
+  color: #9b9690;
+  font-size: 26rpx;
+}
+
+/* ---- key input ---- */
 .key-input-area {
   padding: 20rpx 0 30rpx;
 }
@@ -72,12 +71,28 @@
 }
 
 .key-btn {
-  height: 72rpx;
-  font-size: 25rpx;
+  height: 76rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 27rpx;
+  font-weight: 600;
+}
+
+.key-btn.primary {
+  background: #050505;
+  color: #fff;
+}
+
+.key-btn.outline {
+  background: #fff;
+  border: 1rpx solid #d4cec6;
+  color: #6b6560;
 }
 
 .key-hint {
   margin-top: 16rpx;
   font-size: 23rpx;
-  line-height: 1.45;
+  line-height: 1.5;
 }

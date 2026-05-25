@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/home/home",
+    "pages/setup/setup",
     "pages/bookshelf/bookshelf",
     "pages/book-detail/book-detail",
     "pages/notes/notes",
@@ -13,7 +14,7 @@
   ],
   "window": {
     "navigationStyle": "default",
-    "navigationBarTitleText": "微读 Read",
+    "navigationBarTitleText": "微读工作室",
     "navigationBarBackgroundColor": "#fbf4ed",
     "navigationBarTextStyle": "black",
     "backgroundColor": "#fbf4ed",

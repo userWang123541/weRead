@@ -9,22 +9,29 @@ App({
       traceUser: true
     });
 
-    // 检查是否有 API Key，没有则跳转设置页
-    var apiKey = wx.getStorageSync('weread_api_key');
-    this.globalData.hasApiKey = !!apiKey;
+    this._checkUser();
   },
 
-  onShow: function () {
-    // 每次显示时刷新状态
-    var apiKey = wx.getStorageSync('weread_api_key');
-    this.globalData.hasApiKey = !!apiKey;
+  _checkUser: function () {
+    var self = this;
+    wx.cloud.callFunction({ name: 'checkUser', data: {}, config: { timeout: 10000 } }).then(function (res) {
+      var r = res.result || {};
+      self.globalData.userStatus = r;
+
+      if (!r.hasKey) {
+        wx.redirectTo({ url: '/pages/setup/setup' });
+      } else if (r.syncStatus === 'syncing' || r.syncStatus === 'classifying' || r.syncStatus === 'error') {
+        wx.redirectTo({ url: '/pages/setup/setup' });
+      }
+    }).catch(function (err) {
+      console.error('checkUser failed:', err);
+    });
   },
 
   globalData: {
-    hasApiKey: false,
+    userStatus: null,
     user: {
-      name: 'Jafar',
-      studio: '微信读书工作室',
+      name: '沉思的读者',
       avatar: ''
     }
   }
