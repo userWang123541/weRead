@@ -31,8 +31,9 @@ LLM_CHAT_MODEL="${LLM_CHAT_MODEL:-mimo-v2.5-pro}"
 # ── 前置检查 ──
 info "检查运行环境..."
 
-if [ "$(id -u)" -eq 0 ]; then
-  fail "请不要用 root 用户运行此脚本，使用普通用户 + sudo"
+REAL_USER="${SUDO_USER:-$USER}"
+if [ "$(id -u)" -eq 0 ] && [ -z "$SUDO_USER" ]; then
+  fail "请用普通用户 + sudo 运行此脚本，例如: sudo bash deploy.sh"
 fi
 
 if ! command -v sudo &>/dev/null; then
