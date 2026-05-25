@@ -1,60 +1,61 @@
-.ai-page {
+.light-page {
+  padding-bottom: 160rpx;
+}
+
+.light-header {
+  padding-top: 18rpx;
   text-align: center;
 }
 
-.ai-intro {
-  padding: 34rpx 32rpx;
-  text-align: left;
-  background:
-    linear-gradient(90deg, rgba(138, 122, 90, 0.12) 1rpx, transparent 1rpx),
-    linear-gradient(180deg, #fffdf8, #f1eadf);
-  background-size: 32rpx 32rpx;
+.center {
+  text-align: center;
+  margin-bottom: 24rpx;
 }
 
-.ai-title {
-  margin-bottom: 14rpx;
-  font-size: 34rpx;
-  font-weight: 500;
-  color: #2f2922;
-  line-height: 1.35;
+.light-sub {
+  max-width: 610rpx;
+  margin: 0 auto;
+  color: #5c5b57;
+  font-size: 30rpx;
+  line-height: 1.55;
 }
 
-.ask-box {
-  height: 72rpx;
-  margin-top: 24rpx;
-  padding: 0 22rpx;
+.spark-card {
+  margin: 250rpx auto 28rpx;
+  width: 116rpx;
+  height: 116rpx;
+  border-radius: 50%;
+  background: #fffefd;
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  justify-content: center;
+  box-shadow: 0 14rpx 38rpx rgba(36, 24, 12, 0.06);
 }
 
-.ask-box input {
-  flex: 1;
-  text-align: left;
-  font-size: 25rpx;
+.spark {
+  color: #5d5f5d;
+  font-size: 48rpx;
 }
 
-.placeholder {
-  color: #a79a8d;
-}
-
-.ask-title {
-  margin: 34rpx 0 16rpx;
-  text-align: left;
+.try-text {
+  text-align: center;
+  color: #66635f;
+  font-size: 30rpx;
+  margin-bottom: 58rpx;
 }
 
 .question-list {
   display: flex;
   flex-direction: column;
-  gap: 14rpx;
+  gap: 26rpx;
 }
 
 .question {
-  min-height: 76rpx;
-  padding: 0 26rpx;
+  min-height: 102rpx;
+  padding: 0 48rpx;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  font-size: 25rpx;
-  color: #4b4239;
+  color: #050505;
+  font-size: 29rpx;
+  line-height: 1.4;
 }

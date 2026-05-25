@@ -1,42 +1,58 @@
-<view class="screen detail">
-  <view class="nav">
-    <button class="icon-button" bindtap="back">‹</button>
-    <button class="icon-button">···</button>
-  </view>
-
-  <view class="hero">
-    <view class="detail-cover cover {{book.palette}}">
-      <text class="cover-title">{{book.title}}</text>
+<view class="screen detail-page">
+  <view wx:if="{{loading}}" class="loading">加载中...</view>
+  <view wx:elif="{{book}}">
+    <view class="category-nav">
+      <button class="top-icon" bindtap="back">‹</button>
+      <view class="top-title">书籍详情</view>
+      <view></view>
     </view>
-    <view class="book-name">{{book.title}}</view>
-    <view class="muted">{{book.author}} · 在读中 · 进度 {{book.progress}}%</view>
-    <view class="ring">
-      <view class="ring-score">{{book.progress}}%</view>
-    </view>
-  </view>
 
-  <view class="read-stats card">
-    <view><text>{{book.readTime}}</text><label>已读时长</label></view>
-    <view><text>{{book.lastRead}}</text><label>最近阅读</label></view>
-  </view>
-
-  <view class="action-row">
-    <button class="primary-button">继续阅读</button>
-    <button class="secondary-button" bindtap="addNote">添加笔记</button>
-  </view>
-
-  <view class="section-title block-title">你的阅读轨迹</view>
-  <view class="timeline card">
-    <block wx:for="{{timeline}}" wx:key="date">
-      <view class="timeline-item">
-        <view class="dot"></view>
-        <text class="date">{{item.date}}</text>
-        <text class="action">{{item.action}}</text>
-        <text wx:if="{{item.tag}}" class="tag">{{item.tag}}</text>
+    <view class="detail-hero">
+      <view class="detail-cover" wx:if="{{book.cover}}">
+        <image class="cover-img" src="{{book.cover}}" mode="aspectFill"></image>
       </view>
-    </block>
-  </view>
+      <view class="detail-cover fallback {{book.palette}}" wx:else>
+        <text>{{book.title}}</text>
+      </view>
+      <view class="book-name">{{book.title}}</view>
+      <view class="muted">{{book.author}} · {{statusText}} · 进度 {{book.progress}}%</view>
+    </view>
 
-  <view class="section-title block-title">AI 理解这本书</view>
-  <view class="ai-box card">你的观点让这本书从说服术，变成一组可复用的行为设计框架。</view>
+    <view class="detail-stats">
+      <view class="profile-stat card"><text>{{highlightCount}}</text><label>划线</label></view>
+      <view class="profile-stat card"><text>{{reviewCount}}</text><label>想法</label></view>
+    </view>
+
+    <view class="action-grid detail-actions">
+      <button class="big-button primary">继续阅读</button>
+      <button class="big-button outline" bindtap="goNotes">查看笔记</button>
+    </view>
+
+    <view class="section-label" wx:if="{{timeline.length > 0}}">阅读轨迹</view>
+    <view class="timeline card" wx:if="{{timeline.length > 0}}">
+      <block wx:for="{{timeline}}" wx:key="date">
+        <view class="timeline-item"><text>{{item.date}}</text><view>{{item.action}}</view></view>
+      </block>
+    </view>
+
+    <view class="section-label" wx:if="{{highlights.length > 0}}">精选划线</view>
+    <view class="highlights-list" wx:if="{{highlights.length > 0}}">
+      <block wx:for="{{highlights}}" wx:key="index">
+        <view class="note-card card">
+          <view class="note-quote">"{{item.text}}"</view>
+          <view class="muted note-meta">{{item.chapter}} {{item.timeAgo}}</view>
+        </view>
+      </block>
+    </view>
+
+    <view class="section-label" wx:if="{{reviews.length > 0}}">我的想法</view>
+    <view class="reviews-list" wx:if="{{reviews.length > 0}}">
+      <block wx:for="{{reviews}}" wx:key="index">
+        <view class="note-card card">
+          <view class="note-quote">{{item.text}}</view>
+          <view class="muted note-meta">{{item.chapter}} {{item.timeAgo}}</view>
+        </view>
+      </block>
+    </view>
+  </view>
 </view>

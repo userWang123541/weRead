@@ -4,31 +4,31 @@
     "pages/bookshelf/bookshelf",
     "pages/book-detail/book-detail",
     "pages/notes/notes",
-    "pages/ai/ai",
+    "pages/categories/categories",
     "pages/profile/profile",
+    "pages/ai/ai",
     "pages/settings/settings",
     "pages/sync/sync",
-    "pages/search/search",
-    "pages/categories/categories"
+    "pages/search/search"
   ],
   "window": {
     "navigationStyle": "default",
     "navigationBarTitleText": "微读 Read",
-    "navigationBarBackgroundColor": "#faf8f3",
+    "navigationBarBackgroundColor": "#fbf4ed",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#faf8f3",
+    "backgroundColor": "#fbf4ed",
     "backgroundTextStyle": "dark"
   },
   "tabBar": {
     "custom": false,
-    "color": "#8a8a8a",
-    "selectedColor": "#1a1a1a",
-    "backgroundColor": "#fdfcf8",
+    "color": "#4a4f4f",
+    "selectedColor": "#050505",
+    "backgroundColor": "#fbf4ed",
     "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/home/home",
-        "text": "首页",
+        "text": "概览",
         "iconPath": "assets/tab/home-off.png",
         "selectedIconPath": "assets/tab/home-on.png"
       },
@@ -40,13 +40,13 @@
       },
       {
         "pagePath": "pages/notes/notes",
-        "text": "笔记",
+        "text": "笔记管家",
         "iconPath": "assets/tab/notes-off.png",
         "selectedIconPath": "assets/tab/notes-on.png"
       },
       {
         "pagePath": "pages/ai/ai",
-        "text": "AI",
+        "text": "拾光",
         "iconPath": "assets/tab/ai-off.png",
         "selectedIconPath": "assets/tab/ai-on.png"
       },

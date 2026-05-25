@@ -1,85 +1,88 @@
-.notes-page .search-box {
-  margin-bottom: 18rpx;
+.notebook-page {
+  padding-bottom: 160rpx;
+}
+
+.search-pill {
+  margin-bottom: 38rpx;
+}
+
+.search-pill input {
+  flex: 1;
+  font-size: 27rpx;
+}
+
+.search-placeholder {
+  color: #777c7b;
+}
+
+.filter-row {
+  display: flex;
+  gap: 16rpx;
+  overflow-x: auto;
+  padding-bottom: 26rpx;
+}
+
+.filter-row .tag.active {
+  background: #050505;
+  color: #fff;
 }
 
 .note-list {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
-  margin-top: 18rpx;
+  gap: 28rpx;
 }
 
 .note-card {
-  padding: 30rpx 32rpx;
+  padding: 34rpx 34rpx 32rpx;
 }
 
-.note-top {
+.note-head {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  gap: 20rpx;
 }
 
-.mini-cover {
-  width: 44rpx;
-  height: 58rpx;
-  display: inline-block;
-  vertical-align: middle;
-  margin-right: 12rpx;
-}
-
-.book {
-  display: inline-block;
-  vertical-align: middle;
-  max-width: 520rpx;
-  font-size: 22rpx;
-  font-weight: 500;
-  color: #6b6258;
-}
-
-.note-title {
-  margin-top: 24rpx;
-  padding-left: 22rpx;
-  border-left: 3rpx solid #292520;
-  font-size: 29rpx;
-  line-height: 1.72;
-  font-weight: 400;
-  color: #2b2621;
-}
-
-.note-body {
-  margin-top: 18rpx;
-  padding: 18rpx 20rpx;
-  border-radius: 16rpx;
-  background: #f7f2e9;
+.note-book {
   font-size: 25rpx;
-  line-height: 1.72;
-  color: #746a5f;
+  font-weight: 800;
+  color: #343838;
 }
 
-.tag-row {
+.note-chapter {
+  margin-top: 12rpx;
+  font-size: 25rpx;
+  color: #080808;
+}
+
+.more {
+  font-size: 40rpx;
+  color: #606563;
+  line-height: 1;
+}
+
+.note-quote {
+  margin-top: 34rpx;
+  padding-left: 24rpx;
+  border-left: 5rpx solid #d1d3d0;
+  font-size: 30rpx;
+  line-height: 1.8;
+  color: #050505;
+}
+
+.note-note {
+  margin-top: 28rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 14rpx;
+  background: #f4eee6;
+  color: #5b5752;
+  font-size: 25rpx;
+  line-height: 1.55;
+}
+
+.note-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 12rpx;
-  margin-top: 20rpx;
-}
-
-.tag-row text {
-  padding: 5rpx 14rpx;
-  border-radius: 999rpx;
-  background: #f5f1ea;
-  color: #8c8277;
-  font-size: 20rpx;
-}
-
-.note-actions {
-  margin-top: 20rpx;
-  display: flex;
-  justify-content: flex-end;
-  gap: 34rpx;
-  color: #aaa198;
-  font-size: 22rpx;
-}
-
-.tiny {
-  font-size: 22rpx;
+  gap: 14rpx;
+  margin-top: 30rpx;
 }

@@ -1,24 +1,112 @@
-.category-list {
-  padding: 12rpx 20rpx;
+.category-page {
+  padding-bottom: 160rpx;
 }
 
-.category-item {
-  min-height: 78rpx;
+.category-nav {
+  height: 72rpx;
   display: grid;
-  grid-template-columns: 42rpx 1fr 60rpx 46rpx;
+  grid-template-columns: 80rpx 1fr 80rpx;
   align-items: center;
-  border-bottom: 1rpx solid #eee1d1;
-  font-size: 25rpx;
+  margin-bottom: 42rpx;
 }
 
-.category-item:last-child {
-  border-bottom: 0;
+.search-pill {
+  margin-bottom: 18rpx;
 }
 
-.folder {
-  color: #dfa45f;
+.search-pill input {
+  flex: 1;
+  font-size: 27rpx;
 }
 
-.category-name {
-  font-weight: 700;
+.add-category {
+  width: 100%;
+  height: 88rpx;
+  border-radius: 999rpx;
+  background: #050505;
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 800;
+  margin-bottom: 58rpx;
+}
+
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 30rpx;
+}
+
+.category-card {
+  padding: 34rpx;
+}
+
+.category-main {
+  display: grid;
+  grid-template-columns: 18rpx 1fr auto;
+  gap: 22rpx;
+  align-items: start;
+}
+
+.category-mark {
+  width: 14rpx;
+  height: 58rpx;
+  margin-top: 12rpx;
+  border-radius: 999rpx;
+  background: #e7ded5;
+}
+
+.category-title {
+  font-size: 36rpx;
+  line-height: 1.25;
+  font-weight: 500;
+}
+
+.category-desc {
+  margin-top: 20rpx;
+  color: #343838;
+  font-size: 27rpx;
+  line-height: 1.45;
+}
+
+.count-pill {
+  min-width: 120rpx;
+  height: 48rpx;
+  padding: 0 22rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3eee8;
+  color: #343838;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.sub-list {
+  margin: 28rpx 0 0 58rpx;
+  padding-left: 30rpx;
+  border-left: 4rpx solid #e7ded5;
+}
+
+.sub-item {
+  min-height: 76rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 30rpx;
+}
+
+.category-actions {
+  margin-top: 34rpx;
+  padding-top: 28rpx;
+  border-top: 2rpx solid #e5ddd4;
+  display: flex;
+  justify-content: flex-end;
+  gap: 50rpx;
+  font-size: 32rpx;
+  color: #343838;
+}
+
+.category-actions .danger {
+  color: #c1121f;
 }

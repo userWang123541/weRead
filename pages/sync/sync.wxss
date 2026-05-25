@@ -14,30 +14,68 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #d8e9d7;
-  color: #2c8b45;
+  background: #e9e1d8;
+  color: #050505;
   font-size: 58rpx;
 }
 
 .sync-title {
-  font-size: 30rpx;
-  font-weight: 800;
+  font-size: 32rpx;
+  font-weight: 600;
   margin-bottom: 16rpx;
 }
 
+.sync-desc {
+  font-size: 24rpx;
+  line-height: 1.6;
+  margin-bottom: 12rpx;
+}
+
 .sync-list {
-  margin-top: 34rpx;
+  margin-top: 30rpx;
   text-align: left;
 }
 
-.sync-list view {
+.sync-row {
   display: flex;
   justify-content: space-between;
-  min-height: 58rpx;
+  align-items: center;
+  min-height: 64rpx;
   color: #584b3f;
-  font-size: 24rpx;
+  font-size: 26rpx;
+  border-bottom: 1rpx solid #eee9df;
 }
 
-.sync-list text {
-  color: #2c8b45;
+.sync-row:last-child {
+  border-bottom: 0;
+}
+
+.sync-ok {
+  color: #050505;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.sync-btn-wrap {
+  margin-top: 36rpx;
+  padding: 0 20rpx;
+}
+
+.sync-btn {
+  width: 100%;
+  height: 80rpx;
+  line-height: 80rpx;
+  text-align: center;
+  border-radius: 999rpx;
+  background: #050505;
+  color: #fffdf8;
+  font-size: 28rpx;
+  font-weight: 500;
+  border: none;
+}
+
+.sync-btn[disabled] {
+  opacity: 0.4;
+  color: #fffdf8;
+  background: #2b2621;
 }

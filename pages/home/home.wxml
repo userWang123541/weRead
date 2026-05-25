@@ -1,46 +1,56 @@
-<view class="screen home">
-  <view class="nav">
-    <view>
-      <view class="hello">晚上好，Jafar</view>
-      <view class="muted small">你已经阅读了 {{stats.readingDays}} 天</view>
+<view class="screen overview-page">
+  <view class="hero-copy">
+    <view class="hero-top">
+      <view class="hero-title">阅读不是记录，<br />是再组织</view>
     </view>
-    <view class="nav-actions">
-      <button class="icon-button" bindtap="goSearch">⌕</button>
-      <button class="avatar" bindtap="goProfile"></button>
+    <view class="hero-sub">把微信读书的划线、想法、书评，变成可检索、可判断、可创作的生产力素材。</view>
+  </view>
+
+  <view class="black-note">
+    <view class="quote-ghost">“</view>
+    <view class="black-note-text">{{quote.text || '阅读好书，就像是和过去最伟大的智者交谈。'}}</view>
+    <view class="black-note-book">— {{quote.book || 'René Descartes'}}</view>
+  </view>
+
+  <view class="wide-stats card">
+    <view class="wide-stat"><text>{{stats.books || 0}}</text><view>书籍</view></view>
+    <view class="wide-stat"><text>{{stats.highlights || 0}}</text><view>划线</view></view>
+    <view class="wide-stat"><text>{{stats.notes || 0}}</text><view>想法</view></view>
+    <view class="wide-stat"><text>{{stats.unclassified || 0}}</text><view>未分类</view></view>
+    <view class="wide-stat"><text>{{stats.classified || 0}}</text><view>已分类</view></view>
+    <view class="wide-stat"><text>{{stats.readingDays || 0}}</text><view>阅读日</view></view>
+  </view>
+
+  <view class="feature-grid">
+    <view class="feature-card card" bindtap="goBookshelf">
+      <view class="feature-num">{{stats.books || 0}}</view>
+      <view class="feature-title">书架</view>
+      <view class="feature-desc">在读、已读完、未读分类展示</view>
+    </view>
+    <view class="feature-card card" bindtap="goNotes">
+      <view class="feature-num">{{stats.cards || stats.notes || 0}}</view>
+      <view class="feature-title">笔记管家</view>
+      <view class="feature-desc">跨书检索、分类管理、查看原文</view>
+    </view>
+    <view class="feature-card card" bindtap="goAi">
+      <view class="feature-num">AI</view>
+      <view class="feature-title">拾光</view>
+      <view class="feature-desc">描述你想找的内容，AI 从笔记中召回</view>
     </view>
   </view>
 
-  <view class="headline">阅读不是记录，<br />是再组织</view>
-  <view class="subline">今天你的思想宇宙新增了 12 条连接 →</view>
-
-  <view class="stat-grid">
-    <view class="stat card"><text>{{stats.books}}</text><view>本书</view></view>
-    <view class="stat card"><text>{{stats.highlights}}</text><view>划线</view></view>
-    <view class="stat card"><text>{{stats.notes}}</text><view>想法</view></view>
-    <view class="stat card"><text>{{stats.readingDays}}</text><view>阅读日</view></view>
-  </view>
-
-  <view class="quote-card card">
-    <view class="quote-mark">“</view>
-    <view class="quote-text">因为总有那么一群不识时务的人，无论时间形势如何，无论对手有多强大，坚定地挺身而出。</view>
-    <view class="quote-source">《雷雨前的黎明》</view>
-  </view>
-
-  <view class="section-head">
-    <text class="section-title">最近素材</text>
-    <text class="muted" bindtap="goNotes">查看全部</text>
+  <view class="recent-head">
+    <view class="recent-title">最近素材</view>
+    <view class="recent-more" bindtap="goNotes">查看全部 →</view>
   </view>
   <view class="recent-list">
-    <block wx:for="{{recentNotes}}" wx:key="id">
-      <view class="recent-item card">
-        <view class="mini-cover cover {{item.id === 'n1' ? 'dark' : 'orange'}}">
-          <text class="cover-title">{{item.book}}</text>
+    <block wx:for="{{recentCards}}" wx:key="id">
+      <view class="recent-card card" data-bookid="{{item.bookId}}" bindtap="goNotes">
+        <view class="recent-meta">
+          <view class="recent-book">{{item.bookTitle}}</view>
+          <view class="recent-time">{{item.timeAgo}}</view>
         </view>
-        <view class="recent-main">
-          <view class="recent-book">{{item.book}}</view>
-          <view class="recent-text">{{item.title}}</view>
-          <view class="muted tiny">05/21 17:21 · {{item.tags[0]}}</view>
-        </view>
+        <view class="recent-quote">{{item.quote}}</view>
       </view>
     </block>
   </view>

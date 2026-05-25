@@ -1,120 +1,102 @@
-.detail {
-  padding-bottom: 60rpx;
+.detail-page {
+  padding-bottom: 120rpx;
 }
 
-.hero {
-  position: relative;
+.detail-hero {
   text-align: center;
-  padding-bottom: 28rpx;
-  border-bottom: 1rpx solid #eee9df;
 }
 
 .detail-cover {
-  width: 180rpx;
-  height: 240rpx;
-  margin: -20rpx auto 28rpx;
+  width: 220rpx;
+  height: 310rpx;
+  margin: 0 auto 32rpx;
+  border-radius: 22rpx;
+  overflow: hidden;
+  background: #ede8df;
+  box-shadow: 0 14rpx 34rpx rgba(36, 24, 12, 0.08);
 }
 
-.book-name {
-  font-size: 36rpx;
-  font-weight: 500;
-  margin-bottom: 12rpx;
-  color: #2f2922;
+.cover-img {
+  width: 100%;
+  height: 100%;
 }
 
-.ring {
-  position: absolute;
-  right: 4rpx;
-  top: 214rpx;
-  width: 112rpx;
-  height: 112rpx;
-  border-radius: 50%;
-  border: 8rpx solid #3a332b;
-  border-left-color: #eee8dc;
+.detail-cover.fallback {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 253, 248, 0.88);
-}
-
-.ring-score {
-  font-size: 26rpx;
-  font-weight: 500;
-}
-
-.read-stats {
-  margin-top: 28rpx;
-  padding: 26rpx 0;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  text-align: center;
-}
-
-.read-stats view:first-child {
-  border-right: 1rpx solid #eadccc;
-}
-
-.read-stats text {
-  display: block;
+  padding: 24rpx;
   font-size: 30rpx;
-  font-weight: 500;
 }
 
-.read-stats label {
-  margin-top: 8rpx;
-  display: block;
-  color: #94877a;
-  font-size: 22rpx;
+.book-name {
+  font-size: 42rpx;
+  font-weight: 900;
+  line-height: 1.25;
 }
 
-.action-row {
+.detail-stats {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18rpx;
-  margin: 24rpx 0 32rpx;
+  grid-template-columns: 1fr 1fr;
+  gap: 22rpx;
+  margin-top: 46rpx;
 }
 
-.block-title {
-  margin: 28rpx 0 16rpx;
+.detail-stats .profile-stat {
+  height: 160rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.detail-stats .profile-stat text {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 44rpx;
+  font-weight: 800;
+}
+
+.detail-stats .profile-stat label {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #343838;
+}
+
+.detail-actions {
+  margin-top: 34rpx;
 }
 
 .timeline {
-  padding: 22rpx 26rpx;
+  padding: 20rpx 32rpx;
 }
 
 .timeline-item {
+  min-height: 72rpx;
   display: grid;
-  grid-template-columns: 18rpx 92rpx 1fr;
-  gap: 14rpx;
+  grid-template-columns: 110rpx 1fr;
   align-items: center;
-  min-height: 58rpx;
-  font-size: 24rpx;
+  border-bottom: 1rpx solid #e5ddd4;
+  font-size: 26rpx;
 }
 
-.dot {
-  width: 12rpx;
-  height: 12rpx;
-  border-radius: 50%;
-  background: #8a7a5a;
+.timeline-item:last-child {
+  border-bottom: 0;
 }
 
-.date {
-  color: #806f60;
+.note-card {
+  margin-bottom: 24rpx;
+  padding: 32rpx;
 }
 
-.tag {
-  grid-column: 3;
-  width: fit-content;
-  padding: 6rpx 14rpx;
-  border-radius: 999rpx;
-  background: #f5f0e8;
-  color: #8a7a5a;
-  font-size: 20rpx;
+.note-quote {
+  padding-left: 24rpx;
+  border-left: 5rpx solid #d1d3d0;
+  font-size: 29rpx;
+  line-height: 1.75;
 }
 
-.ai-box {
-  padding: 28rpx;
-  color: #5f554b;
-  font-size: 25rpx;
-  line-height: 1.72;
+.note-meta {
+  margin-top: 22rpx;
+  font-size: 23rpx;
 }

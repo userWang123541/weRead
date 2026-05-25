@@ -1,35 +1,31 @@
-<view class="screen notes-page">
-  <view class="nav">
-    <view class="nav-title">笔记</view>
-    <view class="nav-actions">
-      <button class="icon-button" bindtap="goSearch">⌕</button>
-    </view>
+<view class="screen notebook-page">
+  <view class="search-pill">
+    <text>⌕</text>
+    <input value="{{searchQuery}}" bindinput="onSearch" placeholder="搜索笔记、金句或作者..." placeholder-class="search-placeholder" />
   </view>
-  <view class="search-box">⌕ 搜索观点、情绪、概念</view>
-  <view class="pill-row">
-    <block wx:for="{{filters}}" wx:key="*this">
-      <view class="pill {{active === index ? 'active' : ''}}" data-index="{{index}}" bindtap="setFilter">{{item}}</view>
+
+  <view class="filter-row">
+    <block wx:for="{{typeFilters}}" wx:key="*this">
+      <view class="tag {{activeType === index ? 'active' : ''}}" data-index="{{index}}" bindtap="setTypeFilter">{{item}}</view>
     </block>
   </view>
+
   <view class="note-list">
-    <block wx:for="{{notes}}" wx:key="id">
-      <view class="note-card card">
-        <view class="note-top">
-          <view class="mini-cover cover {{item.id === 'n1' ? 'dark' : 'orange'}}">
-            <text class="cover-title">{{item.book}}</text>
+    <block wx:for="{{cards}}" wx:key="id">
+      <view class="note-card card" data-bookid="{{item.bookId}}" bindtap="goBook">
+        <view class="note-head">
+          <view>
+            <view class="note-book">{{item.bookTitle}}</view>
+            <view class="note-chapter">{{item.chapter || item.author}}</view>
           </view>
-          <view class="book">{{item.book}}</view>
+          <text class="more">⋮</text>
         </view>
-        <view class="note-title">{{item.title}}</view>
-        <view class="note-body">{{item.body}}</view>
-        <view class="tag-row">
+        <view class="note-quote">"{{item.quote || item.note}}"</view>
+        <view class="note-note" wx:if="{{item.note && item.quote}}">{{item.note}}</view>
+        <view class="note-tags">
           <block wx:for="{{item.tags}}" wx:key="*this">
-            <text>{{item}}</text>
+            <text class="tag">{{item}}</text>
           </block>
-        </view>
-        <view class="note-actions">
-          <text>♡ {{item.likes}}</text>
-          <text>↗</text>
         </view>
       </view>
     </block>

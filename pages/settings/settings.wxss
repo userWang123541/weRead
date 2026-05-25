@@ -1,35 +1,83 @@
-.profile-strip {
-  padding: 22rpx;
+.settings-page {
+  padding-bottom: 140rpx;
+}
+
+.reader-card {
+  min-height: 160rpx;
+  padding: 30rpx;
   display: flex;
-  gap: 18rpx;
   align-items: center;
+  gap: 24rpx;
 }
 
-.name {
-  font-size: 28rpx;
-  font-weight: 500;
+.reader-avatar {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #efe4d0, #8f765b);
 }
 
-.settings-list {
-  margin-top: 22rpx;
-  padding: 0 22rpx;
+.reader-name.small {
+  font-size: 34rpx;
+  font-weight: 900;
+}
+
+.settings-section {
+  margin-top: 30rpx;
+  padding: 0 30rpx;
+}
+
+.section-label.inner {
+  margin: 0;
+  padding: 28rpx 0 8rpx;
 }
 
 .settings-item {
-  min-height: 88rpx;
+  min-height: 92rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1rpx solid #eee1d1;
-  font-size: 26rpx;
+  gap: 24rpx;
+  border-bottom: 2rpx solid #e5ddd4;
+  font-size: 29rpx;
 }
 
 .settings-item:last-child {
   border-bottom: 0;
 }
 
-.logout {
-  margin-top: 34rpx;
-  color: #9a6a6a;
+.key-status {
+  display: flex;
+  gap: 12rpx;
+  align-items: center;
+}
+
+.key-input-area {
+  padding: 20rpx 0 30rpx;
+}
+
+.key-input {
+  height: 78rpx;
+  padding: 0 24rpx;
+  border-radius: 18rpx;
+  background: #f4eee6;
   font-size: 26rpx;
+}
+
+.key-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18rpx;
+  margin-top: 20rpx;
+}
+
+.key-btn {
+  height: 72rpx;
+  font-size: 25rpx;
+}
+
+.key-hint {
+  margin-top: 16rpx;
+  font-size: 23rpx;
+  line-height: 1.45;
 }

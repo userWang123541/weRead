@@ -1,12 +1,7 @@
 require('dotenv').config();
 const path = require('path');
-const {
-  syncWereadData,
-  writeJson,
-} = require('./lib/weread-service');
-const {
-  buildCards,
-} = require('./lib/card-engine');
+const { syncWereadData, writeJson } = require('./lib/weread-service');
+const { buildCards } = require('./lib/card-engine');
 
 const OUTPUT = path.join(__dirname, 'data', 'weread-data.json');
 const CARDS_OUTPUT = path.join(__dirname, 'data', 'cards.json');

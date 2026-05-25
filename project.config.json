@@ -1,8 +1,9 @@
 {
-  "appid": "wx4292ea37e950d963",
+  "appid": "wxd820ddbcf451d502",
   "compileType": "miniprogram",
   "libVersion": "3.7.12",
   "projectname": "weread-studio-miniprogram",
+  "cloudfunctionRoot": "cloudfunctions/",
   "setting": {
     "urlCheck": false,
     "es6": true,
@@ -31,8 +32,66 @@
   "condition": {},
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "value": "node_modules",
+        "type": "folder"
+      },
+      {
+        "value": "lib",
+        "type": "folder"
+      },
+      {
+        "value": "data",
+        "type": "folder"
+      },
+      {
+        "value": "config",
+        "type": "folder"
+      },
+      {
+        "value": "scripts",
+        "type": "folder"
+      },
+      {
+        "value": "designs",
+        "type": "folder"
+      },
+      {
+        "value": ".claude",
+        "type": "folder"
+      },
+      {
+        "value": "fetch-data.js",
+        "type": "file"
+      },
+      {
+        "value": "classify.js",
+        "type": "file"
+      },
+      {
+        "value": "package.json",
+        "type": "file"
+      },
+      {
+        "value": "package-lock.json",
+        "type": "file"
+      },
+      {
+        "value": ".env",
+        "type": "file"
+      },
+      {
+        "value": ".mcp.json",
+        "type": "file"
+      },
+      {
+        "value": "README.md",
+        "type": "file"
+      }
+    ],
     "include": []
   },
-  "editorSetting": {}
+  "editorSetting": {},
+  "cloudfunctionTemplateRoot": "cloudfunctionTemplate/"
 }

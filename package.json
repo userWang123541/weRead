@@ -1,19 +1,12 @@
 {
   "name": "weread-studio-miniprogram",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "WeRead Studio WeChat Mini Program",
+  "description": "WeRead Studio WeChat Mini Program (Cloud Edition)",
   "scripts": {
-    "start": "echo \"Open this folder with WeChat DevTools.\"",
-    "sync": "node fetch-data.js",
-    "sync:sample": "node fetch-data.js --max-books=5",
-    "classify": "node classify.js"
+    "start": "echo \"Open this folder with WeChat DevTools.\""
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "dotenv": "^17.4.2",
-    "openai": "^6.38.0"
-  }
+  "license": "ISC"
 }

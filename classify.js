@@ -5,7 +5,6 @@ const { classifyNotes } = require('./lib/classifier');
 
 const DATA_DIR = path.join(__dirname, 'data');
 const RAW_FILE = path.join(DATA_DIR, 'weread-data.json');
-const CARDS_FILE = path.join(DATA_DIR, 'cards.json');
 const CLASSIFIED_FILE = path.join(DATA_DIR, 'classified.json');
 
 async function main() {
@@ -21,14 +20,10 @@ async function main() {
     process.exit(1);
   }
 
-  // Flatten all highlights and reviews into notes
   const notes = [];
   for (const book of raw.books) {
     const chapterMap = {};
-    for (const ch of book.chapters || []) {
-      chapterMap[ch.chapterUid] = ch.title;
-    }
-
+    for (const ch of book.chapters || []) chapterMap[ch.chapterUid] = ch.title;
     for (const h of book.highlights || []) {
       notes.push({
         type: 'highlight',
@@ -41,7 +36,6 @@ async function main() {
         range: h.range,
       });
     }
-
     for (const r of book.reviews || []) {
       notes.push({
         type: 'review',
@@ -54,13 +48,10 @@ async function main() {
     }
   }
 
-  // Filter out empty notes
   const validNotes = notes.filter(n => n.text.trim().length > 0);
   console.log(`共 ${validNotes.length} 条有效笔记，开始分类...\n`);
 
   const { results, stats } = await classifyNotes(validNotes);
-
-  // Save classified data
   await writeJson(CLASSIFIED_FILE, {
     classifiedAt: new Date().toISOString(),
     totalNotes: results.length,
@@ -69,11 +60,6 @@ async function main() {
   });
 
   console.log(`\n已保存到 ${CLASSIFIED_FILE}`);
-  console.log('\n分类统计:');
-  const sorted = Object.entries(stats).sort((a, b) => b[1] - a[1]);
-  for (const [cat, count] of sorted) {
-    console.log(`  ${cat}: ${count}`);
-  }
 }
 
 main().catch(err => {

@@ -1,16 +1,37 @@
-<view class="screen">
-  <view class="nav">
-    <button class="icon-button" bindtap="back">‹</button>
-    <view class="nav-title">分类管理</view>
-    <button class="icon-button">＋</button>
+<view class="screen category-page">
+  <view class="search-pill">
+    <text>⌕</text>
+    <input value="{{searchQuery}}" bindinput="onSearch" placeholder="搜索分类..." placeholder-class="search-placeholder" />
   </view>
-  <view class="category-list card">
-    <block wx:for="{{categories}}" wx:key="name">
-      <view class="category-item">
-        <view class="folder">▰</view>
-        <view class="category-name">{{item.name}}</view>
-        <view class="muted">{{item.count}}</view>
-        <view class="muted">···</view>
+
+  <button class="add-category">＋ 新增分类</button>
+
+  <view class="category-list">
+    <block wx:for="{{filteredDomains || domains}}" wx:key="name">
+      <view class="category-card card">
+        <view class="category-main" data-index="{{index}}" bindtap="toggleDomain">
+          <view class="category-mark"></view>
+          <view class="category-copy">
+            <view class="category-title">{{item.name}}</view>
+            <view class="category-desc">{{item.subs[0].description || '阅读主题与知识结构整理'}}</view>
+          </view>
+          <view class="count-pill">{{item.count || item.subs.length}} 笔记</view>
+        </view>
+
+        <view class="sub-list" wx:if="{{expandedDomain === index}}">
+          <block wx:for="{{item.subs}}" wx:key="id" wx:for-item="sub">
+            <view class="sub-item" data-id="{{sub.id}}" bindtap="tapCategory">
+              <view>{{sub.name}}</view>
+              <text>✎</text>
+            </view>
+          </block>
+        </view>
+
+        <view class="category-actions">
+          <text>✎</text>
+          <text>⌘</text>
+          <text class="danger">▢</text>
+        </view>
       </view>
     </block>
   </view>

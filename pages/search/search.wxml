@@ -1,20 +1,38 @@
-<view class="screen">
+<view class="screen search-page">
   <view class="search-top">
-    <view class="search-box grow">⌕ 搜索观点、书名、标签</view>
-    <text bindtap="back">取消</text>
-  </view>
-  <view class="section-title">搜索历史</view>
-  <view class="pill-row">
-    <block wx:for="{{keywords}}" wx:key="*this">
-      <view class="pill">{{item}}</view>
-    </block>
-  </view>
-  <view class="section-title hot-title">热门搜索</view>
-  <block wx:for="{{notes}}" wx:key="id">
-    <view class="hot-item card">
-      <text>{{index + 1}}</text>
-      <view>{{item.title}}</view>
-      <text>›</text>
+    <view class="search-pill grow">
+      <text>⌕</text>
+      <input bindinput="onInput" bindconfirm="onSearch" value="{{query}}" placeholder="搜索观点、书名、标签..." placeholder-class="search-placeholder" focus="true" />
     </view>
+    <text class="cancel-btn" bindtap="back">取消</text>
+  </view>
+
+  <block wx:if="{{!searched}}">
+    <block wx:if="{{searchHistory.length > 0}}">
+      <view class="section-row"><view class="section-label compact">搜索历史</view><text class="muted clear-link" bindtap="clearHistory">清除</text></view>
+      <view class="pill-row"><block wx:for="{{searchHistory}}" wx:key="*this"><view class="tag" data-keyword="{{item}}" bindtap="tapHistory">{{item}}</view></block></view>
+    </block>
+    <view class="section-label compact">热门搜索</view>
+    <view class="pill-row"><block wx:for="{{hotKeywords}}" wx:key="*this"><view class="tag" data-keyword="{{item}}" bindtap="tapKeyword">{{item}}</view></block></view>
+  </block>
+
+  <block wx:if="{{searched}}">
+    <view class="loading-wrap" wx:if="{{searching}}"><text class="muted">搜索中...</text></view>
+    <block wx:if="{{!searching}}">
+      <view class="results-header"><text class="muted" wx:if="{{hasResults}}">找到 {{results.length}} 条相关笔记</text></view>
+      <view class="result-list" wx:if="{{hasResults}}">
+        <block wx:for="{{results}}" wx:key="id">
+          <view class="note-card card" data-bookid="{{item.bookId}}" bindtap="goBook">
+            <view class="note-quote">{{item.quote}}</view>
+            <view class="note-note" wx:if="{{item.note}}">{{item.note}}</view>
+            <view class="muted note-meta">{{item.bookTitle}} {{item.chapter}}</view>
+          </view>
+        </block>
+      </view>
+      <view class="empty-state" wx:if="{{!hasResults}}">
+        <view class="empty-text">没有找到相关结果</view>
+        <view class="empty-hint muted">试试其他关键词</view>
+      </view>
+    </block>
   </block>
 </view>

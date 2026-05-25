@@ -2,28 +2,79 @@
   display: flex;
   align-items: center;
   gap: 18rpx;
-  margin-bottom: 28rpx;
+  margin-bottom: 42rpx;
 }
 
 .grow {
   flex: 1;
 }
 
-.hot-title {
-  margin: 30rpx 0 16rpx;
+.search-top input {
+  flex: 1;
+  font-size: 27rpx;
 }
 
-.hot-item {
-  min-height: 78rpx;
-  padding: 0 20rpx;
-  display: grid;
-  grid-template-columns: 42rpx 1fr 32rpx;
-  gap: 12rpx;
+.cancel-btn {
+  font-size: 27rpx;
+  color: #343838;
+  white-space: nowrap;
+}
+
+.section-row {
+  display: flex;
   align-items: center;
-  margin-bottom: 14rpx;
+  justify-content: space-between;
+}
+
+.section-label.compact {
+  margin: 20rpx 0;
+}
+
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-bottom: 30rpx;
+}
+
+.result-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.note-card {
+  padding: 32rpx;
+}
+
+.note-quote {
+  padding-left: 24rpx;
+  border-left: 5rpx solid #d1d3d0;
+  font-size: 29rpx;
+  line-height: 1.75;
+}
+
+.note-note {
+  margin-top: 22rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 14rpx;
+  background: #f4eee6;
+  color: #5b5752;
   font-size: 25rpx;
 }
 
-.hot-item text:first-child {
-  font-weight: 900;
+.note-meta {
+  margin-top: 22rpx;
+  font-size: 23rpx;
+}
+
+.empty-state,
+.loading-wrap {
+  padding: 120rpx 0;
+  text-align: center;
+}
+
+.empty-text {
+  font-size: 30rpx;
+  font-weight: 700;
 }

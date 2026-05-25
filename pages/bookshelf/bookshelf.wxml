@@ -1,27 +1,24 @@
-<view class="screen">
-  <view class="nav">
-    <view class="nav-title">书架</view>
-    <view class="nav-actions">
-      <button class="icon-button" bindtap="goSearch">⌕</button>
-    </view>
-  </view>
-
-  <view class="tabs">
-    <block wx:for="{{tabs}}" wx:key="*this">
-      <view class="tab {{active === index ? 'active' : ''}}" data-index="{{index}}" bindtap="setTab">{{item}}</view>
-    </block>
+<view class="screen library-page">
+  <view class="library-tabs">
+    <view class="library-tab {{active === 0 ? 'active' : ''}}" data-index="0" bindtap="setTab">在读 {{readingCount}}</view>
+    <view class="library-tab {{active === 1 ? 'active' : ''}}" data-index="1" bindtap="setTab">已读完 {{completedCount}}</view>
+    <view class="library-tab {{active === 2 ? 'active' : ''}}" data-index="2" bindtap="setTab">未读 {{unreadCount}}</view>
   </view>
 
   <view class="book-grid">
-    <block wx:for="{{books}}" wx:key="id">
-      <view class="book-card card" data-id="{{item.id}}" bindtap="openBook">
-        <view class="book-cover cover {{item.palette}}">
-          <text class="cover-title">{{item.title}}</text>
+    <block wx:for="{{filteredBooks}}" wx:key="bookId">
+      <view class="book-cell" data-id="{{item.bookId}}" bindtap="openBook">
+        <view class="book-art {{item.palette || ''}}">
+          <image wx:if="{{item.cover}}" src="{{item.cover}}" mode="aspectFill"></image>
+          <view wx:else class="book-art-title">{{item.title}}</view>
         </view>
         <view class="book-title">{{item.title}}</view>
         <view class="book-author">{{item.author}}</view>
-        <view class="progress-line"><view style="width: {{item.progress}}%;"></view></view>
-        <view class="progress-text">{{item.progress}}%</view>
+        <view class="progress-row">
+          <text>当前进度</text>
+          <text>{{item.progress || item.readingProgress || 0}}%</text>
+        </view>
+        <view class="progress-track"><view style="width: {{item.progress || item.readingProgress || 0}}%;"></view></view>
       </view>
     </block>
   </view>

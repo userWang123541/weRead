@@ -1,75 +1,111 @@
-.tabs {
+.library-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22rpx;
+  margin: 12rpx 0 62rpx;
+}
+
+.library-tab {
+  height: 58rpx;
+  border-radius: 999rpx;
+  border: 2rpx solid #b9bbb8;
   display: flex;
-  gap: 34rpx;
-  margin: 6rpx 0 30rpx;
-  padding-bottom: 20rpx;
-  border-bottom: 1rpx solid #eee9df;
+  align-items: center;
+  justify-content: center;
+  font-size: 26rpx;
+  color: #343838;
+  background: transparent;
 }
 
-.tab {
-  padding-bottom: 8rpx;
-  font-size: 25rpx;
-  color: #9a9288;
-}
-
-.tab.active {
-  color: #25211d;
-  font-weight: 500;
-  border-bottom: 2rpx solid #25211d;
+.library-tab.active {
+  border-color: transparent;
+  background: #e9e1d8;
 }
 
 .book-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 22rpx;
+  gap: 56rpx 30rpx;
 }
 
-.book-card {
-  padding: 20rpx;
-  min-height: 360rpx;
-  background: #fffdf8;
+.book-cell {
+  min-width: 0;
 }
 
-.book-cover {
+.book-art {
   width: 100%;
-  height: 192rpx;
-  margin-bottom: 18rpx;
+  height: 410rpx;
+  border-radius: 22rpx;
+  overflow: hidden;
+  background: linear-gradient(135deg, #ede8df, #d8d1c5);
+  box-shadow: 0 14rpx 34rpx rgba(36, 24, 12, 0.055);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.book-art image {
+  width: 100%;
+  height: 100%;
+}
+
+.book-art.dark {
+  background: linear-gradient(135deg, #26251f, #a75518);
+}
+
+.book-art.blue {
+  background: linear-gradient(135deg, #f3f7f2, #b0c1b3);
+}
+
+.book-art.orange {
+  background: linear-gradient(135deg, #f5eadb, #e2ab73);
+}
+
+.book-art-title {
+  padding: 28rpx;
+  text-align: center;
+  font-size: 30rpx;
+  color: #333;
+}
+
+.book-art.dark .book-art-title {
+  color: #fff;
 }
 
 .book-title {
-  font-size: 25rpx;
-  font-weight: 500;
+  margin-top: 22rpx;
+  font-size: 30rpx;
+  line-height: 1.25;
+  color: #242828;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .book-author {
-  margin-top: 8rpx;
-  font-size: 20rpx;
-  color: #9a9288;
+  margin-top: 10rpx;
+  font-size: 27rpx;
+  color: #343838;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.progress-line {
-  height: 4rpx;
-  margin-top: 18rpx;
-  border-radius: 999rpx;
-  background: #eee9df;
-  overflow: hidden;
+.progress-row {
+  margin-top: 28rpx;
+  display: flex;
+  justify-content: space-between;
+  color: #343838;
+  font-size: 23rpx;
 }
 
-.progress-line view {
+.progress-track {
+  height: 5rpx;
+  margin-top: 12rpx;
+  background: #ded8cf;
+}
+
+.progress-track view {
   height: 100%;
-  border-radius: 999rpx;
-  background: #292520;
-}
-
-.progress-text {
-  margin-top: 6rpx;
-  text-align: right;
-  color: #8d8073;
-  font-size: 20rpx;
+  background: #050505;
 }

@@ -1,62 +1,143 @@
 .profile-page {
-  padding-bottom: 120rpx;
+  padding-bottom: 160rpx;
 }
 
-.profile-top {
-  padding: 32rpx;
-  color: #2b2621;
-  background: #fffdf8;
+.reader-card {
+  min-height: 252rpx;
+  padding: 46rpx;
+  display: flex;
+  align-items: center;
+  gap: 36rpx;
 }
 
-.profile-name {
-  margin-top: 16rpx;
-  font-size: 34rpx;
-  font-weight: 500;
+.reader-avatar {
+  width: 136rpx;
+  height: 136rpx;
+  border-radius: 50%;
+  flex: none;
+  background: linear-gradient(135deg, #efe4d0, #8f765b);
+  box-shadow: inset 0 0 0 6rpx #fff, 0 8rpx 22rpx rgba(0, 0, 0, 0.12);
+}
+
+.reader-info {
+  min-width: 0;
+}
+
+.reader-name {
+  font-size: 42rpx;
+  line-height: 1.2;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.reader-sub {
+  margin-top: 18rpx;
+  color: #343838;
+  font-size: 28rpx;
+}
+
+.reader-badge {
+  width: fit-content;
+  margin-top: 24rpx;
+  padding: 12rpx 28rpx;
+  border-radius: 999rpx;
+  background: #e9e1d8;
+  font-size: 25rpx;
+  font-weight: 800;
 }
 
 .profile-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0;
-  margin-top: 30rpx;
-  text-align: center;
-  border-top: 1rpx solid #eee9df;
+  gap: 22rpx;
+  margin-top: 58rpx;
 }
 
-.profile-stats view {
-  padding-top: 24rpx;
-}
-
-.profile-stats view:not(:last-child) {
-  border-right: 1rpx solid #eee9df;
-}
-
-.profile-stats text {
-  display: block;
-  font-size: 34rpx;
-  font-weight: 400;
-}
-
-.profile-stats label {
-  color: #9a9288;
-  font-size: 20rpx;
-}
-
-.profile-menu {
-  margin-top: 24rpx;
-  padding: 0 24rpx;
-}
-
-.profile-menu view {
-  min-height: 92rpx;
+.profile-stat {
+  height: 200rpx;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  border-bottom: 1rpx solid #eee9df;
-  font-size: 27rpx;
-  color: #3b332a;
+  justify-content: center;
 }
 
-.profile-menu view:last-child {
+.stat-icon {
+  font-size: 36rpx;
+  margin-bottom: 16rpx;
+}
+
+.profile-stat text {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 46rpx;
+  font-weight: 800;
+}
+
+.profile-stat label {
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #343838;
+}
+
+.settings-card {
+  margin-top: 58rpx;
+  padding: 0 34rpx;
+}
+
+.setting-row {
+  min-height: 100rpx;
+  display: grid;
+  grid-template-columns: 48rpx 1fr auto auto;
+  gap: 24rpx;
+  align-items: center;
+  border-bottom: 2rpx solid #e5ddd4;
+  font-size: 30rpx;
+}
+
+.setting-row:last-child {
   border-bottom: 0;
+}
+
+.setting-icon {
+  font-size: 34rpx;
+}
+
+.setting-row label {
+  padding: 4rpx 14rpx;
+  border-radius: 8rpx;
+  background: #e6ded5;
+  color: #8a8178;
+  font-size: 22rpx;
+}
+
+.switch {
+  width: 78rpx;
+  height: 44rpx;
+  border-radius: 999rpx;
+  background: #e6ded5;
+  position: relative;
+}
+
+.switch::before {
+  content: "";
+  position: absolute;
+  width: 36rpx;
+  height: 36rpx;
+  left: 4rpx;
+  top: 4rpx;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,.12);
+}
+
+.logout-button {
+  width: 100%;
+  height: 92rpx;
+  margin-top: 64rpx;
+  border-radius: 22rpx;
+  border: 2rpx solid #b9bbb8;
+  background: #fffefd;
+  color: #c1121f;
+  font-size: 30rpx;
+  font-weight: 700;
 }
