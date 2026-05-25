@@ -5,26 +5,25 @@
     "pages/book-detail/book-detail",
     "pages/notes/notes",
     "pages/ai/ai",
-    "pages/reports/reports",
-    "pages/report-detail/report-detail",
-    "pages/breakout/breakout",
-    "pages/poster/poster",
-    "pages/categories/categories",
+    "pages/profile/profile",
     "pages/settings/settings",
     "pages/sync/sync",
     "pages/search/search",
-    "pages/profile/profile"
+    "pages/categories/categories"
   ],
   "window": {
-    "navigationStyle": "custom",
-    "backgroundColor": "#f6efe4",
+    "navigationStyle": "default",
+    "navigationBarTitleText": "微读 Read",
+    "navigationBarBackgroundColor": "#faf8f3",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#faf8f3",
     "backgroundTextStyle": "dark"
   },
   "tabBar": {
     "custom": false,
-    "color": "#8d8377",
-    "selectedColor": "#111111",
-    "backgroundColor": "#fffaf2",
+    "color": "#8a8a8a",
+    "selectedColor": "#1a1a1a",
+    "backgroundColor": "#fdfcf8",
     "borderStyle": "white",
     "list": [
       {
@@ -52,10 +51,10 @@
         "selectedIconPath": "assets/tab/ai-on.png"
       },
       {
-        "pagePath": "pages/reports/reports",
-        "text": "报告",
-        "iconPath": "assets/tab/reports-off.png",
-        "selectedIconPath": "assets/tab/reports-on.png"
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "assets/tab/profile-off.png",
+        "selectedIconPath": "assets/tab/profile-on.png"
       }
     ]
   },

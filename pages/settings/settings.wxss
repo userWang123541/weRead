@@ -7,7 +7,7 @@
 
 .name {
   font-size: 28rpx;
-  font-weight: 800;
+  font-weight: 500;
 }
 
 .settings-list {
@@ -30,6 +30,6 @@
 
 .logout {
   margin-top: 34rpx;
-  color: #e25035;
+  color: #9a6a6a;
   font-size: 26rpx;
 }

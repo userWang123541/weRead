@@ -5,7 +5,8 @@
 
 .hello {
   font-size: 32rpx;
-  font-weight: 700;
+  font-weight: 600;
+  color: #3b332a;
 }
 
 .small {
@@ -14,17 +15,17 @@
 }
 
 .headline {
-  margin-top: 36rpx;
-  font-size: 56rpx;
-  line-height: 1.18;
-  font-weight: 800;
-  color: #15110d;
+  margin-top: 44rpx;
+  font-size: 60rpx;
+  line-height: 1.22;
+  font-weight: 600;
+  color: #302820;
 }
 
 .subline {
-  margin: 28rpx 0 26rpx;
+  margin: 24rpx 0 30rpx;
   font-size: 26rpx;
-  color: #4d4134;
+  color: #8a6a4b;
 }
 
 .stat-grid {
@@ -34,15 +35,16 @@
 }
 
 .stat {
-  min-height: 104rpx;
-  padding: 18rpx 8rpx;
+  min-height: 112rpx;
+  padding: 20rpx 8rpx;
   text-align: center;
 }
 
 .stat text {
   display: block;
-  font-size: 30rpx;
-  font-weight: 800;
+  font-size: 31rpx;
+  font-weight: 600;
+  color: #3a3028;
 }
 
 .stat view {
@@ -52,30 +54,34 @@
 }
 
 .quote-card {
-  margin-top: 24rpx;
-  padding: 30rpx;
-  min-height: 176rpx;
-  background: linear-gradient(145deg, #111, #252018);
-  color: #fff8ec;
+  position: relative;
+  margin-top: 28rpx;
+  padding: 34rpx 34rpx 30rpx;
+  min-height: 188rpx;
+  background:
+    linear-gradient(90deg, rgba(154, 112, 62, 0.08) 1rpx, transparent 1rpx),
+    linear-gradient(180deg, #fffdf8, #f8efe1);
+  background-size: 34rpx 34rpx;
+  color: #42362b;
 }
 
 .quote-mark {
   font-size: 58rpx;
   line-height: 40rpx;
-  color: #a99a83;
+  color: #d6b98e;
 }
 
 .quote-text {
   margin-top: 8rpx;
-  font-size: 27rpx;
-  line-height: 1.62;
-  font-weight: 600;
+  font-size: 28rpx;
+  line-height: 1.78;
+  font-weight: 400;
 }
 
 .quote-source {
   margin-top: 12rpx;
   font-size: 22rpx;
-  color: #c8bcae;
+  color: #9b8e80;
 }
 
 .section-head {
@@ -111,13 +117,14 @@
 
 .recent-book {
   font-size: 24rpx;
-  font-weight: 700;
+  font-weight: 600;
+  color: #4a3f34;
 }
 
 .recent-text {
   margin: 10rpx 0;
-  font-size: 23rpx;
-  line-height: 1.35;
+  font-size: 24rpx;
+  line-height: 1.45;
   color: #55483c;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -136,9 +143,9 @@
   bottom: 132rpx;
   width: 76rpx;
   height: 76rpx;
-  border-radius: 50%;
-  background: #0f0f0f;
+  border-radius: 18rpx;
+  background: #6e8b79;
   color: #fff;
-  font-size: 46rpx;
-  box-shadow: 0 16rpx 36rpx rgba(0, 0, 0, 0.24);
+  font-size: 42rpx;
+  box-shadow: 0 14rpx 30rpx rgba(65, 102, 82, 0.22);
 }

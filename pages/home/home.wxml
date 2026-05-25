@@ -22,7 +22,7 @@
 
   <view class="quote-card card">
     <view class="quote-mark">“</view>
-    <view class="quote-text">因为总有那么一群不识时务的人，无论时间形势如何，无论对手有多强大，无论希望多么渺茫，坚定地挺身而出。</view>
+    <view class="quote-text">因为总有那么一群不识时务的人，无论时间形势如何，无论对手有多强大，坚定地挺身而出。</view>
     <view class="quote-source">《雷雨前的黎明》</view>
   </view>
 
@@ -44,6 +44,4 @@
       </view>
     </block>
   </view>
-
-  <button class="floating-add" bindtap="goNotes">+</button>
 </view>

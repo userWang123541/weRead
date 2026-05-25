@@ -2,24 +2,26 @@
   text-align: center;
 }
 
-.orb-card {
-  height: 300rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.ai-intro {
+  padding: 34rpx 32rpx;
+  text-align: left;
+  background:
+    linear-gradient(90deg, rgba(138, 122, 90, 0.12) 1rpx, transparent 1rpx),
+    linear-gradient(180deg, #fffdf8, #f1eadf);
+  background-size: 32rpx 32rpx;
 }
 
-.orb {
-  width: 210rpx;
-  height: 210rpx;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 40% 34%, #fffdf7, #e7c28a 35%, #9a6a37 70%, #281d15);
-  box-shadow: 0 0 60rpx rgba(223, 139, 49, 0.35), inset 0 0 34rpx rgba(255, 255, 255, 0.45);
+.ai-title {
+  margin-bottom: 14rpx;
+  font-size: 34rpx;
+  font-weight: 500;
+  color: #2f2922;
+  line-height: 1.35;
 }
 
 .ask-box {
   height: 72rpx;
+  margin-top: 24rpx;
   padding: 0 22rpx;
   display: flex;
   align-items: center;
@@ -49,9 +51,10 @@
 
 .question {
   min-height: 76rpx;
-  padding: 0 24rpx;
+  padding: 0 26rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 25rpx;
+  color: #4b4239;
 }

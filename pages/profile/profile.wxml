@@ -1,23 +1,23 @@
-<view class="profile-page">
-  <view class="profile-top">
+<view class="profile-page screen">
+  <view class="nav">
+    <view class="nav-title">我的</view>
+  </view>
+
+  <view class="profile-top card">
     <view class="avatar"></view>
     <view class="profile-name">Jafar</view>
-    <view class="muted">阅读 {{stats.readingDays}} 天</view>
+    <view class="muted">微信读书工作室 · 阅读 {{stats.readingDays}} 天</view>
     <view class="profile-stats">
       <view><text>{{stats.books}}</text><label>本书</label></view>
-      <view><text>2535</text><label>划线</label></view>
+      <view><text>{{stats.highlights}}</text><label>划线</label></view>
       <view><text>{{stats.notes}}</text><label>想法</label></view>
     </view>
   </view>
-  <view class="member-card">
-    <view>
-      <view class="member-title">Pro 会员</view>
-      <view>解锁年度 AI 报告和深度功能</view>
-    </view>
-    <button>去升级</button>
-  </view>
+
   <view class="profile-menu card">
-    <view bindtap="goSettings">我的报告 <text>›</text></view>
+    <view bindtap="goSettings">用户设置 <text>›</text></view>
+    <view bindtap="goSync">数据同步 <text>›</text></view>
+    <view bindtap="goCategories">分类管理 <text>›</text></view>
     <view>我的收藏 <text>›</text></view>
   </view>
 </view>

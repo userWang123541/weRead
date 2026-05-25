@@ -3,7 +3,6 @@
     <view class="nav-title">笔记</view>
     <view class="nav-actions">
       <button class="icon-button" bindtap="goSearch">⌕</button>
-      <button class="icon-button">···</button>
     </view>
   </view>
   <view class="search-box">⌕ 搜索观点、情绪、概念</view>
@@ -19,10 +18,7 @@
           <view class="mini-cover cover {{item.id === 'n1' ? 'dark' : 'orange'}}">
             <text class="cover-title">{{item.book}}</text>
           </view>
-          <view>
-            <view class="book">{{item.book}}</view>
-            <view class="muted tiny">···</view>
-          </view>
+          <view class="book">{{item.book}}</view>
         </view>
         <view class="note-title">{{item.title}}</view>
         <view class="note-body">{{item.body}}</view>
@@ -34,7 +30,6 @@
         <view class="note-actions">
           <text>♡ {{item.likes}}</text>
           <text>↗</text>
-          <text>↺</text>
         </view>
       </view>
     </block>

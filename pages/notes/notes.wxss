@@ -5,12 +5,12 @@
 .note-list {
   display: flex;
   flex-direction: column;
-  gap: 22rpx;
-  margin-top: 10rpx;
+  gap: 20rpx;
+  margin-top: 18rpx;
 }
 
 .note-card {
-  padding: 24rpx;
+  padding: 30rpx 32rpx;
 }
 
 .note-top {
@@ -32,23 +32,28 @@
   vertical-align: middle;
   max-width: 520rpx;
   font-size: 22rpx;
-  font-weight: 700;
-  color: #5f5143;
+  font-weight: 500;
+  color: #6b6258;
 }
 
 .note-title {
-  margin-top: 22rpx;
-  font-size: 30rpx;
-  line-height: 1.52;
-  font-weight: 800;
-  color: #201913;
+  margin-top: 24rpx;
+  padding-left: 22rpx;
+  border-left: 3rpx solid #292520;
+  font-size: 29rpx;
+  line-height: 1.72;
+  font-weight: 400;
+  color: #2b2621;
 }
 
 .note-body {
   margin-top: 18rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 16rpx;
+  background: #f7f2e9;
   font-size: 25rpx;
-  line-height: 1.58;
-  color: #706255;
+  line-height: 1.72;
+  color: #746a5f;
 }
 
 .tag-row {
@@ -59,10 +64,10 @@
 }
 
 .tag-row text {
-  padding: 6rpx 14rpx;
+  padding: 5rpx 14rpx;
   border-radius: 999rpx;
-  background: #f1e2d1;
-  color: #8a6b49;
+  background: #f5f1ea;
+  color: #8c8277;
   font-size: 20rpx;
 }
 
@@ -71,7 +76,7 @@
   display: flex;
   justify-content: flex-end;
   gap: 34rpx;
-  color: #8e8074;
+  color: #aaa198;
   font-size: 22rpx;
 }
 

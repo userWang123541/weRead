@@ -31,7 +31,7 @@ const notes = [
   {
     id: 'n2',
     bookId: 'time-friend',
-    book: '把时间当作朋友（第3版）',
+    book: '把时间当作朋友',
     title: '一定要尽量给出时间详细地图，答案来自你一遍遍确认过的事实。',
     body: '真正的解决方案不是凭感觉，而是把过程和结果都记录下来。',
     tags: ['时间管理', '方法论'],
@@ -61,25 +61,18 @@ const categories = [
   { name: '科学技术', count: 10 }
 ];
 
-const reports = [
-  { id: 'persona', title: '阅读人格', subtitle: '系统建筑师 INTJ', score: 88 },
-  { id: 'overview', title: '阅读数据总览', subtitle: '年度 2024 全部', score: 96 },
-  { id: 'cognitive', title: '认知茧房指数', subtitle: '中等偏窄 68/100', score: 68 },
-  { id: 'breakout', title: '破圈书单推荐', subtitle: '舒适区延展、认知破圈、盲区补全', score: 91 }
-];
-
-const timeline = [
-  { date: '05/12', action: '阅读到第3章', tag: '社会认同的力量' },
-  { date: '05/15', action: '划线2条', tag: '' },
-  { date: '05/18', action: '写下想法1条', tag: '' }
-];
-
 const questions = [
   '我最近为什么总读社会学？',
   '我的阅读质量提升了什么维度？',
   '我最快失效的知识结构是什么？',
   '我是不是陷入认知茧房？',
   '脚本书跟改变实践？'
+];
+
+const timeline = [
+  { date: '05/12', action: '阅读到第3章', tag: '社会认同的力量' },
+  { date: '05/15', action: '划线2条', tag: '' },
+  { date: '05/18', action: '写下想法1条', tag: '' }
 ];
 
 function getBook(id) {
@@ -95,9 +88,8 @@ module.exports = {
   books,
   notes,
   categories,
-  reports,
-  timeline,
   questions,
+  timeline,
   getBook,
   bookNotes
 };

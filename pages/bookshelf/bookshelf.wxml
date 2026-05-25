@@ -3,7 +3,6 @@
     <view class="nav-title">书架</view>
     <view class="nav-actions">
       <button class="icon-button" bindtap="goSearch">⌕</button>
-      <button class="icon-button">···</button>
     </view>
   </view>
 
