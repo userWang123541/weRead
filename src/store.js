@@ -22,6 +22,10 @@ export const store = reactive({
   activeCategoryEditCard: null,
   categoryForm: { mode: 'create', path: '', parentPath: '', originalPath: '', name: '', description: '' },
   reports: {},
+  paginatedCards: [],
+  cardsTotal: 0,
+  cardsPage: 1,
+  cardsTotalPages: 0,
 });
 
 export const getters = {
@@ -38,6 +42,12 @@ export const getters = {
 
   bookOptions: computed(() => [...new Set((store.cardsData.cards || []).map(card => card.bookTitle).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, 'zh'))),
+
+  bookList: computed(() => {
+    const books = store.raw?.books || [];
+    return [...new Set(books.map(b => (b.book || {}).title).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, 'zh'));
+  }),
 
   classificationMap: computed(() => {
     if (!store.classified?.notes?.length) return null;
@@ -203,6 +213,66 @@ export async function loadReports() {
     store.reports = data.reports || {};
   } catch {
     store.reports = {};
+  }
+}
+
+export async function loadBooks() {
+  store.status = '正在读取书籍数据...';
+  try {
+    const [booksData, classified, taxonomy] = await Promise.all([
+      request('/api/books'),
+      request('/api/classified').catch(() => null),
+      request('/api/taxonomy').catch(() => ({ categories: [] })),
+    ]);
+    store.raw = { fetchedAt: booksData.fetchedAt, totalBooks: booksData.totalBooks, books: booksData.books };
+    store.cardsData = { cards: booksData.recentCards || [], taxonomy: store.cardsData.taxonomy || [] };
+    store.stats = booksData.stats || {};
+    store.classified = classified;
+    store.taxonomy = taxonomy || { categories: [] };
+    const clsCount = store.classified?.totalNotes || 0;
+    store.status = `已载入：${store.stats.totalBooks || 0} 本书，${store.stats.totalCards || 0} 张资料卡${clsCount ? `，${clsCount} 条已分类` : ''}。`;
+    loadReports().catch(() => {});
+    return booksData;
+  } catch (err) {
+    store.status = `载入失败：${err.message}`;
+    throw err;
+  }
+}
+
+export async function loadCardsPaginated({ page = 1, limit = 50, search = '', type = '', book = '', tag = '' } = {}) {
+  try {
+    const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('limit', String(limit));
+    if (search) params.set('search', search);
+    if (type) params.set('type', type);
+    if (book) params.set('book', book);
+    if (tag) params.set('tag', tag);
+
+    const data = await request(`/api/cards?${params.toString()}`);
+    store.paginatedCards = data.cards || [];
+    store.cardsTotal = data.total || 0;
+    store.cardsPage = data.page || 1;
+    store.cardsTotalPages = data.totalPages || 0;
+    return data;
+  } catch (err) {
+    store.status = `加载卡片失败：${err.message}`;
+    throw err;
+  }
+}
+
+export async function loadAllCards() {
+  store.status = '正在加载完整资料卡...';
+  try {
+    const data = await request('/api/data');
+    store.raw = data.raw || { books: [] };
+    store.cardsData = data.cards || { cards: [], taxonomy: [] };
+    store.stats = data.stats || {};
+    store.status = `完整数据已载入：${store.stats.totalCards || 0} 张资料卡。`;
+    return data;
+  } catch (err) {
+    store.status = `加载完整数据失败：${err.message}`;
+    throw err;
   }
 }
 

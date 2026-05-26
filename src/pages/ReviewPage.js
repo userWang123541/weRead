@@ -1,4 +1,4 @@
-import { store } from '../store.js';
+import { store, loadAllCards } from '../store.js';
 import { compact, formatDate, typeLabel } from '../utils.js';
 
 export default {
@@ -36,7 +36,11 @@ export default {
 
     Vue.onMounted(() => {
       loadReviewed();
-      pickRandom();
+      if (!(store.cardsData.cards?.length > 10)) {
+        loadAllCards().then(() => pickRandom());
+      } else {
+        pickRandom();
+      }
     });
 
     const totalCards = Vue.computed(() => (store.cardsData.cards || []).length);

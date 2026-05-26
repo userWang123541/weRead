@@ -1,4 +1,4 @@
-import { store, getters } from '../store.js';
+import { store, getters, loadAllCards } from '../store.js';
 import { compact, formatDate, typeLabel } from '../utils.js';
 
 export default {
@@ -68,6 +68,10 @@ export default {
       URL.revokeObjectURL(a.href);
     }
 
+    Vue.onMounted(() => {
+      if (!(store.cardsData.cards?.length > 3)) loadAllCards();
+    });
+
     Vue.watch([exportScope, exportFormat, selectedBook, selectedCategory], updatePreview, { immediate: true });
 
     return {
@@ -79,7 +83,7 @@ export default {
       preview,
       filteredCards,
       download,
-      bookOptions: getters.bookOptions,
+      bookOptions: getters.bookList,
       categoryOptions: getters.categoryOptions,
     };
   },

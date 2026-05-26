@@ -1,11 +1,11 @@
 import AppSidebar from './components/Sidebar.js';
-import { store, loadData } from './store.js';
+import { store, loadBooks } from './store.js';
 
 export default {
   name: 'App',
   components: { AppSidebar },
   setup() {
-    loadData();
+    loadBooks();
     return { store };
   },
   template: `

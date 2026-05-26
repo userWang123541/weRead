@@ -5,7 +5,7 @@ echo "[1/2] 修复 nginx.conf gzip 配置..."
 cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak
 sed -i '/gzip_types/d' /etc/nginx/nginx.conf
 sed -i '/gzip_min_length/d' /etc/nginx/nginx.conf
-sed -i '/^[[:space:]]*gzip on;/a\    gzip_types text/css application/javascript text/javascript;\n    gzip_min_length 1024;' /etc/nginx/nginx.conf
+sed -i '/^[[:space:]]*gzip on;/a\    gzip_types text/css application/javascript text/javascript application/json;\n    gzip_min_length 1024;\n    gzip_comp_level 6;' /etc/nginx/nginx.conf
 
 echo "[2/2] 写入站点配置..."
 cat > /etc/nginx/sites-available/wereadwork << 'NGINXEOF'
@@ -14,8 +14,9 @@ server {
     server_name wereadwork.site www.wereadwork.site 43.132.227.67;
 
     gzip on;
-    gzip_types text/css application/javascript text/javascript;
+    gzip_types text/css application/javascript text/javascript application/json;
     gzip_min_length 1024;
+    gzip_comp_level 6;
 
     root /var/www/wereadwork;
     index index.html;

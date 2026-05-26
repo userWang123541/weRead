@@ -1,11 +1,18 @@
-import { store } from '../store.js';
+import { store, request } from '../store.js';
 import { formatDate, compact, typeLabel } from '../utils.js';
 
 export default {
   name: 'TimelinePage',
   setup() {
+    const allCards = Vue.ref([]);
+
+    Vue.onMounted(async () => {
+      const data = await request('/api/cards?page=1&limit=200');
+      allCards.value = data.cards || [];
+    });
+
     const timelineData = Vue.computed(() => {
-      const cards = store.cardsData.cards || [];
+      const cards = allCards.value.length ? allCards.value : (store.cardsData.cards || []);
       const groups = new Map();
       cards.forEach(card => {
         if (!card.createTime) return;

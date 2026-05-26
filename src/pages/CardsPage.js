@@ -1,4 +1,4 @@
-import { store, getters, cardClassification, updateNoteCategory, openOriginal } from '../store.js';
+import { store, getters, cardClassification, updateNoteCategory, openOriginal, loadCardsPaginated } from '../store.js';
 import { compact, formatDate, typeLabel } from '../utils.js';
 
 export default {
@@ -6,6 +6,34 @@ export default {
   setup() {
     const categoryPanelStyle = Vue.ref({});
     const tagTreeRef = Vue.ref(null);
+    const pageSize = 50;
+    const currentPage = Vue.ref(1);
+
+    function fetchCards(page = 1) {
+      currentPage.value = page;
+      loadCardsPaginated({
+        page,
+        limit: pageSize,
+        search: store.searchInput,
+        type: store.typeFilter,
+        book: store.bookFilter,
+        tag: store.selectedTag,
+      });
+    }
+
+    // 搜索防抖
+    let searchTimer = null;
+    Vue.watch(() => store.searchInput, () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => fetchCards(1), 300);
+    });
+
+    // 筛选条件变化立即请求
+    Vue.watch([() => store.typeFilter, () => store.bookFilter, () => store.selectedTag], () => {
+      fetchCards(1);
+    });
+
+    Vue.onMounted(() => fetchCards(1));
 
     function clearFilters() {
       store.selectedTag = '';
@@ -81,11 +109,11 @@ export default {
     return {
       store,
       tagTreeRef,
-      filteredCards: getters.filteredCards,
+      filteredCards: Vue.computed(() => store.paginatedCards),
       filteredTags: getters.filteredTags,
       tagTree: getters.tagTree,
       defaultExpandedKeys: Vue.computed(() => (getters.tagTree.value?.children || []).map(n => n.path)),
-      bookOptions: getters.bookOptions,
+      bookOptions: getters.bookList,
       classificationMap: getters.classificationMap,
       categoryTree: getters.categoryTree,
       currentEditCategory: getters.currentEditCategory,
@@ -104,6 +132,11 @@ export default {
       compact,
       formatDate,
       typeLabel,
+      currentPage,
+      pageSize,
+      cardsTotal: Vue.computed(() => store.cardsTotal),
+      totalPages: Vue.computed(() => store.cardsTotalPages),
+      onPageChange: fetchCards,
     };
   },
   template: `
@@ -172,6 +205,16 @@ export default {
                 </div>
               </div>
             </article>
+          </div>
+          <div v-if="totalPages > 1" style="display:flex; justify-content:center; padding:16px 0">
+            <el-pagination
+              background
+              layout="prev, pager, next, total"
+              :current-page="currentPage"
+              :page-size="pageSize"
+              :total="cardsTotal"
+              @current-change="onPageChange"
+            />
           </div>
         </div>
 

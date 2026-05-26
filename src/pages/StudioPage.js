@@ -8,20 +8,25 @@ export default {
     const tone = Vue.ref('种草风');
     const generatedCopy = Vue.ref('');
     const generating = Vue.ref(false);
+    const sourceCards = Vue.ref([]);
 
     const toneOptions = ['种草风', '学术风', '吐槽风', '编辑推荐风'];
 
-    const sourceCards = Vue.computed(() => {
-      const keyword = query.value.trim().toLowerCase();
-      const cards = store.cardsData.cards || [];
-      const filtered = keyword
-        ? cards.filter(card => [card.quote, card.note, card.bookTitle, card.author, ...(card.tags || [])]
-          .join('\n')
-          .toLowerCase()
-          .includes(keyword))
-        : cards;
-      return filtered.filter(card => card.quote || card.note).slice(0, 18);
+    async function searchCards() {
+      const keyword = query.value.trim();
+      const params = new URLSearchParams({ page: '1', limit: '18' });
+      if (keyword) params.set('search', keyword);
+      const data = await request(`/api/cards?${params.toString()}`);
+      sourceCards.value = (data.cards || []).filter(card => card.quote || card.note);
+    }
+
+    let searchTimer = null;
+    Vue.watch(query, () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(searchCards, 300);
     });
+
+    Vue.onMounted(() => searchCards());
 
     const quoteCards = Vue.computed(() => sourceCards.value
       .filter(card => card.quote)

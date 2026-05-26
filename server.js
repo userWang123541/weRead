@@ -137,6 +137,98 @@ app.get('/api/data', async (req, res) => {
   }
 });
 
+// 轻量书籍接口：不含 highlights/reviews/chapters 大数组，预计算 readingDays
+app.get('/api/books', async (req, res) => {
+  try {
+    const apiKey = getApiKey(req);
+    const raw = await loadRawData(apiKey);
+    const cardsData = await loadCardsData(apiKey, raw);
+
+    const books = (raw.books || []).map(b => ({
+      bookId: b.bookId,
+      book: b.book || {},
+      noteCount: b.noteCount || 0,
+      reviewCount: b.reviewCount || 0,
+      bookmarkCount: b.bookmarkCount || 0,
+      readingProgress: b.readingProgress || 0,
+      markedStatus: b.markedStatus,
+      sort: b.sort,
+    }));
+
+    const dates = new Set();
+    for (const b of raw.books || []) {
+      for (const h of b.highlights || []) {
+        if (h.createTime) {
+          const d = new Date(h.createTime * 1000);
+          dates.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+        }
+      }
+      for (const r of b.reviews || []) {
+        if (r.createTime) {
+          const d = new Date(r.createTime * 1000);
+          dates.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+        }
+      }
+    }
+
+    const allCards = cardsData.cards || [];
+    const recentCards = allCards.slice(0, 3).map(c => ({
+      cardId: c.cardId, type: c.type, bookTitle: c.bookTitle,
+      author: c.author, quote: c.quote, note: c.note, createTime: c.createTime,
+    }));
+    const quotable = allCards.filter(c => c.quote && c.quote.length > 15);
+    const rq = quotable.length ? quotable[Math.floor(Math.random() * quotable.length)] : null;
+
+    res.json({
+      fetchedAt: raw.fetchedAt || '',
+      totalBooks: books.length,
+      books,
+      stats: { ...summarize(raw, cardsData), readingDays: dates.size },
+      recentCards,
+      randomQuote: rq ? { text: rq.quote.slice(0, 120), book: rq.bookTitle || '' } : { text: '', book: '' },
+    });
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+// 分页卡片接口：服务端过滤 + 分页，去掉冗余字段
+app.get('/api/cards', async (req, res) => {
+  try {
+    const apiKey = getApiKey(req);
+    const raw = await loadRawData(apiKey);
+    const cardsData = await loadCardsData(apiKey, raw);
+    let cards = cardsData.cards || [];
+
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 50));
+    const search = String(req.query.search || '').trim().toLowerCase();
+    const typeFilter = String(req.query.type || '').trim();
+    const bookFilter = String(req.query.book || '').trim();
+    const tagFilter = String(req.query.tag || '').trim();
+
+    if (typeFilter) cards = cards.filter(c => c.type === typeFilter);
+    if (bookFilter) cards = cards.filter(c => c.bookTitle === bookFilter);
+    if (tagFilter) cards = cards.filter(c => (c.tags || []).includes(tagFilter));
+    if (search) {
+      cards = cards.filter(c => {
+        const haystack = [c.quote, c.note, c.bookTitle, c.author, c.chapterTitle,
+          ...(c.tags || []), ...(c.keywords || [])].join('\n').toLowerCase();
+        return haystack.includes(search);
+      });
+    }
+
+    const total = cards.length;
+    const totalPages = Math.ceil(total / limit);
+    const offset = (page - 1) * limit;
+    const pageCards = cards.slice(offset, offset + limit).map(({ text, summary, keywords, ...rest }) => rest);
+
+    res.json({ cards: pageCards, total, page, limit, totalPages });
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
 app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,

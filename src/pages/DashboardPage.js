@@ -1,4 +1,4 @@
-import { store, getters, loadData, syncData, rebuildCards, classifyData } from '../store.js';
+import { store, getters, loadBooks, syncData, rebuildCards, classifyData } from '../store.js';
 import { compact, formatDate } from '../utils.js';
 
 export default {
@@ -26,26 +26,7 @@ export default {
       return Object.keys(store.classified?.stats || {}).filter(k => k !== '未分类').length;
     });
 
-    const readingDays = Vue.computed(() => {
-      const books = store.raw?.books || [];
-      if (!books.length) return 0;
-      const dates = new Set();
-      books.forEach(book => {
-        (book.highlights || []).forEach(h => {
-          if (h.createTime) {
-            const d = new Date(h.createTime * 1000);
-            dates.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
-          }
-        });
-        (book.reviews || []).forEach(r => {
-          if (r.createTime) {
-            const d = new Date(r.createTime * 1000);
-            dates.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
-          }
-        });
-      });
-      return dates.size;
-    });
+    const readingDays = Vue.computed(() => store.stats.readingDays || 0);
 
     // 书架分类
     const bookshelf = Vue.computed(() => {
@@ -108,7 +89,7 @@ export default {
       hasData,
       hasClassified,
       go,
-      loadData,
+      loadBooks,
       syncData,
       rebuildCards,
       classifyData,
@@ -198,7 +179,7 @@ export default {
             <el-button :disabled="store.loading" @click="classifyData">
               向量分类
             </el-button>
-            <el-button :disabled="store.loading" @click="loadData">
+            <el-button :disabled="store.loading" @click="loadBooks">
               刷新数据
             </el-button>
           </div>

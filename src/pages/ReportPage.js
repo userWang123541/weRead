@@ -1,4 +1,4 @@
-import { store, getters } from '../store.js';
+import { store, getters, loadAllCards } from '../store.js';
 import { formatDate } from '../utils.js';
 
 export default {
@@ -78,6 +78,10 @@ export default {
         map.get(key).count += 1;
       });
       return [...map.values()].sort((a, b) => b.count - a.count).slice(0, 8);
+    });
+
+    Vue.onMounted(() => {
+      if (!(store.cardsData.cards?.length > 3)) loadAllCards();
     });
 
     return { selectedYear, yearOptions, yearStats, monthlyData, topCategories, topBooks };
