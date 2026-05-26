@@ -1,4 +1,4 @@
-import { store, syncData, loadData } from '../store.js';
+import { store, syncData, loadData, request } from '../store.js';
 
 export default {
   name: 'SettingsPage',
@@ -37,10 +37,15 @@ export default {
       const origKey = store.apiKey;
       store.apiKey = localKey.value.trim();
       try {
+        await request('/api/gateway', {
+          method: 'POST',
+          body: JSON.stringify({ api_name: '/user/notebooks', count: 1 }),
+          timeoutMs: 20000,
+        });
         await loadData();
         testResult.value = {
           ok: true,
-          msg: `连接成功！已加载 ${store.stats.totalBooks || 0} 本书的数据。`,
+          msg: `连接成功。当前本地已加载 ${store.stats.totalBooks || 0} 本书的数据，可以开始同步。`,
         };
       } catch (err) {
         testResult.value = { ok: false, msg: `连接失败：${err.message}` };

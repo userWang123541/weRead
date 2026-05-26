@@ -137,11 +137,20 @@ app.get('/api/data', async (req, res) => {
   }
 });
 
+app.get('/api/health', (_req, res) => {
+  res.json({
+    ok: true,
+    storage: isPostgres() ? 'postgres' : 'file',
+    time: new Date().toISOString(),
+  });
+});
+
 app.post('/api/sync', async (req, res) => {
   try {
     const apiKey = getApiKey(req);
     const maxBooks = Number(req.body?.maxBooks || 0) || undefined;
-    const raw = await syncWereadData(apiKey, { maxBooks });
+    const concurrency = Number(req.body?.concurrency || process.env.WEREAD_SYNC_CONCURRENCY || 4);
+    const raw = await syncWereadData(apiKey, { maxBooks, concurrency });
     const cards = buildCards(raw);
     await writeJsonByKey(apiKey, 'weread-data.json', raw);
     await writeJsonByKey(apiKey, 'cards.json', cards);
@@ -154,6 +163,27 @@ app.post('/api/sync', async (req, res) => {
   } catch (err) {
     sendError(res, err);
   }
+});
+
+app.post('/api/sync/start', async (req, res) => {
+  try {
+    const apiKey = getApiKey(req);
+    const maxBooks = Number(req.body?.maxBooks || 0) || undefined;
+    const concurrency = Number(req.body?.concurrency || process.env.WEREAD_SYNC_CONCURRENCY || 4);
+    const job = createSyncJob(apiKey, { maxBooks, concurrency });
+    res.status(202).json(publicSyncJob(job));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.get('/api/sync/status/:jobId', async (req, res) => {
+  const job = syncJobs.get(req.params.jobId);
+  if (!job) {
+    res.status(404).json({ error: '同步任务不存在或已过期' });
+    return;
+  }
+  res.json(publicSyncJob(job));
 });
 
 app.post('/api/cards/rebuild', async (req, res) => {
@@ -604,6 +634,87 @@ app.get('/', (_req, res) => {
 });
 
 const PORT = process.env.PORT || 3456;
+const syncJobs = new Map();
+const activeSyncJobsByUser = new Map();
+
+function createSyncJob(apiKey, options = {}) {
+  const userSyncKey = stableId(apiKey || '_default');
+  const activeJobId = activeSyncJobsByUser.get(userSyncKey);
+  const activeJob = activeJobId ? syncJobs.get(activeJobId) : null;
+  if (activeJob?.status === 'running') return activeJob;
+
+  const jobId = `sync_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const job = {
+    id: jobId,
+    status: 'running',
+    startedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    completedBooks: 0,
+    totalBooks: 0,
+    sourceBookCount: 0,
+    currentBookTitle: '',
+    error: '',
+    result: null,
+  };
+  syncJobs.set(jobId, job);
+  activeSyncJobsByUser.set(userSyncKey, jobId);
+
+  syncWereadData(apiKey, {
+    ...options,
+    onProgress(progress) {
+      job.completedBooks = progress.completedBooks || 0;
+      job.totalBooks = progress.totalBooks || 0;
+      job.sourceBookCount = progress.sourceBookCount || 0;
+      job.currentBookTitle = progress.currentBookTitle || '';
+      job.updatedAt = new Date().toISOString();
+    },
+  })
+    .then(async (raw) => {
+      const cards = buildCards(raw);
+      await writeJsonByKey(apiKey, 'weread-data.json', raw);
+      await writeJsonByKey(apiKey, 'cards.json', cards);
+      job.status = 'completed';
+      job.completedAt = new Date().toISOString();
+      job.updatedAt = job.completedAt;
+      job.completedBooks = raw.totalBooks || job.completedBooks;
+      job.totalBooks = raw.totalBooks || job.totalBooks;
+      job.sourceBookCount = raw.sourceBookCount || job.sourceBookCount;
+      job.result = {
+        ok: true,
+        raw,
+        cards,
+        stats: summarize(raw, cards),
+      };
+    })
+    .catch((err) => {
+      job.status = 'failed';
+      job.error = err.message;
+      job.updatedAt = new Date().toISOString();
+    })
+    .finally(() => {
+      activeSyncJobsByUser.delete(userSyncKey);
+      setTimeout(() => syncJobs.delete(jobId), 30 * 60 * 1000);
+    });
+
+  return job;
+}
+
+function publicSyncJob(job) {
+  if (!job) return null;
+  return {
+    id: job.id,
+    status: job.status,
+    startedAt: job.startedAt,
+    updatedAt: job.updatedAt,
+    completedAt: job.completedAt,
+    completedBooks: job.completedBooks,
+    totalBooks: job.totalBooks,
+    sourceBookCount: job.sourceBookCount,
+    currentBookTitle: job.currentBookTitle,
+    error: job.error,
+    result: job.result,
+  };
+}
 
 if (require.main === module) {
   startServer(Number(PORT));

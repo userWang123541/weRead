@@ -5,6 +5,7 @@ const { reactive, computed } = Vue;
 export const store = reactive({
   apiKey: localStorage.getItem('weread_api_key') || '',
   status: '等待载入本地数据。',
+  syncStartedAt: null,
   categoryStatus: '',
   raw: { books: [] },
   cardsData: { cards: [], taxonomy: [] },
@@ -150,17 +151,29 @@ export const getters = {
 };
 
 export async function request(path, options = {}) {
+  const { timeoutMs = 30000, ...fetchOptions } = options;
   const headers = {
     'Content-Type': 'application/json',
     ...(options.headers || {}),
   };
   if (store.apiKey.trim()) headers['X-Weread-Key'] = store.apiKey.trim();
-  const response = await fetch(path, { ...options, headers });
-  const text = await response.text();
-  let data;
-  try { data = text ? JSON.parse(text) : {}; } catch { data = { error: `HTTP ${response.status}` }; }
-  if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
-  return data;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(path, { ...fetchOptions, headers, signal: controller.signal });
+    const text = await response.text();
+    let data;
+    try { data = text ? JSON.parse(text) : {}; } catch { data = { error: `HTTP ${response.status}` }; }
+    if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+    return data;
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error('请求超时，请稍后重试或检查服务器响应速度');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function loadData() {
@@ -193,6 +206,10 @@ export async function loadReports() {
   }
 }
 
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export async function generateReport(reportId) {
   store.loading = true;
   store.status = `正在生成报告...`;
@@ -215,17 +232,52 @@ export async function generateReport(reportId) {
 export async function syncData() {
   if (store.apiKey.trim()) localStorage.setItem('weread_api_key', store.apiKey.trim());
   store.loading = true;
+  store.syncStartedAt = Date.now();
   store.status = '正在同步微信读书数据，书多时可能需要一两分钟...';
+  const timer = setInterval(() => {
+    if (!store.loading || !store.syncStartedAt) return;
+    const seconds = Math.floor((Date.now() - store.syncStartedAt) / 1000);
+    store.status = `正在同步微信读书数据，已耗时 ${seconds} 秒。书多时会自动并发拉取，请不要重复点击。`;
+  }, 5000);
   try {
-    const data = await request('/api/sync', { method: 'POST', body: JSON.stringify({}) });
+    const job = await request('/api/sync/start', {
+      method: 'POST',
+      body: JSON.stringify({ concurrency: 4 }),
+      timeoutMs: 20000,
+    });
+    let data = null;
+    let lastStatus = job;
+    for (let i = 0; i < 360; i += 1) {
+      lastStatus = await request(`/api/sync/status/${encodeURIComponent(job.id)}`, {
+        timeoutMs: 15000,
+      });
+      if (lastStatus.status === 'completed') {
+        data = lastStatus.result;
+        break;
+      }
+      if (lastStatus.status === 'failed') {
+        throw new Error(lastStatus.error || '同步任务失败');
+      }
+      const done = lastStatus.completedBooks || 0;
+      const total = lastStatus.totalBooks || lastStatus.sourceBookCount || 0;
+      const progress = total ? `${done}/${total}` : `${done}`;
+      const book = lastStatus.currentBookTitle ? `，当前：${lastStatus.currentBookTitle}` : '';
+      store.status = `正在同步微信读书数据：${progress} 本${book}`;
+      await delay(2000);
+    }
+    if (!data) throw new Error('同步任务等待超时，请稍后刷新数据查看结果');
     store.raw = data.raw;
     store.cardsData = data.cards;
     store.stats = data.stats;
-    store.status = `同步完成：${store.stats.totalBooks} 本书，${store.stats.totalCards} 张资料卡。`;
+    const duration = data.raw?.syncDurationMs ? `，耗时 ${Math.round(data.raw.syncDurationMs / 1000)} 秒` : '';
+    const errors = data.raw?.errorBookCount ? `，${data.raw.errorBookCount} 本书未完整同步` : '';
+    store.status = `同步完成：${store.stats.totalBooks} 本书，${store.stats.totalCards} 张资料卡${duration}${errors}。`;
   } catch (err) {
     store.status = `同步失败：${err.message}`;
   } finally {
+    clearInterval(timer);
     store.loading = false;
+    store.syncStartedAt = null;
   }
 }
 
