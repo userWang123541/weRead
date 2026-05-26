@@ -350,6 +350,7 @@ export async function syncData() {
     store.raw = data.raw;
     store.cardsData = data.cards;
     store.stats = data.stats;
+    store._classifiedLoaded = false; // 同步后重置，下次 loadClassified 会重新拉取
     const duration = data.raw?.syncDurationMs ? `，耗时 ${Math.round(data.raw.syncDurationMs / 1000)} 秒` : '';
     const errors = data.raw?.errorBookCount ? `，${data.raw.errorBookCount} 本书未完整同步` : '';
     store.status = `同步完成：${store.stats.totalBooks} 本书，${store.stats.totalCards} 张资料卡${duration}${errors}。`;

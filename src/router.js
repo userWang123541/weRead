@@ -6,6 +6,13 @@ import BookshelfPage from './pages/BookshelfPage.js';
 import ReportListPage from './pages/ReportListPage.js';
 import ReportDetailPage from './pages/ReportDetailPage.js';
 import SettingsPage from './pages/SettingsPage.js';
+import ExportPage from './pages/ExportPage.js';
+import ReviewPage from './pages/ReviewPage.js';
+import StudioPage from './pages/StudioPage.js';
+import TimelinePage from './pages/TimelinePage.js';
+import ConnectionsPage from './pages/ConnectionsPage.js';
+import TopicRadarPage from './pages/TopicRadarPage.js';
+import ReportPage from './pages/ReportPage.js';
 
 const { createRouter, createWebHashHistory } = VueRouter;
 
@@ -20,6 +27,13 @@ export const router = createRouter({
     { path: '/categories', component: CategoryPage },
     { path: '/reports', component: ReportListPage },
     { path: '/reports/:id', component: ReportDetailPage },
+    { path: '/report', component: ReportPage },
+    { path: '/export', component: ExportPage },
+    { path: '/review', component: ReviewPage },
+    { path: '/studio', component: StudioPage },
+    { path: '/timeline', component: TimelinePage },
+    { path: '/connections', component: ConnectionsPage },
+    { path: '/radar', component: TopicRadarPage },
     { path: '/settings', component: SettingsPage },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],

@@ -28,14 +28,30 @@ app.use(compression({
 }));
 const TAXONOMY_FILE_DEFAULT = path.join(__dirname, 'config', 'taxonomy.json');
 
-app.use(express.json({ limit: '20mb' }));
-app.use(express.static(__dirname));
+app.use(express.json({ limit: '2mb' }));
+
+// 安全：只暴露前端静态资源，不暴露 .env / server.js / lib/ 等敏感文件
+app.use(express.static(__dirname, {
+  dotfiles: 'deny',
+  index: 'index.html',
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  },
+}));
+
+// 拦截敏感路径
+const BLOCKED_PATHS = /^\/(\.env|\.git|server\.js|lib\/|config\/|node_modules\/|package|deploy|fix-nginx|ecosystem|README|vendor\/chunk)/;
+app.use((req, res, next) => {
+  if (BLOCKED_PATHS.test(req.path)) return res.status(404).end();
+  next();
+});
 
 function sendError(res, err) {
-  res.status(err.statusCode || 500).json({
-    error: err.message,
-    payload: err.payload,
-  });
+  const status = err.statusCode || 500;
+  const message = status >= 500 ? '服务器内部错误' : err.message;
+  res.status(status).json({ error: message });
 }
 
 async function loadRawData(apiKey) {
@@ -107,12 +123,15 @@ async function saveTaxonomyData(apiKey, taxonomy) {
   await writeJsonByKey(apiKey, 'taxonomy.json', normalizeTaxonomy(taxonomy));
 }
 
+// 白名单：只允许调用这几个微信读书 API
+const WEREAD_API_ALLOWLIST = new Set(['/user/notebooks', '/book/bookmarklist', '/review/list/mine']);
+
 app.post('/api/gateway', async (req, res) => {
   try {
     const apiKey = getApiKey(req);
     const { api_name: apiName, skill_version: _skillVersion, apiKey: _apiKey, ...params } = req.body || {};
-    if (!apiName) {
-      res.status(400).json({ error: 'api_name is required' });
+    if (!apiName || !WEREAD_API_ALLOWLIST.has(apiName)) {
+      res.status(400).json({ error: '不支持的 API 调用' });
       return;
     }
     const data = await callWeread(apiName, params, apiKey);
@@ -462,13 +481,15 @@ app.post('/api/classified/update', async (req, res) => {
   try {
     const apiKey = getApiKey(req);
     const { noteIndex, category, card } = req.body;
-    if (noteIndex === undefined || !category) {
-      res.status(400).json({ error: 'noteIndex and category are required' });
+    const idx = Number(noteIndex);
+    if (!Number.isInteger(idx) || !category || typeof category !== 'string') {
+      res.status(400).json({ error: '参数无效' });
       return;
     }
+    const safeCategory = category.trim().slice(0, 200);
     const data = await readJson(apiKey, 'classified.json', { notes: [], stats: {} });
     let updatedNote;
-    if (noteIndex < 0 && card) {
+    if (idx < 0 && card) {
       updatedNote = {
         type: card.type === 'linked' ? (card.note ? 'review' : 'highlight') : card.type,
         text: card.quote || card.note || card.text || '',
@@ -476,20 +497,20 @@ app.post('/api/classified/update', async (req, res) => {
         bookTitle: card.bookTitle || '',
         chapter: card.chapterTitle || '',
         createTime: card.createTime || null,
-        category,
+        category: safeCategory,
         categoryId: '',
         categoryScore: 1,
         userEdited: true,
       };
       data.notes.push(updatedNote);
       data.totalNotes = data.notes.length;
-    } else if (noteIndex < 0 || noteIndex >= data.notes.length) {
+    } else if (idx < 0 || idx >= data.notes.length) {
       res.status(400).json({ error: 'noteIndex out of range' });
       return;
     } else {
-      data.notes[noteIndex].category = category;
-      data.notes[noteIndex].userEdited = true;
-      updatedNote = data.notes[noteIndex];
+      data.notes[idx].category = safeCategory;
+      data.notes[idx].userEdited = true;
+      updatedNote = data.notes[idx];
     }
     // Recalculate stats
     const stats = {};
@@ -810,7 +831,15 @@ async function runSyncJob(job, userSyncKey, apiKey, options) {
     job.updatedAt = new Date().toISOString();
   } finally {
     activeSyncJobsByUser.delete(userSyncKey);
-    setTimeout(() => syncJobs.delete(job.id), 30 * 60 * 1000);
+    setTimeout(() => {
+      job.result = null; // 释放内存
+      syncJobs.delete(job.id);
+    }, 10 * 60 * 1000);
+    // 防止内存泄漏：超限时清理最旧的 job
+    if (syncJobs.size > 20) {
+      const oldest = syncJobs.keys().next().value;
+      syncJobs.delete(oldest);
+    }
   }
 }
 
@@ -860,6 +889,14 @@ async function startServer(port) {
     throw err;
   });
 }
+
+// 全局错误处理
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled rejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err);
+});
 
 module.exports = {
   app,

@@ -13,11 +13,15 @@ export default {
     const toneOptions = ['种草风', '学术风', '吐槽风', '编辑推荐风'];
 
     async function searchCards() {
-      const keyword = query.value.trim();
-      const params = new URLSearchParams({ page: '1', limit: '18' });
-      if (keyword) params.set('search', keyword);
-      const data = await request(`/api/cards?${params.toString()}`);
-      sourceCards.value = (data.cards || []).filter(card => card.quote || card.note);
+      try {
+        const keyword = query.value.trim();
+        const params = new URLSearchParams({ page: '1', limit: '18' });
+        if (keyword) params.set('search', keyword);
+        const data = await request(`/api/cards?${params.toString()}`);
+        sourceCards.value = (data.cards || []).filter(card => card.quote || card.note);
+      } catch (err) {
+        console.error('搜索卡片失败:', err);
+      }
     }
 
     let searchTimer = null;
@@ -27,6 +31,10 @@ export default {
     });
 
     Vue.onMounted(() => searchCards());
+
+    Vue.onUnmounted(() => {
+      clearTimeout(searchTimer);
+    });
 
     const quoteCards = Vue.computed(() => sourceCards.value
       .filter(card => card.quote)

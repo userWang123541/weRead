@@ -7,8 +7,12 @@ export default {
     const allCards = Vue.ref([]);
 
     Vue.onMounted(async () => {
-      const data = await request('/api/cards?page=1&limit=200');
-      allCards.value = data.cards || [];
+      try {
+        const data = await request('/api/cards?page=1&limit=200');
+        allCards.value = data.cards || [];
+      } catch (err) {
+        console.error('加载时间线失败:', err);
+      }
     });
 
     const timelineData = Vue.computed(() => {

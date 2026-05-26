@@ -9,16 +9,20 @@ export default {
     const pageSize = 50;
     const currentPage = Vue.ref(1);
 
-    function fetchCards(page = 1) {
+    async function fetchCards(page = 1) {
       currentPage.value = page;
-      loadCardsPaginated({
-        page,
-        limit: pageSize,
-        search: store.searchInput,
-        type: store.typeFilter,
-        book: store.bookFilter,
-        tag: store.selectedTag,
-      });
+      try {
+        await loadCardsPaginated({
+          page,
+          limit: pageSize,
+          search: store.searchInput,
+          type: store.typeFilter,
+          book: store.bookFilter,
+          tag: store.selectedTag,
+        });
+      } catch (err) {
+        console.error('加载卡片失败:', err);
+      }
     }
 
     // 搜索防抖
@@ -36,6 +40,10 @@ export default {
     Vue.onMounted(() => {
       fetchCards(1);
       loadClassified();
+    });
+
+    Vue.onUnmounted(() => {
+      clearTimeout(searchTimer);
     });
 
     function clearFilters() {
@@ -109,9 +117,21 @@ export default {
       return parts.map((_, index) => parts.slice(0, index + 1).join('/'));
     }
 
+    // 缓存分类结果，避免模板中重复调用 cardClassification
+    const clsCache = new WeakMap();
+    function cardCls(card) {
+      let cls = clsCache.get(card);
+      if (cls === undefined) {
+        cls = cardClassification(card) || null;
+        clsCache.set(card, cls);
+      }
+      return cls;
+    }
+
     return {
       store,
       tagTreeRef,
+      cardCls,
       filteredCards: Vue.computed(() => store.paginatedCards),
       filteredTags: getters.filteredTags,
       tagTree: getters.tagTree,
@@ -182,11 +202,11 @@ export default {
               <div v-if="card.note" class="card-note-text">{{ compact(card.note, 220) }}</div>
               <div class="card-tags">
                 <span
-                  v-if="cardClassification(card)?.category && cardClassification(card)?.category !== '未分类'"
+                  v-if="cardCls(card)?.category && cardCls(card)?.category !== '未分类'"
                   class="card-tag"
-                  :class="{ 'user-edited': cardClassification(card)?.userEdited }"
+                  :class="{ 'user-edited': cardCls(card)?.userEdited }"
                 >
-                  {{ cardClassification(card).category }}
+                  {{ cardCls(card).category }}
                 </span>
                 <template v-if="!classificationMap">
                   <span v-for="tag in (card.tags || []).slice(0, 4)" :key="tag" class="card-tag">{{ tag }}</span>

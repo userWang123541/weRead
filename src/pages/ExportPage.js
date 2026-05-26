@@ -65,7 +65,7 @@ export default {
       a.href = URL.createObjectURL(blob);
       a.download = `weread-export.${ext}`;
       a.click();
-      URL.revokeObjectURL(a.href);
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     }
 
     Vue.onMounted(() => {
