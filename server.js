@@ -54,6 +54,22 @@ function sendError(res, err) {
   res.status(status).json({ error: message });
 }
 
+// 缓存控制：GET 请求允许浏览器和 Cloudflare 边缘缓存
+const CACHE_HEADERS = {
+  books: 'public, max-age=60, stale-while-revalidate=300',
+  data: 'public, max-age=120, stale-while-revalidate=600',
+  classified: 'public, max-age=300, stale-while-revalidate=600',
+  taxonomy: 'public, max-age=3600',
+  cards: 'public, max-age=60, stale-while-revalidate=300',
+  reports: 'public, max-age=300',
+  health: 'public, max-age=10',
+};
+
+function setCacheHeaders(res, type) {
+  const header = CACHE_HEADERS[type];
+  if (header) res.setHeader('Cache-Control', header);
+}
+
 async function loadRawData(apiKey) {
   return readJson(apiKey, 'weread-data.json', {
     fetchedAt: '',
@@ -146,6 +162,7 @@ app.get('/api/data', async (req, res) => {
     const apiKey = getApiKey(req);
     const raw = await loadRawData(apiKey);
     const cards = await loadCardsData(apiKey, raw);
+    setCacheHeaders(res, 'data');
     res.json({
       raw,
       cards,
@@ -208,6 +225,7 @@ app.get('/api/books', async (req, res) => {
       ? { totalNotes: classifiedFull.totalNotes || 0, stats: classifiedFull.stats || {}, classifiedAt: classifiedFull.classifiedAt || '' }
       : null;
 
+    setCacheHeaders(res, 'books');
     res.json({
       fetchedAt: raw.fetchedAt || '',
       totalBooks: books.length,
@@ -254,6 +272,7 @@ app.get('/api/cards', async (req, res) => {
     const offset = (page - 1) * limit;
     const pageCards = cards.slice(offset, offset + limit).map(({ text, summary, keywords, ...rest }) => rest);
 
+    setCacheHeaders(res, 'cards');
     res.json({ cards: pageCards, total, page, limit, totalPages });
   } catch (err) {
     sendError(res, err);
@@ -261,6 +280,7 @@ app.get('/api/cards', async (req, res) => {
 });
 
 app.get('/api/health', (_req, res) => {
+  setCacheHeaders(res, 'health');
   res.json({
     ok: true,
     storage: isPostgres() ? 'postgres' : 'file',
@@ -344,6 +364,7 @@ app.post('/api/material-pack', async (req, res) => {
 app.get('/api/taxonomy', async (req, res) => {
   try {
     const apiKey = getApiKey(req);
+    setCacheHeaders(res, 'taxonomy');
     res.json(await loadTaxonomyData(apiKey));
   } catch (err) {
     sendError(res, err);
@@ -471,6 +492,7 @@ app.get('/api/classified', async (req, res) => {
   try {
     const apiKey = getApiKey(req);
     const data = await readJson(apiKey, 'classified.json', { notes: [], stats: {} });
+    setCacheHeaders(res, 'classified');
     res.json(data);
   } catch (err) {
     sendError(res, err);
@@ -550,6 +572,7 @@ app.get('/api/reports', async (req, res) => {
   try {
     const apiKey = getApiKey(req);
     const data = await getCachedReports(apiKey);
+    setCacheHeaders(res, 'reports');
     res.json(data);
   } catch (err) {
     sendError(res, err);

@@ -1,5 +1,39 @@
 import { buildTree, formatDate, normalizeCategoryPath } from './utils.js';
 
+// ── 前端 localStorage 缓存层 ──
+
+function cacheKey(endpoint) {
+  const prefix = store.apiKey ? store.apiKey.slice(-8) : 'anon';
+  return `wr_cache_${prefix}_${endpoint}`;
+}
+
+function readCache(key, ttlMs) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const entry = JSON.parse(raw);
+    if (Date.now() - entry.ts > ttlMs) return { data: entry.data, stale: true };
+    return { data: entry.data, stale: false };
+  } catch { return null; }
+}
+
+function writeCache(key, data) {
+  try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data })); } catch {}
+}
+
+function clearAllCaches() {
+  try {
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k?.startsWith('wr_cache_')) keysToRemove.push(k);
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+  } catch {}
+}
+
+export { cacheKey, readCache, writeCache, clearAllCaches };
+
 const { reactive, computed } = Vue;
 
 export const store = reactive({
@@ -209,8 +243,20 @@ export async function loadData() {
 }
 
 export async function loadReports() {
+  const ck = cacheKey('reports');
+  const cached = readCache(ck, 5 * 60 * 1000);
+  if (cached?.data) {
+    store.reports = cached.data.reports || {};
+    // 后台刷新
+    request('/api/reports').then(fresh => {
+      writeCache(ck, fresh);
+      store.reports = fresh.reports || {};
+    }).catch(() => {});
+    return;
+  }
   try {
     const data = await request('/api/reports');
+    writeCache(ck, data);
     store.reports = data.reports || {};
   } catch {
     store.reports = {};
@@ -218,16 +264,27 @@ export async function loadReports() {
 }
 
 export async function loadBooks() {
+  const ck = cacheKey('books');
+  const cached = readCache(ck, 5 * 60 * 1000);
+
+  // 有缓存就先渲染（秒开），然后后台静默刷新
+  if (cached?.data) {
+    applyBooksData(cached.data);
+    store.status = cached.stale ? '正在刷新数据...' : store.status;
+    // 后台静默刷新（不阻塞页面）
+    request('/api/books').then(fresh => {
+      writeCache(ck, fresh);
+      applyBooksData(fresh);
+    }).catch(() => {});
+    return cached.data;
+  }
+
+  // 无缓存：正常请求
   store.status = '正在读取书籍数据...';
   try {
     const booksData = await request('/api/books');
-    store.raw = { fetchedAt: booksData.fetchedAt, totalBooks: booksData.totalBooks, books: booksData.books };
-    store.cardsData = { cards: booksData.recentCards || [], taxonomy: store.cardsData.taxonomy || [] };
-    store.stats = booksData.stats || {};
-    store.classified = booksData.classified || null;
-    store.taxonomy = booksData.taxonomy || { categories: [] };
-    const clsCount = store.classified?.totalNotes || 0;
-    store.status = `已载入：${store.stats.totalBooks || 0} 本书，${store.stats.totalCards || 0} 张资料卡${clsCount ? `，${clsCount} 条已分类` : ''}。`;
+    writeCache(ck, booksData);
+    applyBooksData(booksData);
     loadReports().catch(() => {});
     return booksData;
   } catch (err) {
@@ -236,11 +293,38 @@ export async function loadBooks() {
   }
 }
 
+function applyBooksData(booksData) {
+  store.raw = { fetchedAt: booksData.fetchedAt, totalBooks: booksData.totalBooks, books: booksData.books };
+  store.cardsData = { cards: booksData.recentCards || [], taxonomy: store.cardsData.taxonomy || [] };
+  store.stats = booksData.stats || {};
+  store.classified = booksData.classified || null;
+  store.taxonomy = booksData.taxonomy || { categories: [] };
+  const clsCount = store.classified?.totalNotes || 0;
+  store.status = `已载入：${store.stats.totalBooks || 0} 本书，${store.stats.totalCards || 0} 张资料卡${clsCount ? `，${clsCount} 条已分类` : ''}。`;
+}
+
 export async function loadClassified() {
   if (store._classifiedLoaded) return store.classified;
+
+  const ck = cacheKey('classified');
+  const cached = readCache(ck, 10 * 60 * 1000);
+  if (cached?.data?.notes?.length) {
+    store.classified = cached.data;
+    store._classifiedLoaded = true;
+    // 后台刷新
+    request('/api/classified').then(fresh => {
+      if (fresh?.notes?.length) {
+        writeCache(ck, fresh);
+        store.classified = fresh;
+      }
+    }).catch(() => {});
+    return cached.data;
+  }
+
   try {
     const data = await request('/api/classified').catch(() => null);
     if (data?.notes?.length) {
+      writeCache(ck, data);
       store.classified = data;
       store._classifiedLoaded = true;
     }
@@ -251,25 +335,47 @@ export async function loadClassified() {
 }
 
 export async function loadCardsPaginated({ page = 1, limit = 50, search = '', type = '', book = '', tag = '' } = {}) {
-  try {
-    const params = new URLSearchParams();
-    params.set('page', String(page));
-    params.set('limit', String(limit));
-    if (search) params.set('search', search);
-    if (type) params.set('type', type);
-    if (book) params.set('book', book);
-    if (tag) params.set('tag', tag);
+  const endpoint = `cards_${page}_${limit}_${search}_${type}_${book}_${tag}`;
+  const ck = cacheKey(endpoint);
+  const cached = readCache(ck, 3 * 60 * 1000);
 
-    const data = await request(`/api/cards?${params.toString()}`);
-    store.paginatedCards = data.cards || [];
-    store.cardsTotal = data.total || 0;
-    store.cardsPage = data.page || 1;
-    store.cardsTotalPages = data.totalPages || 0;
+  if (cached?.data && !search) { // 搜索结果不走缓存
+    applyCardsData(cached.data);
+    // 后台刷新
+    request(`/api/cards?${buildCardsParams(page, limit, search, type, book, tag)}`).then(fresh => {
+      writeCache(ck, fresh);
+      applyCardsData(fresh);
+    }).catch(() => {});
+    return cached.data;
+  }
+
+  try {
+    const data = await request(`/api/cards?${buildCardsParams(page, limit, search, type, book, tag)}`);
+    if (!search) writeCache(ck, data);
+    applyCardsData(data);
     return data;
   } catch (err) {
     store.status = `加载卡片失败：${err.message}`;
     throw err;
   }
+}
+
+function buildCardsParams(page, limit, search, type, book, tag) {
+  const params = new URLSearchParams();
+  params.set('page', String(page));
+  params.set('limit', String(limit));
+  if (search) params.set('search', search);
+  if (type) params.set('type', type);
+  if (book) params.set('book', book);
+  if (tag) params.set('tag', tag);
+  return params.toString();
+}
+
+function applyCardsData(data) {
+  store.paginatedCards = data.cards || [];
+  store.cardsTotal = data.total || 0;
+  store.cardsPage = data.page || 1;
+  store.cardsTotalPages = data.totalPages || 0;
 }
 
 export async function loadAllCards() {
@@ -351,6 +457,7 @@ export async function syncData() {
     store.cardsData = data.cards;
     store.stats = data.stats;
     store._classifiedLoaded = false; // 同步后重置，下次 loadClassified 会重新拉取
+    clearAllCaches(); // 同步后清除所有缓存，确保下次加载新数据
     const duration = data.raw?.syncDurationMs ? `，耗时 ${Math.round(data.raw.syncDurationMs / 1000)} 秒` : '';
     const errors = data.raw?.errorBookCount ? `，${data.raw.errorBookCount} 本书未完整同步` : '';
     store.status = `同步完成：${store.stats.totalBooks} 本书，${store.stats.totalCards} 张资料卡${duration}${errors}。`;
@@ -370,6 +477,7 @@ export async function rebuildCards() {
     const data = await request('/api/cards/rebuild', { method: 'POST', body: JSON.stringify({}) });
     store.cardsData = data.cards;
     store.stats = data.stats;
+    clearAllCaches();
     store.status = `资料卡已重建：${store.stats.totalCards} 张。`;
   } catch (err) {
     store.status = `重建失败：${err.message}`;
@@ -384,6 +492,7 @@ export async function classifyData() {
   try {
     const result = await request('/api/classify', { method: 'POST', body: JSON.stringify({}), timeoutMs: 300000 });
     store.classified = await request('/api/classified');
+    clearAllCaches();
     store.status = `分类完成：${result.totalNotes} 条笔记，${Object.keys(result.stats || {}).length} 个分类。`;
   } catch (err) {
     store.status = `分类失败：${err.message}。请确认 LLM_API_KEY 可用。`;
