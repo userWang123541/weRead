@@ -382,6 +382,53 @@ BootCDN 上 `@element-plus/icons-vue` 是独立包，不在 `element-plus` 路�
 
 ---
 
+## 问题九：API 数据同步超时 / Failed to fetch
+
+### 现象
+
+页面加载后同步数据时显示 `Failed to fetch`，等待时间极长。
+
+### 原因
+
+API 返回数据量巨大（约 5MB JSON），2Mbps 带宽传输需要 20 秒以上，浏览器请求超时。
+
+### 排查过程
+
+1. 服务器本地测试 API：`curl http://localhost:3456/api/data` → 0.12 秒（正常）
+2. 通过 Nginx 代理测试：`curl http://localhost/api/data` → 0.12 秒（正常）
+3. 检查响应大小：`curl http://localhost/api/data | wc -c` → **4,939,985 字节（约 5MB）**
+4. 根因：5MB 数据在 2Mbps 带宽上传输需 20 秒+
+
+### 解决方案
+
+Express 的 `compression` 中间件已自动压缩 JSON 响应：
+
+```bash
+curl -s -H "Accept-Encoding: gzip" http://localhost/api/data | wc -c
+# 结果：1,083,803 字节（约 1MB，压缩率 78%）
+```
+
+5MB → 1MB，传输时间从 20 秒降到约 4 秒。
+
+### Nginx gzip 配置补充
+
+Nginx 的 gzip_types 默认只包含 `text/css` 和 `application/javascript`，需要添加 `application/json`：
+
+```nginx
+gzip_types text/css application/javascript text/javascript application/json text/html;
+```
+
+> 注意：由于 Express 已经在应用层压缩了 JSON，Nginx 层的配置是额外保障。
+> 在 VNC 终端中执行 sed 替换长命令容易断行，建议用修复脚本处理。
+
+### 长期优化建议
+
+- **升级带宽**：从 2Mbps 升到 5Mbps+（腾讯云控制台可操作）
+- **API 分页**：改造代码，只返回当前页面需要的数据，不一次性返回全部
+- **数据缓存**：前端缓存已同步的数据，避免重复请求
+
+---
+
 ## 经验总结
 
 ### 服务器选择
