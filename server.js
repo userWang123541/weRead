@@ -20,7 +20,12 @@ const { generateReport, getCachedReports, chatCompletion } = require('./lib/repo
 const { isPostgres, initDatabase } = require('./lib/postgres');
 
 const app = express();
-app.use(compression());
+app.use(compression({
+  filter: (req, res) => {
+    if (req.path.startsWith('/vendor/')) return false;
+    return compression.filter(req, res);
+  },
+}));
 const TAXONOMY_FILE_DEFAULT = path.join(__dirname, 'config', 'taxonomy.json');
 
 app.use(express.json({ limit: '20mb' }));
