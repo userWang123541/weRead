@@ -5,8 +5,6 @@ export default {
   name: 'RecallPage',
   setup() {
     const inputText = Vue.ref('');
-    const messages = Vue.ref([]);
-    const loading = Vue.ref(false);
     const chatRef = Vue.ref(null);
 
     const examples = [
@@ -19,13 +17,13 @@ export default {
 
     async function onSend(text) {
       const query = (text || inputText.value).trim();
-      if (!query || loading.value) return;
+      if (!query || store.recallLoading) return;
 
       inputText.value = '';
-      messages.value.push({ role: 'user', content: query, sources: null });
-      messages.value.push({ role: 'assistant', content: '', sources: null, loading: true });
+      store.recallMessages.push({ role: 'user', content: query, sources: null });
+      store.recallMessages.push({ role: 'assistant', content: '', sources: null, loading: true });
       scrollToBottom();
-      loading.value = true;
+      store.recallLoading = true;
 
       try {
         const result = await request('/api/recall', {
@@ -33,16 +31,18 @@ export default {
           body: JSON.stringify({ query }),
         });
 
-        const lastMsg = messages.value[messages.value.length - 1];
+        const msgs = store.recallMessages;
+        const lastMsg = msgs[msgs.length - 1];
         lastMsg.content = result.answer || '未能生成回答。';
         lastMsg.sources = result.sources || [];
         lastMsg.loading = false;
       } catch (err) {
-        const lastMsg = messages.value[messages.value.length - 1];
+        const msgs = store.recallMessages;
+        const lastMsg = msgs[msgs.length - 1];
         lastMsg.content = '请求失败：' + err.message;
         lastMsg.loading = false;
       } finally {
-        loading.value = false;
+        store.recallLoading = false;
         scrollToBottom();
       }
     }
@@ -72,8 +72,8 @@ export default {
     return {
       store,
       inputText,
-      messages,
-      loading,
+      messages: Vue.computed(() => store.recallMessages),
+      loading: Vue.computed(() => store.recallLoading),
       chatRef,
       examples,
       onSend,
@@ -156,9 +156,10 @@ export default {
   `,
   computed: {
     lastSources() {
-      for (let i = this.messages.length - 1; i >= 0; i--) {
-        if (this.messages[i].role === 'assistant' && this.messages[i].sources?.length) {
-          return this.messages[i].sources;
+      const msgs = store.recallMessages;
+      for (let i = msgs.length - 1; i >= 0; i--) {
+        if (msgs[i].role === 'assistant' && msgs[i].sources?.length) {
+          return msgs[i].sources;
         }
       }
       return [];

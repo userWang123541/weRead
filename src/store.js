@@ -61,6 +61,8 @@ export const store = reactive({
   cardsPage: 1,
   cardsTotalPages: 0,
   _classifiedLoaded: false,
+  recallMessages: [],
+  recallLoading: false,
 });
 
 export const getters = {
@@ -491,8 +493,15 @@ export async function classifyData() {
   store.status = '正在调用 BGE 模型进行向量分类，首次可能需要几分钟...';
   try {
     const result = await request('/api/classify', { method: 'POST', body: JSON.stringify({}), timeoutMs: 300000 });
-    store.classified = await request('/api/classified');
     clearAllCaches();
+    // 分类完成后重新加载分类数据和分类体系，确保分类管理页显示最新状态
+    const [classified, taxonomy] = await Promise.all([
+      request('/api/classified').catch(() => null),
+      request('/api/taxonomy').catch(() => ({ categories: [] })),
+    ]);
+    store.classified = classified;
+    store.taxonomy = taxonomy || { categories: [] };
+    store._classifiedLoaded = true;
     store.status = `分类完成：${result.totalNotes} 条笔记，${Object.keys(result.stats || {}).length} 个分类。`;
   } catch (err) {
     store.status = `分类失败：${err.message}。请确认 LLM_API_KEY 可用。`;

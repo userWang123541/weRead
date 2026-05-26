@@ -6,6 +6,7 @@ import {
   startCreateRoot,
   deleteCategoryNode,
   resetCategoryForm,
+  loadClassified,
 } from '../store.js';
 
 export default {
@@ -15,6 +16,10 @@ export default {
     const dialogVisible = Vue.ref(false);
     const expandLevel = Vue.ref(0); // 0=只看一级, 1=展开到二级, 2=全部
     const extraExpanded = Vue.ref(new Set()); // ▸ 手动展开的路径
+    const pageLoading = Vue.ref(true);
+
+    // 确保分类数据已加载
+    loadClassified().finally(() => { pageLoading.value = false; });
 
     // 构建完整树结构
     const categoryTree = Vue.computed(() => {
@@ -217,6 +222,7 @@ export default {
       filteredRows,
       categoryTree,
       expandLevel,
+      pageLoading,
       shouldExpand,
       toggleExpand,
       expandToLevel,
@@ -255,7 +261,7 @@ export default {
         <el-button size="small" @click="expandAll">全部</el-button>
       </div>
 
-      <div class="cat-table-card">
+      <div class="cat-table-card" v-loading="pageLoading" element-loading-text="加载分类数据...">
         <el-table
           :data="filteredRows"
           stripe

@@ -8,9 +8,11 @@ export default {
     const tagTreeRef = Vue.ref(null);
     const pageSize = 50;
     const currentPage = Vue.ref(1);
+    const cardsLoading = Vue.ref(false);
 
     async function fetchCards(page = 1) {
       currentPage.value = page;
+      cardsLoading.value = true;
       try {
         await loadCardsPaginated({
           page,
@@ -22,6 +24,8 @@ export default {
         });
       } catch (err) {
         console.error('加载卡片失败:', err);
+      } finally {
+        cardsLoading.value = false;
       }
     }
 
@@ -132,6 +136,7 @@ export default {
       store,
       tagTreeRef,
       cardCls,
+      cardsLoading,
       filteredCards: Vue.computed(() => store.paginatedCards),
       filteredTags: getters.filteredTags,
       tagTree: getters.tagTree,
@@ -183,7 +188,7 @@ export default {
       </div>
 
       <div class="cards-layout">
-        <div class="cards-main">
+        <div class="cards-main" v-loading="cardsLoading" element-loading-text="加载资料卡...">
           <div v-if="!filteredCards.length" class="no-cards-msg">
             没有匹配的资料卡。可以清空筛选，或先同步微信读书数据。
           </div>

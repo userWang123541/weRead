@@ -258,7 +258,49 @@ app.get('/api/cards', async (req, res) => {
 
     if (typeFilter) cards = cards.filter(c => c.type === typeFilter);
     if (bookFilter) cards = cards.filter(c => c.bookTitle === bookFilter);
-    if (tagFilter) cards = cards.filter(c => (c.tags || []).includes(tagFilter));
+    if (tagFilter) {
+      // 先尝试按 card.tags 过滤
+      let tagMatched = cards.filter(c => (c.tags || []).includes(tagFilter));
+      if (tagMatched.length > 0) {
+        cards = tagMatched;
+      } else {
+        // tags 没匹配，尝试按分类结果过滤（支持"未分类"和分类体系路径）
+        const classifiedData = await readJson(apiKey, 'classified.json', null);
+        if (classifiedData?.notes?.length) {
+          if (tagFilter === '未分类') {
+            const unclassifiedKeys = new Set(
+              classifiedData.notes
+                .filter(n => !n.category || n.category === '未分类')
+                .map(n => `${n.bookId}|${n.type}|${(n.text || '').slice(0, 60)}`)
+            );
+            cards = cards.filter(c => {
+              const text = c.quote || c.note || '';
+              const type = c.type === 'linked' ? 'highlight' : c.type;
+              const key = `${c.bookId}|${type}|${text.slice(0, 60)}`;
+              if (unclassifiedKeys.has(key)) return true;
+              // linked 卡片同时检查 review 类型
+              if (c.type === 'linked' && c.note) {
+                const reviewKey = `${c.bookId}|review|${c.note.slice(0, 60)}`;
+                return unclassifiedKeys.has(reviewKey);
+              }
+              return false;
+            });
+          } else {
+            const categoryKeys = new Set(
+              classifiedData.notes
+                .filter(n => n.category === tagFilter)
+                .map(n => `${n.bookId}|${n.type}|${(n.text || '').slice(0, 60)}`)
+            );
+            cards = cards.filter(c => {
+              const text = c.quote || c.note || '';
+              const type = c.type === 'linked' ? 'highlight' : c.type;
+              const key = `${c.bookId}|${type}|${text.slice(0, 60)}`;
+              return categoryKeys.has(key);
+            });
+          }
+        }
+      }
+    }
     if (search) {
       cards = cards.filter(c => {
         const haystack = [c.quote, c.note, c.bookTitle, c.author, c.chapterTitle,

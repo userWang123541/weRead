@@ -103,8 +103,19 @@ export default {
   template: `
     <div class="magazine-home">
 
+      <!-- 数据加载中 -->
+      <section v-if="!hasData && store.status.includes('正在')" class="mg-guide">
+        <div class="mg-guide-card">
+          <div class="mg-guide-icon" style="animation: spin .8s linear infinite">⏳</div>
+          <div class="mg-guide-content">
+            <h3>正在加载数据...</h3>
+            <p>{{ store.status }}</p>
+          </div>
+        </div>
+      </section>
+
       <!-- 新手引导 -->
-      <section v-if="!hasData && !store.loading" class="mg-guide">
+      <section v-else-if="!hasData && !store.loading" class="mg-guide">
         <div class="mg-guide-card">
           <div class="mg-guide-icon">1</div>
           <div class="mg-guide-content">
