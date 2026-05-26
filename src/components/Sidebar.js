@@ -12,10 +12,6 @@ export default {
       { path: '/recall', icon: 'ChatDotRound', label: '拾光' },
       { path: '/categories', icon: 'Folder', label: '分类管理' },
       { path: '/reports', icon: 'DataAnalysis', label: '阅读报告' },
-      { path: '/timeline', icon: 'Clock', label: '时间线' },
-      { path: '/studio', icon: 'EditPen', label: '内容工坊' },
-      { path: '/review', icon: 'Refresh', label: '划线回顾' },
-      { path: '/export', icon: 'Download', label: '导出' },
       { path: '/settings', icon: 'Setting', label: '设置' },
     ];
 
