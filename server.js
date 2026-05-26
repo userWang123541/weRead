@@ -173,6 +173,7 @@ app.post('/api/sync/start', async (req, res) => {
     const job = createSyncJob(apiKey, { maxBooks, concurrency });
     res.status(202).json(publicSyncJob(job));
   } catch (err) {
+    console.error('Failed to start sync job:', err);
     sendError(res, err);
   }
 });
@@ -659,44 +660,54 @@ function createSyncJob(apiKey, options = {}) {
   syncJobs.set(jobId, job);
   activeSyncJobsByUser.set(userSyncKey, jobId);
 
-  syncWereadData(apiKey, {
-    ...options,
-    onProgress(progress) {
-      job.completedBooks = progress.completedBooks || 0;
-      job.totalBooks = progress.totalBooks || 0;
-      job.sourceBookCount = progress.sourceBookCount || 0;
-      job.currentBookTitle = progress.currentBookTitle || '';
-      job.updatedAt = new Date().toISOString();
-    },
-  })
-    .then(async (raw) => {
-      const cards = buildCards(raw);
-      await writeJsonByKey(apiKey, 'weread-data.json', raw);
-      await writeJsonByKey(apiKey, 'cards.json', cards);
-      job.status = 'completed';
-      job.completedAt = new Date().toISOString();
-      job.updatedAt = job.completedAt;
-      job.completedBooks = raw.totalBooks || job.completedBooks;
-      job.totalBooks = raw.totalBooks || job.totalBooks;
-      job.sourceBookCount = raw.sourceBookCount || job.sourceBookCount;
-      job.result = {
-        ok: true,
-        raw,
-        cards,
-        stats: summarize(raw, cards),
-      };
-    })
-    .catch((err) => {
-      job.status = 'failed';
-      job.error = err.message;
-      job.updatedAt = new Date().toISOString();
-    })
-    .finally(() => {
-      activeSyncJobsByUser.delete(userSyncKey);
-      setTimeout(() => syncJobs.delete(jobId), 30 * 60 * 1000);
-    });
+  setImmediate(() => {
+    runSyncJob(job, userSyncKey, apiKey, options)
+      .catch((err) => {
+        console.error('Unhandled sync job failure:', err);
+        job.status = 'failed';
+        job.error = err.message;
+        job.updatedAt = new Date().toISOString();
+      });
+  });
 
   return job;
+}
+
+async function runSyncJob(job, userSyncKey, apiKey, options) {
+  try {
+    const raw = await syncWereadData(apiKey, {
+      ...options,
+      onProgress(progress) {
+        job.completedBooks = progress.completedBooks || 0;
+        job.totalBooks = progress.totalBooks || 0;
+        job.sourceBookCount = progress.sourceBookCount || 0;
+        job.currentBookTitle = progress.currentBookTitle || '';
+        job.updatedAt = new Date().toISOString();
+      },
+    });
+    const cards = buildCards(raw);
+    await writeJsonByKey(apiKey, 'weread-data.json', raw);
+    await writeJsonByKey(apiKey, 'cards.json', cards);
+    job.status = 'completed';
+    job.completedAt = new Date().toISOString();
+    job.updatedAt = job.completedAt;
+    job.completedBooks = raw.totalBooks || job.completedBooks;
+    job.totalBooks = raw.totalBooks || job.totalBooks;
+    job.sourceBookCount = raw.sourceBookCount || job.sourceBookCount;
+    job.result = {
+      ok: true,
+      raw,
+      cards,
+      stats: summarize(raw, cards),
+    };
+  } catch (err) {
+    job.status = 'failed';
+    job.error = err.message;
+    job.updatedAt = new Date().toISOString();
+  } finally {
+    activeSyncJobsByUser.delete(userSyncKey);
+    setTimeout(() => syncJobs.delete(job.id), 30 * 60 * 1000);
+  }
 }
 
 function publicSyncJob(job) {
