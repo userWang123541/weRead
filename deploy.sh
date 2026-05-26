@@ -19,14 +19,14 @@ APP_DIR="/var/www/wereadwork"
 APP_PORT=3456
 NODE_VERSION="18"
 
-# .env 配置
-WEREAD_API_KEY="${WEREAD_API_KEY:-wrk-mR0uDPHsTYKSkYXD4a4dnAAA}"
+# .env 配置（从环境变量读取，不再硬编码密钥）
+WEREAD_API_KEY="${WEREAD_API_KEY:?请设置 WEREAD_API_KEY 环境变量}"
 LLM_EMBEDDING_BASE_URL="${LLM_EMBEDDING_BASE_URL:-https://api.siliconflow.cn/v1}"
-LLM_EMBEDDING_API_KEY="${LLM_EMBEDDING_API_KEY:-sk-zhkqicohmkkukpzinwvfqdmtkcgdnwcqdywfvsuhltpmbaqs}"
+LLM_EMBEDDING_API_KEY="${LLM_EMBEDDING_API_KEY:?请设置 LLM_EMBEDDING_API_KEY 环境变量}"
 LLM_EMBEDDING_MODEL="${LLM_EMBEDDING_MODEL:-BAAI/bge-large-zh-v1.5}"
-LLM_CHAT_BASE_URL="${LLM_CHAT_BASE_URL:-https://token-plan-cn.xiaomimimo.com/v1}"
-LLM_CHAT_API_KEY="${LLM_CHAT_API_KEY:-tp-c61bic2mjub82xdrj5do6paofjwp7bfr0jkzui0lcuvnhz25}"
-LLM_CHAT_MODEL="${LLM_CHAT_MODEL:-mimo-v2.5-pro}"
+LLM_CHAT_BASE_URL="${LLM_CHAT_BASE_URL:-https://api.siliconflow.cn/v1}"
+LLM_CHAT_API_KEY="${LLM_CHAT_API_KEY:?请设置 LLM_CHAT_API_KEY 环境变量}"
+LLM_CHAT_MODEL="${LLM_CHAT_MODEL:-deepseek-ai/DeepSeek-V4-Flash}"
 
 # ── 前置检查 ──
 info "检查运行环境..."
