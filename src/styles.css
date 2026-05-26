@@ -142,16 +142,20 @@ button:disabled { cursor: not-allowed; opacity: .4; }
   display: flex;
   align-items: center;
   gap: 14px;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .header-status {
   color: var(--text-placeholder);
   font-size: 12px;
-  max-width: 280px;
+  max-width: 400px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
   letter-spacing: .2px;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 /* ====== 侧边栏 — 浅米色 ====== */

@@ -370,7 +370,7 @@ export async function classifyData() {
   store.loading = true;
   store.status = '正在调用 BGE 模型进行向量分类，首次可能需要几分钟...';
   try {
-    const result = await request('/api/classify', { method: 'POST', body: JSON.stringify({}) });
+    const result = await request('/api/classify', { method: 'POST', body: JSON.stringify({}), timeoutMs: 300000 });
     store.classified = await request('/api/classified');
     store.status = `分类完成：${result.totalNotes} 条笔记，${Object.keys(result.stats || {}).length} 个分类。`;
   } catch (err) {
