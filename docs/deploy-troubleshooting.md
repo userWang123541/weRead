@@ -280,6 +280,108 @@ app.use(compression({
 
 ---
 
+## 问题七：LCP（最大内容绘制）9.21 秒
+
+### 现象
+
+PageSpeed 显示 LCP 9.21 秒，页面加载体验差。
+
+### 原因
+
+所有 JS 脚本都是同步加载（无 `defer`），浏览器必须按顺序下载完所有脚本才开始渲染：
+- Vue（2s）→ Vue Router（1.3s）→ Element Plus（8s）→ Icons → Marked
+- 总计约 13 秒后才开始渲染页面
+
+### 解决方案
+
+**1. preconnect + preload 提前建立连接和下载关键资源：**
+
+```html
+<link rel="preconnect" href="https://cdn.bootcdn.net" crossorigin>
+<link rel="preload" as="script" href="https://cdn.bootcdn.net/ajax/libs/vue/3.5.13/vue.global.prod.min.js">
+<link rel="preload" as="script" href="https://cdn.bootcdn.net/ajax/libs/vue-router/4.4.5/vue-router.global.prod.min.js">
+```
+
+**2. defer 异步加载非关键脚本：**
+
+```html
+<!-- Vue/Vue Router 同步加载（Element Plus 依赖它们） -->
+<script src="https://cdn.bootcdn.net/ajax/libs/vue/3.5.13/vue.global.prod.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/vue-router/4.4.5/vue-router.global.prod.min.js"></script>
+
+<!-- Element Plus/Icons/Marked 延迟加载 -->
+<script defer src="https://cdn.bootcdn.net/ajax/libs/element-plus/2.9.1/index.full.min.js"></script>
+<script defer src="https://cdn.bootcdn.net/ajax/libs/element-plus-icons-vue/2.3.2/index.iife.min.js"></script>
+<script defer src="https://cdn.bootcdn.net/ajax/libs/marked/12.0.0/marked.min.js"></script>
+```
+
+**3. 添加 loading 动画（CSS 内联，不依赖外部资源）：**
+
+```html
+<style>
+  #app:empty { display:flex; align-items:center; justify-content:center; height:100vh; }
+  #app:empty::after { content:''; width:32px; height:32px; border:3px solid #e5e5e5; border-top-color:#409eff; border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg) } }
+</style>
+```
+
+**4. main.js 等待 Element Plus 加载完成后再挂载：**
+
+```javascript
+function mountApp() {
+  const app = createApp(App);
+  app.use(router);
+  app.use(ElementPlus);
+  // ...
+  app.mount('#app');
+}
+
+if (typeof ElementPlus !== 'undefined') {
+  mountApp();
+} else {
+  const scripts = document.querySelectorAll('script[src*="element-plus"]');
+  let loaded = 0;
+  scripts.forEach(s => s.addEventListener('load', () => {
+    if (++loaded >= scripts.length) mountApp();
+  }));
+}
+```
+
+### 优化效果
+
+| 指标 | 优化前 | 优化后 |
+|---|---|---|
+| Vue 加载 | 阻塞 | 1.5 秒（preload 加速） |
+| Element Plus | 阻塞渲染 8 秒 | defer 异步，不阻塞 |
+| CSS 缓存 | 无 | disk cache，0ms |
+| 用户感知 | 白屏 9+ 秒 | 立即显示 loading 动画 |
+
+---
+
+## 问题八：BootCDN icons-vue 路径 404
+
+### 现象
+
+```
+GET https://cdn.bootcdn.net/ajax/libs/element-plus/2.9.1/icons-vue.min.js → 404
+```
+
+### 原因
+
+BootCDN 上 `@element-plus/icons-vue` 是独立包，不在 `element-plus` 路径下。
+
+### 正确路径
+
+```html
+<!-- 错误 -->
+<script src="https://cdn.bootcdn.net/ajax/libs/element-plus/2.9.1/icons-vue.min.js"></script>
+
+<!-- 正确 -->
+<script src="https://cdn.bootcdn.net/ajax/libs/element-plus-icons-vue/2.3.2/index.iife.min.js"></script>
+```
+
+---
+
 ## 经验总结
 
 ### 服务器选择
