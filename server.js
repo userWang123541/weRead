@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const compression = require('compression');
 const path = require('path');
 
 const {
@@ -19,6 +20,7 @@ const { generateReport, getCachedReports, chatCompletion } = require('./lib/repo
 const { isPostgres, initDatabase } = require('./lib/postgres');
 
 const app = express();
+app.use(compression());
 const TAXONOMY_FILE_DEFAULT = path.join(__dirname, 'config', 'taxonomy.json');
 
 app.use(express.json({ limit: '20mb' }));
