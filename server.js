@@ -179,6 +179,12 @@ app.get('/api/books', async (req, res) => {
     const quotable = allCards.filter(c => c.quote && c.quote.length > 15);
     const rq = quotable.length ? quotable[Math.floor(Math.random() * quotable.length)] : null;
 
+    // 合并 classified + taxonomy，前端只需 1 次请求
+    const [classified, taxonomy] = await Promise.all([
+      readJson(apiKey, 'classified.json', null),
+      loadTaxonomyData(apiKey),
+    ]);
+
     res.json({
       fetchedAt: raw.fetchedAt || '',
       totalBooks: books.length,
@@ -186,6 +192,8 @@ app.get('/api/books', async (req, res) => {
       stats: { ...summarize(raw, cardsData), readingDays: dates.size },
       recentCards,
       randomQuote: rq ? { text: rq.quote.slice(0, 120), book: rq.bookTitle || '' } : { text: '', book: '' },
+      classified,
+      taxonomy,
     });
   } catch (err) {
     sendError(res, err);

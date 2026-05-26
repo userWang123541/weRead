@@ -219,16 +219,12 @@ export async function loadReports() {
 export async function loadBooks() {
   store.status = '正在读取书籍数据...';
   try {
-    const [booksData, classified, taxonomy] = await Promise.all([
-      request('/api/books'),
-      request('/api/classified').catch(() => null),
-      request('/api/taxonomy').catch(() => ({ categories: [] })),
-    ]);
+    const booksData = await request('/api/books');
     store.raw = { fetchedAt: booksData.fetchedAt, totalBooks: booksData.totalBooks, books: booksData.books };
     store.cardsData = { cards: booksData.recentCards || [], taxonomy: store.cardsData.taxonomy || [] };
     store.stats = booksData.stats || {};
-    store.classified = classified;
-    store.taxonomy = taxonomy || { categories: [] };
+    store.classified = booksData.classified || null;
+    store.taxonomy = booksData.taxonomy || { categories: [] };
     const clsCount = store.classified?.totalNotes || 0;
     store.status = `已载入：${store.stats.totalBooks || 0} 本书，${store.stats.totalCards || 0} 张资料卡${clsCount ? `，${clsCount} 条已分类` : ''}。`;
     loadReports().catch(() => {});
