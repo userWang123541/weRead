@@ -5,7 +5,12 @@ export default {
   name: 'App',
   components: { AppSidebar },
   setup() {
-    loadBooks();
+    // 有 key 才加载，新用户不加载别人的数据
+    if (store.apiKey.trim()) {
+      loadBooks();
+    } else {
+      store.status = '请先在设置页输入 API Key。';
+    }
     return { store };
   },
   template: `

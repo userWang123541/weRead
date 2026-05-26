@@ -7,7 +7,10 @@ export default {
     const router = VueRouter.useRouter();
 
     const hasData = Vue.computed(() => (store.stats.totalBooks || 0) > 0);
-    const hasClassified = Vue.computed(() => (store.classified?.totalNotes || 0) > 0);
+    const hasClassified = Vue.computed(() => {
+      const stats = store.classified?.stats || {};
+      return Object.keys(stats).some(k => k !== '未分类' && stats[k] > 0);
+    });
 
     const topCategories = Vue.computed(() => Object.entries(store.classified?.stats || {})
       .filter(([tag]) => tag !== '未分类')
@@ -101,7 +104,7 @@ export default {
     <div class="magazine-home">
 
       <!-- 新手引导 -->
-      <section v-if="!hasData" class="mg-guide">
+      <section v-if="!hasData && !store.loading" class="mg-guide">
         <div class="mg-guide-card">
           <div class="mg-guide-icon">1</div>
           <div class="mg-guide-content">
@@ -114,7 +117,7 @@ export default {
         </div>
       </section>
 
-      <section v-else-if="!hasClassified" class="mg-guide">
+      <section v-else-if="!hasClassified && hasData" class="mg-guide">
         <div class="mg-guide-card">
           <div class="mg-guide-icon">2</div>
           <div class="mg-guide-content">
@@ -127,6 +130,17 @@ export default {
         </div>
       </section>
 
+      <!-- 加载中 -->
+      <section v-else-if="store.loading" class="mg-guide">
+        <div class="mg-guide-card">
+          <div class="mg-guide-content">
+            <h3>{{ store.status }}</h3>
+            <p>请稍候，正在加载数据...</p>
+          </div>
+        </div>
+      </section>
+
+      <template v-if="hasData">
       <!-- Slogan Hero -->
       <section class="mg-hero">
         <h1 class="mg-slogan">阅读不是记录，是再组织</h1>
@@ -238,6 +252,7 @@ export default {
           </div>
         </div>
       </section>
+      </template>
 
     </div>
   `,

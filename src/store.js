@@ -26,6 +26,7 @@ export const store = reactive({
   cardsTotal: 0,
   cardsPage: 1,
   cardsTotalPages: 0,
+  _classifiedLoaded: false,
 });
 
 export const getters = {
@@ -236,10 +237,13 @@ export async function loadBooks() {
 }
 
 export async function loadClassified() {
-  if (store.classified?.notes?.length) return store.classified;
+  if (store._classifiedLoaded) return store.classified;
   try {
     const data = await request('/api/classified').catch(() => null);
-    if (data) store.classified = data;
+    if (data?.notes?.length) {
+      store.classified = data;
+      store._classifiedLoaded = true;
+    }
     return data;
   } catch {
     return null;
