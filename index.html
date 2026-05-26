@@ -5,11 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <title>微读 Read</title>
-  <link rel="preconnect" href="https://cdn.bootcdn.net" crossorigin>
-  <link rel="preload" as="script" href="https://cdn.bootcdn.net/ajax/libs/vue/3.5.13/vue.global.prod.min.js">
-  <link rel="preload" as="script" href="https://cdn.bootcdn.net/ajax/libs/vue-router/4.4.5/vue-router.global.prod.min.js">
-  <link rel="preload" as="style" href="https://cdn.bootcdn.net/ajax/libs/element-plus/2.9.1/index.css">
-  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/element-plus/2.9.1/index.css">
+  <link rel="preload" href="/vendor/vue.global.prod.js" as="script">
+  <link rel="preload" href="/vendor/vue-router.global.prod.js" as="script">
+  <link rel="preload" href="/vendor/element-plus.min.js" as="script">
+  <link rel="stylesheet" href="/vendor/element-plus.css">
   <link rel="stylesheet" href="/src/styles.css">
   <style>
     #app:empty { display:flex; align-items:center; justify-content:center; height:100vh; }
@@ -20,11 +19,13 @@
 <body>
   <div id="app"></div>
 
-  <script src="https://cdn.bootcdn.net/ajax/libs/vue/3.5.13/vue.global.prod.min.js"></script>
-  <script src="https://cdn.bootcdn.net/ajax/libs/vue-router/4.4.5/vue-router.global.prod.min.js"></script>
-  <script defer src="https://cdn.bootcdn.net/ajax/libs/element-plus/2.9.1/index.full.min.js"></script>
-  <script defer src="https://cdn.bootcdn.net/ajax/libs/element-plus-icons-vue/2.3.2/index.iife.min.js"></script>
-  <script defer src="https://cdn.bootcdn.net/ajax/libs/marked/12.0.0/marked.min.js"></script>
+  <!-- 本地 vendor：不阻塞解析，按 defer 顺序执行 -->
+  <script defer src="/vendor/vue.global.prod.js"></script>
+  <script defer src="/vendor/vue-router.global.prod.js"></script>
+  <script defer src="/vendor/element-plus.min.js"></script>
+  <script defer src="/vendor/icons-vue.min.js"></script>
+  <script defer src="/vendor/marked.min.js"></script>
+  <!-- main.js 是 module，自动 defer，等上面全部执行完后再跑 -->
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

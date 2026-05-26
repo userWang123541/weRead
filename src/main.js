@@ -17,13 +17,5 @@ function mountApp() {
   app.mount('#app');
 }
 
-// Element Plus 用 defer 加载，可能还没准备好
-if (typeof ElementPlus !== 'undefined') {
-  mountApp();
-} else {
-  const scripts = document.querySelectorAll('script[src*="element-plus"]');
-  let loaded = 0;
-  scripts.forEach(s => s.addEventListener('load', () => {
-    if (++loaded >= scripts.length) mountApp();
-  }));
-}
+// 所有 vendor 已用 defer 加载，此处必定可用
+mountApp();
