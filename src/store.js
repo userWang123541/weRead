@@ -235,6 +235,17 @@ export async function loadBooks() {
   }
 }
 
+export async function loadClassified() {
+  if (store.classified?.notes?.length) return store.classified;
+  try {
+    const data = await request('/api/classified').catch(() => null);
+    if (data) store.classified = data;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 export async function loadCardsPaginated({ page = 1, limit = 50, search = '', type = '', book = '', tag = '' } = {}) {
   try {
     const params = new URLSearchParams();

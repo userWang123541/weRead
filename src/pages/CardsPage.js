@@ -1,4 +1,4 @@
-import { store, getters, cardClassification, updateNoteCategory, openOriginal, loadCardsPaginated } from '../store.js';
+import { store, getters, cardClassification, updateNoteCategory, openOriginal, loadCardsPaginated, loadClassified } from '../store.js';
 import { compact, formatDate, typeLabel } from '../utils.js';
 
 export default {
@@ -33,7 +33,10 @@ export default {
       fetchCards(1);
     });
 
-    Vue.onMounted(() => fetchCards(1));
+    Vue.onMounted(() => {
+      fetchCards(1);
+      loadClassified();
+    });
 
     function clearFilters() {
       store.selectedTag = '';

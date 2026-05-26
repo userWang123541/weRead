@@ -179,11 +179,15 @@ app.get('/api/books', async (req, res) => {
     const quotable = allCards.filter(c => c.quote && c.quote.length > 15);
     const rq = quotable.length ? quotable[Math.floor(Math.random() * quotable.length)] : null;
 
-    // 合并 classified + taxonomy，前端只需 1 次请求
-    const [classified, taxonomy] = await Promise.all([
+    // 合并 classified stats + taxonomy，前端只需 1 次请求
+    // classified 完整数据按需通过 /api/classified 加载
+    const [classifiedFull, taxonomy] = await Promise.all([
       readJson(apiKey, 'classified.json', null),
       loadTaxonomyData(apiKey),
     ]);
+    const classified = classifiedFull
+      ? { totalNotes: classifiedFull.totalNotes || 0, stats: classifiedFull.stats || {}, classifiedAt: classifiedFull.classifiedAt || '' }
+      : null;
 
     res.json({
       fetchedAt: raw.fetchedAt || '',
