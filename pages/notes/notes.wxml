@@ -1,16 +1,56 @@
 <view class="screen notebook-page">
   <view class="search-pill">
-    <text>⌕</text>
-    <input value="{{searchQuery}}" bindinput="onSearch" placeholder="搜索笔记、金句或作者..." placeholder-class="search-placeholder" />
+    <text class="search-icon">⌕</text>
+    <input class="search-input" value="{{searchQuery}}" bindinput="onSearch" placeholder="搜索笔记、金句或作者..." placeholder-class="search-placeholder" />
+    <text class="search-clear" wx:if="{{searchQuery}}" catchtap="clearSearch">×</text>
   </view>
 
-  <view class="filter-row">
-    <block wx:for="{{typeFilters}}" wx:key="*this">
-      <view class="tag {{activeType === index ? 'active' : ''}}" data-index="{{index}}" bindtap="setTypeFilter">{{item}}</view>
-    </block>
+  <view class="filter-bar">
+    <view class="filter-tags">
+      <block wx:for="{{typeFilters}}" wx:key="*this">
+        <view class="ftag {{activeType === index ? 'on' : ''}}" data-index="{{index}}" catchtap="setTypeFilter">{{item}}</view>
+      </block>
+      <view class="ftag sep">|</view>
+      <view class="ftag {{activeBookIdx > 0 ? 'on' : ''}}" catchtap="toggleBookPicker">
+        {{activeBookIdx > 0 ? bookNames[activeBookIdx] : '书籍'}} ▾
+      </view>
+      <view class="ftag {{activeCatPath ? 'on' : ''}}" catchtap="toggleCatPicker">
+        {{activeCatPath ? activeCatLabel : '分类'}} ▾
+      </view>
+    </view>
   </view>
 
-  <view class="note-list">
+  <view class="dropdown-mask" wx:if="{{showBookPicker}}" catchtap="closePickers"></view>
+  <view class="dropdown-box" wx:if="{{showBookPicker}}" catchtap="noop">
+    <scroll-view scroll-y class="dropdown-scroll">
+      <view class="dd-item {{activeBookIdx === index ? 'on' : ''}}" data-index="{{index}}" catchtap="pickBook" wx:for="{{bookNames}}" wx:key="*this">{{item}}</view>
+    </scroll-view>
+  </view>
+
+  <view class="dropdown-mask" wx:if="{{showCatPicker}}" catchtap="closePickers"></view>
+  <view class="dropdown-box cat-dropdown" wx:if="{{showCatPicker}}" catchtap="noop">
+    <view class="cat-dd-head">
+      <text class="cat-dd-title">选择分类</text>
+      <text class="cat-dd-clear" catchtap="clearCategoryFilter">清除</text>
+    </view>
+    <view class="cat-dd-cols">
+      <scroll-view scroll-y class="cat-dd-col">
+        <view class="cat-dd-item {{filterCat1 === item.path ? 'on' : ''}}" data-path="{{item.path}}" data-name="{{item.name}}" catchtap="pickFilterCat1" wx:for="{{filterCatCol1}}" wx:key="path">{{item.name}}</view>
+      </scroll-view>
+      <scroll-view scroll-y class="cat-dd-col" wx:if="{{filterCatCol2.length}}">
+        <view class="cat-dd-item {{filterCat2 === item.path ? 'on' : ''}}" data-path="{{item.path}}" data-name="{{item.name}}" catchtap="pickFilterCat2" wx:for="{{filterCatCol2}}" wx:key="path">{{item.name}}</view>
+      </scroll-view>
+    </view>
+  </view>
+
+  <view class="result-bar" wx:if="{{!loading}}">
+    <text class="result-count">第 {{currentPage}} / {{totalPages}} 页，共 {{filteredCount}} 条</text>
+    <text class="result-clear" wx:if="{{searchQuery || activeType !== 0 || activeBookIdx !== 0 || activeCatPath}}" catchtap="clearAllFilters">清除筛选</text>
+  </view>
+
+  <view class="page-loading" wx:if="{{pageLoading && !loading}}">加载本页数据...</view>
+
+  <view class="note-list" wx:if="{{cards.length > 0}}">
     <block wx:for="{{cards}}" wx:key="id">
       <view class="note-card card">
         <view class="note-head">
@@ -18,39 +58,68 @@
             <view class="note-book">{{item.bookTitle}}</view>
             <view class="note-chapter">{{item.chapter || item.author}}</view>
           </view>
-          <text class="note-type">{{item.type === 'review' ? '想法' : (item.type === 'linked' ? '划线+想法' : '划线')}}</text>
+          <text class="note-type {{item.type === 1 ? 'type-review' : ''}}">{{item.type === 1 ? '想法' : '划线'}}</text>
         </view>
         <view class="note-quote">"{{item.quote || item.note}}"</view>
         <view class="note-note" wx:if="{{item.note && item.quote}}">{{item.note}}</view>
         <view class="note-tags">
           <text class="tag category-tag">{{item.category || '未分类'}}</text>
-          <block wx:for="{{item.tags}}" wx:key="*this">
-            <text class="tag">{{item}}</text>
+          <block wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this">
+            <text class="tag">{{tag}}</text>
           </block>
         </view>
         <view class="note-actions">
-          <button class="note-action" data-cardid="{{item.cardId}}" bindtap="openCategorySheet">修改分类</button>
+          <button class="note-action" data-cardid="{{item.cardId}}" catchtap="openCategorySheet">修改分类</button>
         </view>
       </view>
     </block>
   </view>
 
-  <view wx:if="{{categorySheetVisible}}" class="sheet-mask" bindtap="closeCategorySheet">
+  <view class="pagination" wx:if="{{!loading && filteredCount > 0}}">
+    <button class="page-btn {{!hasPrevPage || pageLoading ? 'disabled' : ''}}" disabled="{{!hasPrevPage || pageLoading}}" catchtap="prevPage">上一页</button>
+    <view class="page-indicator">
+      <text class="page-main">{{currentPage}}</text>
+      <text class="page-sub">/ {{totalPages}}</text>
+    </view>
+    <button class="page-btn primary {{!hasNextPage || pageLoading ? 'disabled' : ''}}" disabled="{{!hasNextPage || pageLoading}}" catchtap="nextPage">下一页</button>
+  </view>
+
+  <view class="empty-state" wx:if="{{!loading && cards.length === 0}}">
+    <text class="empty-icon">▤</text>
+    <text class="empty-title" wx:if="{{searchQuery || activeType !== 0 || activeBookIdx !== 0 || activeCatPath}}">没有找到匹配的笔记</text>
+    <text class="empty-title" wx:else>还没有笔记</text>
+    <text class="empty-desc" wx:if="{{searchQuery}}">换个关键词试试</text>
+    <text class="empty-desc" wx:elif="{{activeType !== 0 || activeBookIdx !== 0 || activeCatPath}}">试试切换筛选条件</text>
+    <text class="empty-desc" wx:else>同步微信读书数据后，笔记会出现在这里</text>
+  </view>
+
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <view class="spinner"></view>
+    <text class="muted">加载中...</text>
+  </view>
+
+  <view wx:if="{{categorySheetVisible}}" class="sheet-mask" catchtap="closeCategorySheet">
     <view class="category-sheet" catchtap="noop">
       <view class="sheet-head">
         <view>
           <view class="sheet-title">修改分类</view>
           <view class="sheet-sub">{{editingCard.bookTitle}}</view>
         </view>
-        <view class="sheet-close" bindtap="closeCategorySheet">×</view>
+        <view class="sheet-close" catchtap="closeCategorySheet">×</view>
       </view>
-      <scroll-view scroll-y class="category-options">
-        <block wx:for="{{categoryOptions}}" wx:key="id">
-          <view class="category-option {{editingCard.category === item.path ? 'active' : ''}}" data-id="{{item.id}}" data-path="{{item.path}}" bindtap="selectCategory">
-            {{item.name}}
-          </view>
-        </block>
-      </scroll-view>
+      <view class="cat-cascader">
+        <picker-view class="cat-picker" value="{{[catPick1, catPick2]}}" bindchange="onCatPickerChange">
+          <picker-view-column>
+            <view wx:for="{{catCol1}}" wx:key="*this" class="cat-picker-item">{{item}}</view>
+          </picker-view-column>
+          <picker-view-column wx:if="{{catCol2.length > 0}}">
+            <view wx:for="{{catCol2}}" wx:key="*this" class="cat-picker-item">{{item}}</view>
+          </picker-view-column>
+        </picker-view>
+      </view>
+      <view class="sheet-footer">
+        <button class="big-button primary" catchtap="confirmCategory">确认</button>
+      </view>
     </view>
   </view>
 </view>

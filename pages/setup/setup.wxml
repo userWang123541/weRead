@@ -1,9 +1,50 @@
 <view class="setup-page">
+
+  <!-- 引导页：首次使用介绍 -->
+  <view wx:if="{{step === 'intro'}}" class="intro-wrap">
+    <view class="intro-hero">
+      <view class="intro-brand">微信读书笔记管理助手</view>
+      <view class="intro-headline">把你的笔记变成你的知识资产</view>
+      <view class="intro-lead">导入微信读书数据后，划线、想法、书评会进入一个可分类、可检索、可追问的知识库。</view>
+    </view>
+
+    <swiper class="intro-swiper" current="{{currentSlide}}" bindchange="onIntroSwiperChange" duration="400" circular="{{false}}">
+      <swiper-item wx:for="{{introSlides}}" wx:key="index">
+        <view class="intro-slide">
+          <view class="intro-icon">{{item.icon}}</view>
+          <view class="intro-title">{{item.title}}</view>
+          <view class="intro-desc">{{item.desc}}</view>
+        </view>
+      </swiper-item>
+    </swiper>
+
+    <view class="intro-dots">
+      <view wx:for="{{totalSlides}}" wx:key="index" class="intro-dot {{currentSlide === index ? 'active' : ''}}"></view>
+    </view>
+
+    <view class="intro-actions">
+      <view class="intro-skip" bindtap="skipIntro">跳过</view>
+      <view class="intro-btn" bindtap="nextSlide">{{currentSlide < totalSlides - 1 ? '下一页' : '开始使用'}}</view>
+    </view>
+  </view>
+
   <!-- 状态：输入 key -->
-  <view wx:if="{{step === 'input'}}" class="setup-center">
+  <view wx:elif="{{step === 'input'}}" class="setup-center">
     <view class="setup-logo">✦</view>
-    <view class="setup-title">欢迎使用微读工作室</view>
-    <view class="setup-sub">连接你的微信读书，将划线、想法变成可检索的知识素材。</view>
+    <view class="setup-title">微信读书笔记管理助手</view>
+    <view class="setup-sub">把你的笔记变成你的知识资产。连接微信读书后，书籍、划线和想法会同步进入可检索的知识库。</view>
+
+    <view class="value-card-list">
+      <block wx:for="{{valueCards}}" wx:key="mark">
+        <view class="value-card">
+          <text class="value-mark">{{item.mark}}</text>
+          <view>
+            <view class="value-title">{{item.title}}</view>
+            <view class="value-desc">{{item.desc}}</view>
+          </view>
+        </view>
+      </block>
+    </view>
 
     <view class="setup-form">
       <input class="setup-input" value="{{apiKey}}" bindinput="onInput" placeholder="请输入微信读书 API Key" password="{{!showKey}}" />
@@ -21,17 +62,25 @@
     <view wx:if="{{errorMsg}}" class="setup-error">{{errorMsg}}</view>
   </view>
 
-  <!-- 状态：同步/分类中 -->
+  <!-- 状态：同步中 -->
   <view wx:elif="{{step === 'syncing'}}" class="setup-center">
     <view class="setup-spinner"></view>
     <view class="setup-title">{{statusText}}</view>
-    <view class="setup-sub">{{detailText}}</view>
 
-    <view wx:if="{{classifyTotal > 0}}" class="setup-progress">
-      <view class="progress-bar">
-        <view class="progress-fill" style="width: {{classifyPercent}}%;"></view>
+    <!-- 轮播功能描述 -->
+    <view class="sync-carousel">
+      <view class="sync-carousel-item">
+        <text class="sync-carousel-icon">{{syncFeatures[syncFeatureIndex].icon}}</text>
+        <text class="sync-carousel-text">{{syncFeatures[syncFeatureIndex].text}}</text>
       </view>
-      <text class="progress-text">{{classifyDone}} / {{classifyTotal}}</text>
+    </view>
+
+    <!-- 进度条 -->
+    <view class="setup-progress">
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{syncProgress}}%;"></view>
+      </view>
+      <text class="progress-text">{{syncProgress}}%</text>
     </view>
   </view>
 

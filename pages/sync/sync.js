@@ -100,7 +100,8 @@ Page({
       var result = res.result || {};
       if (result.success) {
         store.invalidateCache();
-        self.refresh();
+        self.setData({ syncStatus: 'classifying' });
+        self._runClassification(0);
       } else {
         self.setData({ syncStatus: 'error', errorMsg: result.error || '同步失败' });
         self._stopPoll();
@@ -111,7 +112,30 @@ Page({
     });
   },
 
-  back: function () {
-    wx.navigateBack();
+  _runClassification: function (startBatch) {
+    var self = this;
+    wx.cloud.callFunction({
+      name: 'classifyData',
+      data: { startBatch: startBatch || 0 },
+      config: { timeout: 180000 }
+    }).then(function (res) {
+      var result = res.result || {};
+      if (!result.success) {
+        self.setData({ syncStatus: 'error', errorMsg: result.error || '分类失败' });
+        self._stopPoll();
+        return;
+      }
+
+      if (result.done === false && typeof result.nextBatch === 'number') {
+        self._runClassification(result.nextBatch);
+        return;
+      }
+
+      store.invalidateCache();
+      self.refresh();
+    }).catch(function (err) {
+      self.setData({ syncStatus: 'error', errorMsg: err.message || '分类请求失败' });
+      self._stopPoll();
+    });
   }
 });

@@ -1,32 +1,32 @@
 function timeAgo(ts) {
   if (!ts) return '';
-  const now = Date.now();
-  const t = typeof ts === 'number' && ts < 1e12 ? ts * 1000 : ts;
-  const diff = now - t;
+  var now = Date.now();
+  var t = typeof ts === 'number' && ts < 1e12 ? ts * 1000 : ts;
+  var diff = now - t;
   if (diff < 0) return '刚刚';
-  const mins = Math.floor(diff / 60000);
+  var mins = Math.floor(diff / 60000);
   if (mins < 1) return '刚刚';
   if (mins < 60) return mins + '分钟前';
-  const hours = Math.floor(mins / 60);
+  var hours = Math.floor(mins / 60);
   if (hours < 24) return hours + '小时前';
-  const days = Math.floor(hours / 24);
+  var days = Math.floor(hours / 24);
   if (days === 1) return '昨天';
   if (days < 30) return days + '天前';
-  const d = new Date(t);
+  var d = new Date(t);
   return (d.getMonth() + 1) + '/' + d.getDate();
 }
 
 function formatDate(ts) {
   if (!ts) return '';
-  const t = typeof ts === 'number' && ts < 1e12 ? ts * 1000 : ts;
-  const d = new Date(t);
+  var t = typeof ts === 'number' && ts < 1e12 ? ts * 1000 : ts;
+  var d = new Date(t);
   return d.getFullYear() + '/' + pad(d.getMonth() + 1) + '/' + pad(d.getDate());
 }
 
 function formatDateTime(ts) {
   if (!ts) return '';
-  const t = typeof ts === 'number' && ts < 1e12 ? ts * 1000 : ts;
-  const d = new Date(t);
+  var t = typeof ts === 'number' && ts < 1e12 ? ts * 1000 : ts;
+  var d = new Date(t);
   return (d.getMonth() + 1) + '/' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
 }
 
@@ -52,4 +52,12 @@ function typeClass(type) {
   return '';
 }
 
-module.exports = { timeAgo, formatDate, formatDateTime, truncate, typeLabel, typeClass, pad };
+module.exports = {
+  timeAgo: timeAgo,
+  formatDate: formatDate,
+  formatDateTime: formatDateTime,
+  truncate: truncate,
+  typeLabel: typeLabel,
+  typeClass: typeClass,
+  pad: pad
+};

@@ -3,33 +3,55 @@ var auth = require('../../utils/auth');
 var fmt = require('../../utils/format');
 
 var TYPE_FILTERS = ['全部', '划线', '想法'];
-var TYPE_VALUES = [-1, 'highlight', 'review'];
+var TYPE_VALUES = [-1, 0, 1];
+var PAGE_SIZE = 20;
 
 Page({
   data: {
-    allCards: [],
     cards: [],
     typeFilters: TYPE_FILTERS,
     activeType: 0,
-    tagFilters: ['全部'],
-    activeTag: 0,
     searchQuery: '',
     loading: true,
-    skip: 0,
-    hasMore: true,
-    loadingMore: false,
-    categoryOptions: [],
+    pageLoading: false,
+    cardCount: 0,
+    bookNames: ['全部书籍'],
+    bookValues: [''],
+    activeBookIdx: 0,
+    activeCatPath: '',
+    activeCatLabel: '全部分类',
+    showBookPicker: false,
+    showCatPicker: false,
+    filterCatCol1: [],
+    filterCatCol2: [],
+    filterCat1: '',
+    filterCat2: '',
     categorySheetVisible: false,
-    editingCard: null
+    editingCard: null,
+    catCol1: [],
+    catCol2: [],
+    catPick1: 0,
+    catPick2: 0,
+    taxonomy: null,
+    categoryOptions: [],
+    visibleCount: 0,
+    filteredCount: 0,
+    currentPage: 1,
+    totalPages: 1,
+    hasPrevPage: false,
+    hasNextPage: false
   },
+
+  _searchTimer: null,
 
   noop: function () {},
 
   processCard: function (c) {
+    var typeNum = typeof c.type === 'number' ? c.type : 0;
     return {
       id: c.id || c._id,
       cardId: c.cardId || c.id || c._id,
-      type: c.type || 'highlight',
+      type: typeNum,
       bookId: c.bookId,
       bookTitle: c.bookTitle || '',
       author: c.author || '',
@@ -51,90 +73,174 @@ Page({
 
   onShow: function () {
     var that = this;
+    var app = getApp();
+    var filterBookTitle = app.globalData.notesFilterBookTitle || '';
+    app.globalData.notesFilterBookId = '';
+    app.globalData.notesFilterBookTitle = '';
+
     auth.ensureHasKey(function () {
-      that._loadData();
+      that._loadData(function () {
+        if (!filterBookTitle) return;
+        var idx = that.data.bookNames.indexOf(filterBookTitle);
+        if (idx > 0) {
+          that.setData({ activeBookIdx: idx });
+        }
+      });
     });
   },
 
-  _loadData: function () {
+  onPullDownRefresh: function () {
+    store.invalidateCache();
+    this._loadData();
+    wx.stopPullDownRefresh();
+  },
+
+  _loadData: function (callback) {
     var that = this;
-    that.setData({ loading: true });
-    Promise.all([
-      store.getTopCategories(),
-      store.getRecentCards(100),
-      wx.cloud.callFunction({ name: 'categoryCRUD', data: { action: 'list' } })
-    ]).then(function (results) {
-      var topCats = results[0].slice(0, 6);
-      var processed = (results[1] || []).map(that.processCard);
-      var catResult = (results[2] && results[2].result) || {};
-      var seenCategories = {};
-      var categoryOptions = (catResult.categories || []).map(function (cat) {
-        seenCategories[cat.path] = true;
-        return { id: cat.id || cat.path, path: cat.path, name: cat.path };
+    that.setData({ loading: true, pageLoading: true, cards: [] });
+    store.getNotesMeta().then(function (meta) {
+      var books = (meta && meta.books) || [];
+      var taxonomy = (meta && meta.taxonomy) || { domains: [] };
+      var domains = taxonomy.domains || [];
+
+      var bookNames = ['全部书籍'];
+      var bookValues = [''];
+      books.forEach(function (book) {
+        if (!book || !book.bookId || !book.title) return;
+        bookNames.push(book.title);
+        bookValues.push(book.bookId);
       });
 
-      processed.forEach(function (card) {
-        if (card.category && card.category !== '未分类' && !seenCategories[card.category]) {
-          seenCategories[card.category] = true;
-          categoryOptions.push({ id: card.categoryId || card.category, path: card.category, name: card.category });
-        }
-        (card.rawTags || []).forEach(function (tag) {
-          if (tag && tag !== '待分类/未归档' && !seenCategories[tag]) {
-            seenCategories[tag] = true;
-            categoryOptions.push({ id: tag, path: tag, name: tag });
-          }
+      var categoryOptions = [];
+      domains.forEach(function (d) {
+        categoryOptions.push({ id: d.name, path: d.name });
+        (d.children || d.subs || []).forEach(function (s) {
+          categoryOptions.push({ id: s.path, path: s.path });
         });
       });
 
-      topCats.forEach(function (tag) {
-        if (tag && !seenCategories[tag]) {
-          seenCategories[tag] = true;
-          categoryOptions.push({ id: tag, path: tag, name: tag });
-        }
-      });
-
-      categoryOptions.sort(function (a, b) {
-        if (a.path === '未分类') return -1;
-        if (b.path === '未分类') return 1;
-        return a.path.localeCompare(b.path, 'zh');
-      });
-      categoryOptions.unshift({ id: 'unclassified', path: '未分类', name: '未分类' });
+      var catCol1 = domains.map(function (d) { return d.name; });
 
       that.setData({
-        allCards: processed,
-        tagFilters: ['全部'].concat(topCats),
+        bookNames: bookNames,
+        bookValues: bookValues,
+        taxonomy: taxonomy,
+        catCol1: catCol1,
         categoryOptions: categoryOptions,
-        loading: false
+        filterCatCol1: that._withAll(domains.map(function (d) {
+          return { name: d.name, path: d.name };
+        }), '全部分类'),
+        filterCatCol2: [],
+        currentPage: 1,
+        totalPages: 1,
+        visibleCount: 0,
+        filteredCount: 0,
+        cardCount: 0,
+        hasPrevPage: false,
+        hasNextPage: false
       });
-      that.applyFilters();
+      if (typeof callback === 'function') callback();
+      that.loadCardsPage(1);
     }).catch(function () {
-      that.setData({ loading: false });
+      that.setData({ loading: false, pageLoading: false });
+    });
+  },
+
+  _currentFilters: function () {
+    var activeType = this.data.activeType;
+    return {
+      type: TYPE_VALUES[activeType],
+      bookId: this.data.activeBookIdx > 0 ? this.data.bookValues[this.data.activeBookIdx] : '',
+      category: this.data.activeCatPath || ''
+    };
+  },
+
+  _filterSearchResults: function (cards) {
+    var filters = this._currentFilters();
+    return (cards || []).map(this.processCard).filter(function (c) {
+      if (filters.type !== -1 && c.type !== filters.type) return false;
+      if (filters.bookId && c.bookId !== filters.bookId) return false;
+      if (filters.category) {
+        if (!(c.category === filters.category || c.category.indexOf(filters.category + '/') === 0)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  },
+
+  loadCardsPage: function (page) {
+    var that = this;
+    var targetPage = Math.max(1, Number(page) || 1);
+    var query = (that.data.searchQuery || '').trim();
+
+    that.setData({ pageLoading: true });
+
+    if (query) {
+      return store.searchCards(query).then(function (results) {
+        var filtered = that._filterSearchResults(results);
+        var total = filtered.length;
+        var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        targetPage = Math.min(targetPage, totalPages);
+        var start = (targetPage - 1) * PAGE_SIZE;
+        var pageCards = filtered.slice(start, start + PAGE_SIZE);
+        that.setData({
+          cards: pageCards,
+          loading: false,
+          pageLoading: false,
+          cardCount: total,
+          filteredCount: total,
+          visibleCount: pageCards.length,
+          currentPage: targetPage,
+          totalPages: totalPages,
+          hasPrevPage: targetPage > 1,
+          hasNextPage: targetPage < totalPages
+        });
+      }).catch(function () {
+        that.setData({ loading: false, pageLoading: false });
+      });
+    }
+
+    return store.queryCardsPage({
+      page: targetPage,
+      pageSize: PAGE_SIZE,
+      filters: that._currentFilters()
+    }).then(function (res) {
+      var pageCards = (res.cards || []).map(that.processCard);
+      var total = res.total || 0;
+      var totalPages = res.totalPages || 1;
+      if (total > 0 && targetPage > totalPages) {
+        return that.loadCardsPage(totalPages);
+      }
+      that.setData({
+        cards: pageCards,
+        loading: false,
+        pageLoading: false,
+        cardCount: total,
+        filteredCount: total,
+        visibleCount: pageCards.length,
+        currentPage: res.page || targetPage,
+        totalPages: totalPages,
+        hasPrevPage: (res.page || targetPage) > 1,
+        hasNextPage: (res.page || targetPage) < totalPages
+      });
+    }).catch(function () {
+      that.setData({ loading: false, pageLoading: false });
     });
   },
 
   applyFilters: function () {
-    var activeType = this.data.activeType;
-    var activeTag = this.data.activeTag;
-    var query = this.data.searchQuery.trim().toLowerCase();
-    var typeVal = TYPE_VALUES[activeType];
-    var tagFilters = this.data.tagFilters;
-    var activeTagName = activeTag > 0 ? tagFilters[activeTag] : '';
-    var filtered = this.data.allCards.filter(function (c) {
-      if (typeVal !== -1) {
-        if (typeVal === 'highlight' && c.type === 'review') return false;
-        if (typeVal === 'review' && c.type !== 'review' && !c.note) return false;
-      }
-      if (activeTagName) {
-        var hasTag = c.rawTags.some(function (t) { return t.indexOf(activeTagName) >= 0; });
-        if (!hasTag && c.category.indexOf(activeTagName) < 0) return false;
-      }
-      if (query) {
-        var text = (c.quote + ' ' + c.note + ' ' + c.bookTitle + ' ' + c.category).toLowerCase();
-        if (text.indexOf(query) < 0) return false;
-      }
-      return true;
-    });
-    this.setData({ cards: filtered });
+    this.loadCardsPage(1);
+  },
+
+  prevPage: function () {
+    if (!this.data.hasPrevPage || this.data.pageLoading) return;
+    this.loadCardsPage(this.data.currentPage - 1);
+  },
+
+  nextPage: function () {
+    if (!this.data.hasNextPage || this.data.pageLoading) return;
+    this.loadCardsPage(this.data.currentPage + 1);
   },
 
   setTypeFilter: function (e) {
@@ -142,35 +248,207 @@ Page({
     this.applyFilters();
   },
 
-  setTagFilter: function (e) {
-    this.setData({ activeTag: Number(e.currentTarget.dataset.index) });
+  toggleBookPicker: function () {
+    this.setData({ showBookPicker: !this.data.showBookPicker, showCatPicker: false });
+  },
+
+  pickBook: function (e) {
+    var idx = Number(e.currentTarget.dataset.index);
+    this.setData({ activeBookIdx: idx, showBookPicker: false });
     this.applyFilters();
   },
 
-  onSearch: function (e) {
-    this.setData({ searchQuery: e.detail.value || '' });
+  toggleCatPicker: function () {
+    this.setData({ showCatPicker: !this.data.showCatPicker, showBookPicker: false });
+  },
+
+  _withAll: function (items, label) {
+    return [{ name: label, path: '' }].concat(items || []);
+  },
+
+  pickFilterCat1: function (e) {
+    var path = e.currentTarget.dataset.path || '';
+    var name = e.currentTarget.dataset.name || '全部分类';
+    var taxonomy = this.data.taxonomy;
+    var domains = (taxonomy && taxonomy.domains) || [];
+    var col2 = [];
+
+    domains.forEach(function (d) {
+      if ((d.path || d.name) === path) {
+        col2 = (d.children || d.subs || []).map(function (child) {
+          return { name: child.name, path: child.path };
+        });
+      }
+    });
+
+    this.setData({
+      filterCat1: path,
+      filterCat2: '',
+      activeCatPath: path,
+      activeCatLabel: name,
+      filterCatCol2: path ? this._withAll(col2, '全部二级') : [],
+      showCatPicker: path && col2.length ? this.data.showCatPicker : false
+    });
     this.applyFilters();
+  },
+
+  pickFilterCat2: function (e) {
+    var path = e.currentTarget.dataset.path || '';
+    var name = e.currentTarget.dataset.name || this.data.activeCatLabel;
+
+    this.setData({
+      filterCat2: path,
+      activeCatPath: path || this.data.filterCat1,
+      activeCatLabel: path ? name : this._catNameByPath(this.data.filterCat1),
+      showCatPicker: false
+    });
+    this.applyFilters();
+  },
+
+  clearCategoryFilter: function () {
+    this.setData({
+      activeCatPath: '',
+      activeCatLabel: '全部分类',
+      filterCat1: '',
+      filterCat2: '',
+      filterCatCol2: [],
+      showCatPicker: false
+    });
+    this.applyFilters();
+  },
+
+  clearAllFilters: function () {
+    this.setData({
+      activeType: 0,
+      activeBookIdx: 0,
+      activeCatPath: '',
+      activeCatLabel: '全部分类',
+      searchQuery: '',
+      filterCat1: '',
+      filterCat2: '',
+      filterCatCol2: []
+    });
+    this.applyFilters();
+  },
+
+  _catNameByPath: function (path) {
+    if (!path) return '全部分类';
+    var last = path.split('/').pop();
+    return last || '全部分类';
+  },
+
+  onSearch: function (e) {
+    var that = this;
+    this.setData({ searchQuery: e.detail.value || '' });
+    clearTimeout(this._searchTimer);
+    this._searchTimer = setTimeout(function () {
+      that.applyFilters();
+    }, 300);
+  },
+
+  clearSearch: function () {
+    clearTimeout(this._searchTimer);
+    this.setData({ searchQuery: '' });
+    this.applyFilters();
+  },
+
+  closePickers: function () {
+    this.setData({ showBookPicker: false, showCatPicker: false });
   },
 
   openCategorySheet: function (e) {
     var cardId = e.currentTarget.dataset.cardid;
-    var card = this.data.allCards.find(function (item) {
+    var card = (this.data.cards || []).find(function (item) {
       return item.cardId === cardId || item.id === cardId;
     });
     if (!card) return;
-    this.setData({ editingCard: card, categorySheetVisible: true });
+
+    var parts = (card.category || '未分类').split('/');
+    var catCol1 = this.data.catCol1.slice();
+    if (catCol1.indexOf('未分类') < 0) catCol1.unshift('未分类');
+
+    var pick1 = 0;
+    for (var i = 0; i < catCol1.length; i++) {
+      if (catCol1[i] === parts[0]) {
+        pick1 = i;
+        break;
+      }
+    }
+
+    this.setData({
+      editingCard: card,
+      categorySheetVisible: true,
+      catCol1: catCol1,
+      catPick1: pick1,
+      catPick2: 0,
+      catCol2: []
+    });
+    this._refreshCatCol2(pick1);
+    if (parts.length > 1) {
+      var that = this;
+      setTimeout(function () {
+        var col2 = that.data.catCol2;
+        for (var j = 0; j < col2.length; j++) {
+          if (col2[j] === parts[1]) {
+            that.setData({ catPick2: j });
+            break;
+          }
+        }
+      }, 50);
+    }
   },
 
   closeCategorySheet: function () {
     this.setData({ categorySheetVisible: false, editingCard: null });
   },
 
-  selectCategory: function (e) {
+  onCatPickerChange: function (e) {
+    var values = e.detail.value || [0, 0];
+    var pick1 = Number(values[0] || 0);
+    var pick2 = Number(values[1] || 0);
+
+    if (pick1 !== this.data.catPick1) {
+      this.setData({ catPick1: pick1, catPick2: 0 });
+      this._refreshCatCol2(pick1);
+      return;
+    }
+
+    if (pick2 !== this.data.catPick2) {
+      this.setData({ catPick2: pick2 });
+    }
+  },
+
+  _refreshCatCol2: function (col1Idx) {
+    var domain = this.data.catCol1[col1Idx];
+    var taxonomy = this.data.taxonomy;
+    var domains = (taxonomy && taxonomy.domains) || [];
+    var col2 = [];
+    for (var i = 0; i < domains.length; i++) {
+      if (domains[i].name === domain || domains[i].path === domain) {
+        (domains[i].children || domains[i].subs || []).forEach(function (s) {
+          col2.push(s.name);
+        });
+        break;
+      }
+    }
+    this.setData({ catCol2: col2 });
+  },
+
+  confirmCategory: function () {
     var self = this;
-    var path = e.currentTarget.dataset.path;
-    var id = e.currentTarget.dataset.id || '';
     var card = this.data.editingCard;
-    if (!card || !card.cardId || !path) return;
+    if (!card || !card.cardId) return;
+
+    var domain = this.data.catCol1[this.data.catPick1] || '';
+    var path = '未分类';
+    var id = '';
+    if (domain && domain !== '未分类') {
+      path = domain;
+      if (this.data.catCol2.length > 0) {
+        path += '/' + this.data.catCol2[this.data.catPick2];
+      }
+      id = path;
+    }
 
     wx.showLoading({ title: '保存中...' });
     wx.cloud.callFunction({
@@ -179,7 +457,7 @@ Page({
         action: 'updateCardCategory',
         cardId: card.cardId,
         category: path,
-        categoryId: id === 'unclassified' ? '' : id
+        categoryId: id
       },
       config: { timeout: 10000 }
     }).then(function (res) {
@@ -189,38 +467,13 @@ Page({
         wx.showToast({ title: result.error || '保存失败', icon: 'none' });
         return;
       }
-
-      function patch(list) {
-        return list.map(function (item) {
-          if (item.cardId === card.cardId) {
-            return Object.assign({}, item, {
-              category: path,
-              categoryId: id === 'unclassified' ? '' : id
-            });
-          }
-          return item;
-        });
-      }
-
-      self.setData({
-        allCards: patch(self.data.allCards),
-        cards: patch(self.data.cards),
-        categorySheetVisible: false,
-        editingCard: null
-      });
+      self.setData({ categorySheetVisible: false, editingCard: null });
       store.invalidateCache();
+      self.loadCardsPage(self.data.currentPage);
       wx.showToast({ title: '分类已更新', icon: 'success' });
     }).catch(function (err) {
       wx.hideLoading();
       wx.showToast({ title: err.message || '保存失败', icon: 'none' });
     });
-  },
-
-  goSearch: function () {
-    wx.navigateTo({ url: '/pages/search/search' });
-  },
-
-  goProfile: function () {
-    wx.switchTab({ url: '/pages/profile/profile' });
   }
 });

@@ -1,4 +1,5 @@
 const cloud = require('wx-server-sdk');
+const defaultTaxonomy = require('./taxonomy.json');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 
@@ -24,16 +25,37 @@ exports.main = async (event) => {
 
   if (action === 'list') {
     const res = await db.collection('taxonomy').where({ _openid: openid }).limit(1).get();
-    return { categories: (res.data[0] && res.data[0].categories) || [], docId: (res.data[0] && res.data[0]._id) || '' };
+    if (res.data[0]) {
+      const doc = res.data[0];
+      if (doc.version !== defaultTaxonomy.version && doc.source !== 'user') {
+        const categories = defaultTaxonomy.categories || [];
+        await db.collection('taxonomy').doc(doc._id).update({
+          data: { categories, version: defaultTaxonomy.version || '2.0.0', source: 'default', updatedAt: new Date().toISOString() }
+        });
+        return { categories, docId: doc._id || '' };
+      }
+      return { categories: doc.categories || [], docId: doc._id || '' };
+    }
+    const categories = defaultTaxonomy.categories || [];
+    const addRes = await db.collection('taxonomy').add({
+      data: {
+        _openid: openid,
+        categories,
+        version: defaultTaxonomy.version || '1.0.0',
+        createdAt: new Date().toISOString(),
+        source: 'default'
+      }
+    });
+    return { categories, docId: addRes._id || '' };
   }
 
   if (action === 'save') {
     const categories = event.categories || [];
     const docId = event.docId;
     if (docId) {
-      await db.collection('taxonomy').doc(docId).update({ data: { categories } });
+      await db.collection('taxonomy').doc(docId).update({ data: { categories, source: 'user', updatedAt: new Date().toISOString() } });
     } else {
-      await db.collection('taxonomy').add({ data: { _openid: openid, categories } });
+      await db.collection('taxonomy').add({ data: { _openid: openid, categories, source: 'user', updatedAt: new Date().toISOString() } });
     }
     return { success: true };
   }

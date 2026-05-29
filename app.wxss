@@ -1,12 +1,14 @@
 page {
   min-height: 100%;
+  width: 100%;
+  overflow-x: hidden;
   background: #fbf4ed;
   color: #080808;
   font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   letter-spacing: 0;
 }
 
-view, text, button, input {
+view, text, button, input, scroll-view, rich-text {
   box-sizing: border-box;
 }
 
@@ -23,6 +25,9 @@ button::after {
 }
 
 .screen {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
   min-height: 100vh;
   padding: 30rpx 36rpx 128rpx;
   background: #fbf4ed;

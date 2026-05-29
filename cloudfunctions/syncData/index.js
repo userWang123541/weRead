@@ -5,6 +5,7 @@ const _ = db.command;
 
 const { callWeread, syncWereadData } = require('./weread-service');
 const { buildCards } = require('./card-engine');
+const defaultTaxonomy = require('./taxonomy.json');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -40,6 +41,33 @@ async function batchInsert(db, openid, collectionName, items) {
     const tasks = batch.map(item => col.add({ data: { _openid: openid, ...item } }));
     await Promise.all(tasks);
   }
+}
+
+async function ensureTaxonomy(db, openid) {
+  const existing = await db.collection('taxonomy').where({ _openid: openid }).limit(1).get();
+  if (existing.data.length) {
+    const doc = existing.data[0];
+    if (doc.version !== defaultTaxonomy.version && doc.source !== 'user') {
+      await db.collection('taxonomy').doc(doc._id).update({
+        data: {
+          categories: defaultTaxonomy.categories || [],
+          version: defaultTaxonomy.version || '2.0.0',
+          source: 'default',
+          updatedAt: new Date().toISOString()
+        }
+      });
+    }
+    return;
+  }
+  await db.collection('taxonomy').add({
+    data: {
+      _openid: openid,
+      categories: defaultTaxonomy.categories || [],
+      version: defaultTaxonomy.version || '1.0.0',
+      createdAt: new Date().toISOString(),
+      source: 'default'
+    }
+  });
 }
 
 function truncate(str, len) {
@@ -125,6 +153,12 @@ function computeStats(rawData, cardsResult) {
 
   const taxonomy = cardsResult.taxonomy || [];
   const topTags = taxonomy.slice(0, 10).map(t => ({ tag: t.tag, count: t.count }));
+  const readingDateSet = new Set();
+  cards.forEach(card => {
+    const ts = Number(card.createTime || 0);
+    if (!ts) return;
+    readingDateSet.add(new Date(ts * 1000).toISOString().slice(0, 10));
+  });
 
   return {
     books: books.length,
@@ -134,7 +168,7 @@ function computeStats(rawData, cardsResult) {
     reviews: totalReviews,
     classified: 0,
     unclassified: cards.length,
-    readingDays: 0,
+    readingDays: readingDateSet.size,
     totalBooks: books.length,
     totalCards: cards.length,
     totalHighlights,
@@ -217,6 +251,7 @@ exports.main = async (event, context) => {
     await deleteCollection(db, openid, 'cards');
     await batchInsert(db, openid, 'books', books);
     await batchInsert(db, openid, 'cards', cardsResult.cards);
+    await ensureTaxonomy(db, openid);
 
     // 8. Compute stats and quotes
     const stats = computeStats(rawData, cardsResult);
@@ -224,17 +259,15 @@ exports.main = async (event, context) => {
 
     // 9. Update user doc
     await upsertUser(db, openid, {
-      syncStatus: 'idle',
+      syncStatus: 'classifying',
       syncedAt: new Date().toISOString(),
       fetchedAt: rawData.fetchedAt,
       stats,
       quotes,
+      classifyBatch: 0,
     });
 
-    // 10. Trigger classification (async, don't await)
-    cloud.callFunction({ name: 'classifyData', data: {} }).catch(() => {});
-
-    return { success: true, stats, bookCount: books.length, cardCount: cardsResult.cards.length, debug: { sourceBookCount: rawData.sourceBookCount, totalBooks: rawData.totalBooks, firstBookTitle: rawData.books[0] ? (rawData.books[0].book || {}).title : 'N/A', firstBookHighlights: rawData.books[0] ? (rawData.books[0].highlights || []).length : 0, firstBookReviews: rawData.books[0] ? (rawData.books[0].reviews || []).length : 0, respKeysSample: rawData.books[0] ? Object.keys(rawData.books[0]) : [] } };
+    return { success: true, needsClassify: true, stats, bookCount: books.length, cardCount: cardsResult.cards.length, debug: { sourceBookCount: rawData.sourceBookCount, totalBooks: rawData.totalBooks, firstBookTitle: rawData.books[0] ? (rawData.books[0].book || {}).title : 'N/A', firstBookHighlights: rawData.books[0] ? (rawData.books[0].highlights || []).length : 0, firstBookReviews: rawData.books[0] ? (rawData.books[0].reviews || []).length : 0, respKeysSample: rawData.books[0] ? Object.keys(rawData.books[0]) : [] } };
 
   } catch (err) {
     await upsertUser(db, openid, { syncStatus: 'error', syncError: err.message });

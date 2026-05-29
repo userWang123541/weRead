@@ -1,5 +1,13 @@
 var store = require('../../utils/store');
 
+var QUOTE_OPTIONS = [
+  { label: '3秒', value: 3000 },
+  { label: '5秒', value: 5000 },
+  { label: '8秒', value: 8000 },
+  { label: '10秒', value: 10000 },
+  { label: '15秒', value: 15000 }
+];
+
 function normalizeStats(stats) {
   var source = stats || {};
   return Object.assign({}, source, {
@@ -17,7 +25,8 @@ Page({
     hasData: false,
     syncStatus: 'idle',
     syncing: false,
-    stats: {}
+    stats: {},
+    quoteIntervalLabel: '5秒'
   },
 
   onLoad: function () {
@@ -35,6 +44,16 @@ Page({
         });
       }
     });
+
+    var interval = wx.getStorageSync('quote_interval') || 5000;
+    var label = '5秒';
+    for (var i = 0; i < QUOTE_OPTIONS.length; i++) {
+      if (QUOTE_OPTIONS[i].value === interval) {
+        label = QUOTE_OPTIONS[i].label;
+        break;
+      }
+    }
+    that.setData({ quoteIntervalLabel: label });
   },
 
   onShow: function () {
@@ -69,13 +88,9 @@ Page({
       wx.hideLoading();
       var result = res.result || {};
       if (result.success) {
-        that.setData({ syncing: false, syncStatus: 'idle', hasData: true, stats: normalizeStats(result.stats) });
+        that.setData({ syncing: true, syncStatus: 'classifying', hasData: true, stats: normalizeStats(result.stats) });
         store.invalidateCache();
-        wx.showToast({ title: '同步成功！', icon: 'success' });
-        // 同步成功后 1.5 秒自动跳转首页
-        setTimeout(function() {
-          wx.switchTab({ url: '/pages/home/home' });
-        }, 1500);
+        that._runClassification(0);
       } else {
         that.setData({ syncing: false, syncStatus: 'error' });
         wx.showModal({ title: '同步失败', content: result.error || '未知错误', showCancel: false });
@@ -87,15 +102,39 @@ Page({
     });
   },
 
-  saveApiKey: function () {
-    var key = this.data.apiKey.trim();
-    if (!key) {
-      wx.showToast({ title: '请输入 API Key', icon: 'none' });
-      return;
-    }
-    wx.setStorageSync('weread_api_key', key);
-    wx.showToast({ title: '已保存', icon: 'success' });
-    this.setData({ showKeyInput: false });
+  _runClassification: function (startBatch) {
+    var that = this;
+    wx.showLoading({ title: '正在分类...', mask: true });
+    wx.cloud.callFunction({
+      name: 'classifyData',
+      data: { startBatch: startBatch || 0 },
+      config: { timeout: 180000 }
+    }).then(function(res) {
+      var result = res.result || {};
+      if (!result.success) {
+        wx.hideLoading();
+        that.setData({ syncing: false, syncStatus: 'error' });
+        wx.showModal({ title: '分类失败', content: result.error || '未知错误', showCancel: false });
+        return;
+      }
+
+      if (result.done === false && typeof result.nextBatch === 'number') {
+        that._runClassification(result.nextBatch);
+        return;
+      }
+
+      wx.hideLoading();
+      store.invalidateCache();
+      that.setData({ syncing: false, syncStatus: 'idle' });
+      wx.showToast({ title: '同步完成', icon: 'success' });
+      setTimeout(function() {
+        wx.switchTab({ url: '/pages/home/home' });
+      }, 1200);
+    }).catch(function(err) {
+      wx.hideLoading();
+      that.setData({ syncing: false, syncStatus: 'error' });
+      wx.showModal({ title: '分类失败', content: err.message || '网络错误', showCancel: false });
+    });
   },
 
   triggerSync: function () {
@@ -113,6 +152,20 @@ Page({
     wx.showToast({ title: '已清除', icon: 'success' });
   },
 
+  changeQuoteInterval: function () {
+    var that = this;
+    var labels = QUOTE_OPTIONS.map(function (o) { return o.label; });
+    wx.showActionSheet({
+      itemList: labels,
+      success: function (res) {
+        var selected = QUOTE_OPTIONS[res.tapIndex];
+        wx.setStorageSync('quote_interval', selected.value);
+        that.setData({ quoteIntervalLabel: selected.label });
+        wx.showToast({ title: '已设置为' + selected.label, icon: 'success' });
+      }
+    });
+  },
+
   checkSyncStatus: function () {
     var that = this;
     store.getUserDoc().then(function(doc) {
@@ -127,35 +180,11 @@ Page({
     });
   },
 
-  openSync: function () {
-    wx.navigateTo({ url: '/pages/sync/sync' });
-  },
-
   openAbout: function () {
     wx.showModal({
       title: '关于微读工作室',
       content: '微读工作室 v1.0.0\n基于微信读书数据的个人阅读知识管理工具。\n数据存储在微信云开发环境中。',
       showCancel: false
     });
-  },
-
-  openPrivacy: function () {
-    wx.showModal({
-      title: '隐私与安全',
-      content: '数据存储在微信云开发环境中，仅你本人可访问。API Key 通过云函数调用微信读书接口，不会暴露给第三方。',
-      showCancel: false
-    });
-  },
-
-  openNotify: function () {
-    wx.showToast({ title: '暂未开放', icon: 'none' });
-  },
-
-  goSyncPage: function () {
-    wx.navigateTo({ url: '/pages/sync/sync' });
-  },
-
-  back: function () {
-    wx.navigateBack();
   }
 });

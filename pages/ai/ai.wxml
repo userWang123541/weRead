@@ -6,6 +6,11 @@
       <view class="welcome-icon">✦</view>
       <view class="welcome-title">拾光</view>
       <view class="welcome-sub">从你的阅读笔记中召回记忆，回答你的问题。</view>
+      <view class="welcome-questions">
+        <block wx:for="{{starterQuestions}}" wx:key="*this">
+          <view class="welcome-q" data-question="{{item}}" bindtap="askQuestion">{{item}}</view>
+        </block>
+      </view>
     </view>
 
     <!-- 消息列表 -->
@@ -24,7 +29,12 @@
             <view class="dot"></view><view class="dot"></view><view class="dot"></view>
           </view>
           <!-- markdown 渲染 -->
-          <rich-text wx:else class="msg-bubble ai-bubble" nodes="{{item.html}}"></rich-text>
+          <block wx:else>
+            <rich-text class="msg-bubble ai-bubble" nodes="{{item.html}}"></rich-text>
+            <view class="msg-actions">
+              <view class="msg-copy" data-content="{{item.content}}" bindtap="copyMessage">复制</view>
+            </view>
+          </block>
           <!-- 来源 -->
           <view wx:if="{{item.sources && item.sources.length}}" class="msg-sources">
             <view class="source-label">引用来源</view>

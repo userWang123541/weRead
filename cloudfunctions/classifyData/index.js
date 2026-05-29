@@ -4,6 +4,7 @@ const db = cloud.database();
 const _ = db.command;
 
 const { getEmbeddings, cosineSimilarity, findBestCategory } = require('./classifier');
+const defaultTaxonomy = require('./taxonomy.json');
 
 // Cloud function env vars for SiliconFlow API
 const EMBEDDING_BASE_URL = process.env.LLM_EMBEDDING_BASE_URL || 'https://api.siliconflow.cn/v1';
@@ -26,12 +27,75 @@ async function upsertUser(database, openid, data) {
   }
 }
 
+async function getUserCategories(openid) {
+  const taxDoc = await db.collection('taxonomy').where({ _openid: openid }).limit(1).get();
+  if (taxDoc.data[0] && (taxDoc.data[0].categories || []).length) {
+    const doc = taxDoc.data[0];
+    if (doc.version !== defaultTaxonomy.version && doc.source !== 'user') {
+      const categories = defaultTaxonomy.categories || [];
+      await db.collection('taxonomy').doc(doc._id).update({
+        data: { categories, version: defaultTaxonomy.version || '2.0.0', source: 'default', updatedAt: new Date().toISOString() }
+      });
+      return categories;
+    }
+    return doc.categories || [];
+  }
+
+  const categories = defaultTaxonomy.categories || [];
+  if (categories.length) {
+    await db.collection('taxonomy').add({
+      data: {
+        _openid: openid,
+        categories,
+        version: defaultTaxonomy.version || '1.0.0',
+        createdAt: new Date().toISOString(),
+        source: 'default'
+      }
+    });
+  }
+  return categories;
+}
+
+async function updateClassifyStats(openid) {
+  const cards = [];
+  const pageSize = 1000;
+  let skip = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const cardsRes = await db.collection('cards')
+      .where({ _openid: openid })
+      .field({ category: true })
+      .skip(skip)
+      .limit(pageSize)
+      .get();
+    const data = cardsRes.data || [];
+    cards.push(...data);
+    hasMore = data.length === pageSize;
+    skip += pageSize;
+  }
+
+  const classified = cards.filter(card => card.category && card.category !== '未分类').length;
+  const unclassified = Math.max(0, cards.length - classified);
+
+  const userRes = await db.collection('users').where({ _openid: openid }).limit(1).get();
+  const user = userRes.data[0];
+  const stats = Object.assign({}, (user && user.stats) || {}, {
+    classified,
+    unclassified
+  });
+  await upsertUser(db, openid, { stats });
+}
+
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext();
   const openid = wxContext.OPENID;
 
   try {
+    console.log('classifyData started, EMBEDDING_API_KEY configured:', !!EMBEDDING_API_KEY);
+
     if (!EMBEDDING_API_KEY) {
+      console.error('EMBEDDING_API_KEY is empty');
       return { success: false, error: '未配置向量化 API Key' };
     }
 
@@ -44,16 +108,17 @@ exports.main = async (event, context) => {
     // Update status to classifying
     await upsertUser(db, openid, { syncStatus: 'classifying' });
 
-    // Load taxonomy from cloud DB
-    const taxDoc = await db.collection('taxonomy').limit(1).get();
-    const categories = taxDoc.data[0]?.categories || [];
+    const categories = await getUserCategories(openid);
     if (!categories.length) {
+      await upsertUser(db, openid, { syncStatus: 'idle', syncError: '分类体系未初始化' });
       return { success: false, error: '分类体系未初始化' };
     }
 
     // Build category descriptions for embedding
     const catTexts = categories.map(c => `${c.path}: ${c.description}`);
+    console.log('Embedding', catTexts.length, 'categories, first:', catTexts[0]);
     const catEmbeddings = await getEmbeddings(catTexts, config);
+    console.log('Category embeddings complete, dimension:', catEmbeddings[0] ? catEmbeddings[0].length : 0);
 
     // Chunked processing with resume support
     const startBatch = event.startBatch || 0;
@@ -66,6 +131,7 @@ exports.main = async (event, context) => {
     // Get total card count for this user
     const countResult = await db.collection('cards').where({ _openid: openid }).count();
     totalCards = countResult.total;
+    console.log('Total cards to classify:', totalCards);
 
     const totalBatches = Math.ceil(totalCards / BATCH_SIZE);
 
@@ -86,6 +152,7 @@ exports.main = async (event, context) => {
       // Load batch of cards
       const cardsRes = await db.collection('cards')
         .where({ _openid: openid })
+        .orderBy('createTime', 'desc')
         .skip(batch * BATCH_SIZE)
         .limit(BATCH_SIZE)
         .get();
@@ -128,6 +195,8 @@ exports.main = async (event, context) => {
       processed += cardsRes.data.length;
     }
 
+    await updateClassifyStats(openid);
+
     // All batches done — mark complete
     await upsertUser(db, openid, {
       syncStatus: 'idle',
@@ -138,7 +207,7 @@ exports.main = async (event, context) => {
     return { success: true, done: true, processed, total: totalCards };
 
   } catch (err) {
-    console.error('classifyData error:', err);
+    console.error('classifyData error:', err.message, err.stack);
     await upsertUser(db, openid, { syncStatus: 'error', syncError: err.message });
     return { success: false, error: err.message };
   }

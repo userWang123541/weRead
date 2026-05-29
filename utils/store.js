@@ -1,5 +1,3 @@
-var fmt = require('./format');
-
 var db = null;
 var _cache = {
   stats: null,
@@ -12,7 +10,7 @@ var _cache = {
   userDoc: null,
   lastLoad: 0
 };
-var CACHE_TTL = 60000;
+var CACHE_TTL = 300000; // 5 minutes cache
 var _loading = null;
 
 function normalizeStats(stats) {
@@ -29,9 +27,45 @@ function normalizeStats(stats) {
   });
 }
 
+function computeReadingDays(cards) {
+  var dates = {};
+  (cards || []).forEach(function(card) {
+    var ts = Number(card.time || card.createTime || 0);
+    if (!ts) return;
+    var date = new Date(ts * 1000).toISOString().slice(0, 10);
+    dates[date] = true;
+  });
+  return Object.keys(dates).length;
+}
+
 function getDb() {
   if (!db) db = wx.cloud.database();
   return db;
+}
+
+function loadCollection(d, name, orderField, orderDirection, max) {
+  var pageSize = 20;
+  var all = [];
+  var limit = max || 1000;
+
+  function load(skip) {
+    var query = d.collection(name).where({});
+    if (orderField) query = query.orderBy(orderField, orderDirection || 'desc');
+    return query
+      .skip(skip)
+      .limit(pageSize)
+      .get()
+      .then(function(res) {
+        var data = res.data || [];
+        all = all.concat(data);
+        if (data.length === pageSize && all.length < limit) {
+          return load(skip + pageSize);
+        }
+        return all;
+      });
+  }
+
+  return load(0);
 }
 
 function _ensureLoaded() {
@@ -53,13 +87,13 @@ function _doLoad() {
   var d = getDb();
   return Promise.all([
     d.collection('users').where({}).limit(1).get(),
-    d.collection('books').where({}).orderBy('sort', 'desc').limit(100).get(),
-    d.collection('cards').where({}).orderBy('createTime', 'desc').limit(100).get(),
+    loadCollection(d, 'books', 'sort', 'desc', 1000),
+    loadCollection(d, 'cards', 'createTime', 'desc', 100),
     d.collection('taxonomy').limit(1).get()
   ]).then(function(results) {
     var userRes = results[0];
-    var booksRes = results[1];
-    var cardsRes = results[2];
+    var booksData = results[1] || [];
+    var cardsData = results[2] || [];
     var taxRes = results[3];
 
     if (userRes.data.length > 0) {
@@ -73,28 +107,17 @@ function _doLoad() {
       _cache.quotes = [];
     }
 
-    _cache.books = booksRes.data || [];
+    _cache.books = booksData;
     _cache.bookMap = {};
     _cache.books.forEach(function(b) { _cache.bookMap[b.bookId] = b; });
 
-    _cache.cards = (cardsRes.data || []).map(function(c) {
-      return {
-        id: c.cardId || c._id,
-        cardId: c.cardId,
-        type: c.type || 0,
-        bookId: c.bookId,
-        bookTitle: c.bookTitle || '',
-        author: c.author || '',
-        chapter: c.chapterTitle || '',
-        quote: c.quote || '',
-        note: c.note || '',
-        tags: c.tags || [],
-        category: c.category || '',
-        categoryId: c.categoryId || '',
-        time: c.createTime || 0,
-        url: c.openUrl || ''
-      };
-    });
+    _cache.cards = cardsData.map(normalizeCard);
+
+    if (!_cache.stats.readingDays) {
+      _cache.stats = Object.assign({}, _cache.stats, {
+        readingDays: computeReadingDays(_cache.cards)
+      });
+    }
 
     if (taxRes.data.length > 0) {
       var tax = taxRes.data[0];
@@ -108,22 +131,73 @@ function _doLoad() {
   });
 }
 
+function normalizeCard(c) {
+  return {
+    id: c.cardId || c._id,
+    cardId: c.cardId || c._id,
+    type: c.type || 0,
+    bookId: c.bookId,
+    bookTitle: c.bookTitle || '',
+    author: c.author || '',
+    chapter: c.chapterTitle || c.chapter || '',
+    quote: c.quote || '',
+    note: c.note || '',
+    tags: c.tags || [],
+    category: c.category || '',
+    categoryId: c.categoryId || '',
+    time: c.createTime || c.time || 0,
+    url: c.openUrl || c.url || ''
+  };
+}
+
 function buildTaxonomyTree(categories) {
-  var catMap = {};
+  var nodeMap = {};
+  var domains = [];
+
+  function ensureNode(parts, source) {
+    var path = parts.join('/');
+    if (!nodeMap[path]) {
+      nodeMap[path] = {
+        id: (source && source.id) || path,
+        name: parts[parts.length - 1],
+        path: path,
+        description: (source && source.description) || '',
+        count: 0,
+        children: [],
+        subs: []
+      };
+    } else if (source) {
+      nodeMap[path].id = source.id || nodeMap[path].id;
+      nodeMap[path].description = source.description || nodeMap[path].description;
+    }
+    return nodeMap[path];
+  }
+
   categories.forEach(function(c) {
-    var parts = c.path.split('/');
-    var domain = parts[0];
-    if (!catMap[domain]) catMap[domain] = { name: domain, count: 0, subs: [] };
-    catMap[domain].subs.push({
-      name: parts[parts.length - 1],
-      id: c.id,
-      path: c.path,
-      description: c.description,
-      count: 0
-    });
+    if (!c || !c.path) return;
+    var parts = c.path.split('/').filter(Boolean);
+    for (var i = 1; i <= parts.length; i++) {
+      var node = ensureNode(parts.slice(0, i), i === parts.length ? c : null);
+      if (i === 1 && domains.indexOf(node) < 0) {
+        domains.push(node);
+      }
+      if (i > 1) {
+        var parent = ensureNode(parts.slice(0, i - 1), null);
+        if (parent.children.indexOf(node) < 0) {
+          parent.children.push(node);
+          parent.subs = parent.children;
+        }
+      }
+    }
   });
-  var domains = Object.keys(catMap).map(function(k) { return catMap[k]; });
+
+  function sortNode(node) {
+    node.children.sort(function(a, b) { return a.path.localeCompare(b.path, 'zh'); });
+    node.subs = node.children;
+    node.children.forEach(sortNode);
+  }
   domains.sort(function(a, b) { return b.count - a.count; });
+  domains.forEach(sortNode);
   return { domains: domains };
 }
 
@@ -150,26 +224,107 @@ function getBookCards(bookId) {
 
 function getBookCardsAll(bookId) {
   var d = getDb();
-  return d.collection('cards')
-    .where({ bookId: bookId })
-    .orderBy('createTime', 'desc')
-    .limit(200)
-    .get()
-    .then(function(res) {
-      return (res.data || []).map(function(c) {
-        return {
-          id: c.cardId || c._id, type: c.type || 0, bookId: c.bookId,
-          bookTitle: c.bookTitle || '', author: c.author || '',
-          chapter: c.chapterTitle || '', quote: c.quote || '',
-          note: c.note || '', tags: c.tags || [],
-          category: c.category || '', time: c.createTime || 0, url: c.openUrl || ''
-        };
+  var pageSize = 20;
+  var max = 200;
+  var all = [];
+
+  function load(skip) {
+    return d.collection('cards')
+      .where({ bookId: bookId })
+      .orderBy('createTime', 'desc')
+      .skip(skip)
+      .limit(pageSize)
+      .get()
+      .then(function(res) {
+        var data = res.data || [];
+        all = all.concat(data.map(normalizeCard));
+        if (data.length === pageSize && all.length < max) {
+          return load(skip + pageSize);
+        }
+        return all;
       });
-    });
+  }
+
+  return load(0);
 }
 
 function getRecentCards(n) {
   return _ensureLoaded().then(function() { return _cache.cards.slice(0, n || 20); });
+}
+
+function getAllCards(limit) {
+  var d = getDb();
+  var batchSize = 20;
+  var max = limit || 1000;
+  var all = [];
+
+  function load(skip) {
+    return d.collection('cards')
+      .where({})
+      .orderBy('createTime', 'desc')
+      .skip(skip)
+      .limit(Math.min(batchSize, max - all.length))
+      .get()
+      .then(function(res) {
+        var data = res.data || [];
+        all = all.concat(data.map(normalizeCard));
+        if (data.length === batchSize && all.length < max) {
+          return load(skip + batchSize);
+        }
+        return all;
+      });
+  }
+
+  return load(0);
+}
+
+function escapeRegExp(text) {
+  return String(text || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildCardQuery(d, filters) {
+  var where = {};
+  var source = filters || {};
+
+  if (typeof source.type === 'number' && source.type >= 0) {
+    where.type = source.type;
+  }
+  if (source.bookId) {
+    where.bookId = source.bookId;
+  }
+  if (source.category) {
+    where.category = d.RegExp({
+      regexp: '^' + escapeRegExp(source.category) + '(/|$)',
+      options: ''
+    });
+  }
+
+  return d.collection('cards').where(where);
+}
+
+function queryCardsPage(options) {
+  var d = getDb();
+  var source = options || {};
+  var pageSize = Math.max(1, Math.min(Number(source.pageSize) || 20, 20));
+  var page = Math.max(1, Number(source.page) || 1);
+  var skip = (page - 1) * pageSize;
+  var query = buildCardQuery(d, source.filters || {});
+
+  return Promise.all([
+    query.count(),
+    query.orderBy('createTime', 'desc').skip(skip).limit(pageSize).get()
+  ]).then(function(results) {
+    var countRes = results[0] || {};
+    var dataRes = results[1] || {};
+    var total = countRes.total || 0;
+    return {
+      cards: (dataRes.data || []).map(normalizeCard),
+      total: total,
+      page: page,
+      pageSize: pageSize,
+      totalPages: Math.max(1, Math.ceil(total / pageSize))
+    };
+  });
 }
 
 function getRandomQuote() {
@@ -182,7 +337,6 @@ function getRandomQuote() {
 
 function searchCards(query) {
   if (!query) return Promise.resolve([]);
-  var d = getDb();
   return wx.cloud.callFunction({
     name: 'searchNotes',
     data: { query: query }
@@ -197,6 +351,24 @@ function getCategories() {
   return _ensureLoaded().then(function() { return _cache.taxonomy || { domains: [] }; });
 }
 
+function getNotesMeta() {
+  var d = getDb();
+  return Promise.all([
+    loadCollection(d, 'books', 'sort', 'desc', 1000),
+    d.collection('taxonomy').limit(1).get()
+  ]).then(function(results) {
+    var taxRes = results[1] || {};
+    var taxonomy = { domains: [] };
+    if (taxRes.data && taxRes.data.length > 0) {
+      taxonomy = buildTaxonomyTree(taxRes.data[0].categories || []);
+    }
+    return {
+      books: results[0] || [],
+      taxonomy: taxonomy
+    };
+  });
+}
+
 function getTopCategories() {
   return _ensureLoaded().then(function() { return _cache.topCategories; });
 }
@@ -209,6 +381,8 @@ function getTimeGreeting() {
   if (h < 18) return '下午好';
   return '晚上好';
 }
+
+
 
 function getCardsByTag(tag) {
   return _ensureLoaded().then(function() {
@@ -241,13 +415,17 @@ module.exports = {
   getBook: getBook,
   getBookCards: getBookCards,
   getBookCardsAll: getBookCardsAll,
+  getAllCards: getAllCards,
+  queryCardsPage: queryCardsPage,
   getRecentCards: getRecentCards,
   getRandomQuote: getRandomQuote,
   searchCards: searchCards,
   getCategories: getCategories,
+  getNotesMeta: getNotesMeta,
   getTopCategories: getTopCategories,
   getTimeGreeting: getTimeGreeting,
   getCardsByTag: getCardsByTag,
   getUserDoc: getUserDoc,
-  invalidateCache: invalidateCache
+  invalidateCache: invalidateCache,
+
 };

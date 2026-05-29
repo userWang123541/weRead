@@ -11,7 +11,9 @@ Page({
     recentCards: [],
     topCategories: [],
     topicCount: 0,
-    classifiedCount: 0
+    classifiedCount: 0,
+    hasData: false,
+    classifyStatus: 'idle'
   },
   _quoteTimer: null,
 
@@ -30,7 +32,6 @@ Page({
           wx.reLaunch({ url: '/pages/setup/setup?status=' + status.syncStatus });
           return;
         }
-        status.syncStatus = 'idle';
         getApp().globalData.userStatus = status;
       }
 
@@ -39,7 +40,7 @@ Page({
         return;
       }
 
-      self.setData({ ready: true });
+      self.setData({ ready: true, classifyStatus: status.syncStatus || 'idle' });
       self._loadData();
       self._startQuoteRotation();
 
@@ -47,7 +48,19 @@ Page({
       if (syncedAt && Date.now() - syncedAt > 3600000) {
         self._backgroundRefresh();
       }
+
+      // 如果正在分类，定期检查状态
+      if (status.syncStatus === 'classifying') {
+        self._runClassification(status.classifyBatch || 0);
+      }
     });
+  },
+
+  onPullDownRefresh: function () {
+    var self = this;
+    store.invalidateCache();
+    self._loadData();
+    wx.stopPullDownRefresh();
   },
 
   _backgroundRefresh: function () {
@@ -61,8 +74,49 @@ Page({
       if (result.success) {
         store.invalidateCache();
         self._loadData();
+        self._runClassification(0);
       }
     }).catch(function () {});
+  },
+
+  _runClassification: function (startBatch) {
+    var self = this;
+    self.setData({ classifyStatus: 'classifying' });
+    wx.cloud.callFunction({
+      name: 'classifyData',
+      data: { startBatch: startBatch || 0 },
+      config: { timeout: 180000 }
+    }).then(function (res) {
+      var result = res.result || {};
+      if (result.success && result.done === false && typeof result.nextBatch === 'number') {
+        self._runClassification(result.nextBatch);
+        return;
+      }
+      store.invalidateCache();
+      self.setData({ classifyStatus: result.success ? 'idle' : 'error' });
+      self._loadData();
+    }).catch(function () {
+      self.setData({ classifyStatus: 'error' });
+    });
+  },
+
+  _pollClassifyStatus: function () {
+    var self = this;
+    var timer = setInterval(function () {
+      wx.cloud.callFunction({ name: 'checkUser', data: {}, config: { timeout: 10000 } }).then(function (res) {
+        var r = res.result || {};
+        if (r.syncStatus !== 'classifying') {
+          clearInterval(timer);
+          self.setData({ classifyStatus: r.syncStatus || 'idle' });
+          if (r.syncStatus === 'idle') {
+            store.invalidateCache();
+            self._loadData();
+          }
+        }
+      }).catch(function () {});
+    }, 5000);
+    // 5分钟后停止轮询
+    setTimeout(function () { clearInterval(timer); }, 300000);
   },
 
   _loadData: function () {
@@ -80,6 +134,8 @@ Page({
       var taxonomy = results[2];
       var topCategories = results[3];
       var domains = (taxonomy && taxonomy.domains) || [];
+
+      var hasData = (stats && (stats.books > 0 || stats.highlights > 0));
 
       var bookPromises = rawCards.map(function (card) {
         if (card.bookId) {
@@ -102,17 +158,17 @@ Page({
           };
         });
 
-        var classifiedCount = 0;
-        domains.forEach(function (d) {
-          classifiedCount += (d.subs ? d.subs.length : 0);
-        });
+        var classifiedCount = (stats && stats.classified) || 0;
+
+      var readingDays = stats.readingDays || 0;
 
         self.setData({
-          stats: stats || {},
+          stats: Object.assign({}, stats || {}, { readingDays: readingDays }),
           recentCards: recentCards,
           topCategories: topCategories.slice(0, 5),
           topicCount: domains.length,
-          classifiedCount: classifiedCount
+          classifiedCount: classifiedCount,
+          hasData: hasData
         });
       });
     }).catch(function () {});
@@ -121,9 +177,10 @@ Page({
   _startQuoteRotation: function () {
     var self = this;
     if (this._quoteTimer) clearInterval(this._quoteTimer);
+    var quoteInterval = wx.getStorageSync('quote_interval') || 5000;
     this._quoteTimer = setInterval(function () {
       self.setData({ quote: store.getRandomQuote() });
-    }, 3000);
+    }, quoteInterval);
   },
 
   onHide: function () {
@@ -138,7 +195,7 @@ Page({
     wx.switchTab({ url: '/pages/notes/notes' });
   },
 
-  goSearch: function () {
-    wx.navigateTo({ url: '/pages/search/search' });
+  goSetup: function () {
+    wx.reLaunch({ url: '/pages/setup/setup' });
   }
 });

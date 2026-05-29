@@ -3,13 +3,20 @@ var auth = require('../../utils/auth');
 
 Page({
   data: {
-    stats: {}
+    stats: {},
+    userName: '沉思的读者',
+    syncStatusText: '已开启'
   },
 
   onShow: function () {
     var that = this;
     store.getStats().then(function (stats) {
       that.setData({ stats: stats });
+    });
+    store.getUserDoc().then(function (user) {
+      if (user && user.name) {
+        that.setData({ userName: user.name });
+      }
     });
   },
 
@@ -40,7 +47,6 @@ Page({
       success: function (res) {
         if (res.confirm) {
           wx.showLoading({ title: '退出中...' });
-          // 清除云数据库中的 apiKey 和状态
           wx.cloud.callFunction({
             name: 'categoryCRUD',
             data: { action: 'resetUser' },

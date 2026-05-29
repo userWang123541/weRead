@@ -78,3 +78,28 @@
   font-size: 30rpx;
   font-weight: 700;
 }
+
+/* ---- missing styles ---- */
+.search-page {
+  padding-bottom: 40rpx;
+}
+
+.clear-link {
+  font-size: 24rpx;
+  color: #8f765b;
+  font-weight: 600;
+}
+
+.results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.empty-hint {
+  font-size: 24rpx;
+  color: #9b9690;
+  text-align: center;
+  padding: 40rpx 0;
+}

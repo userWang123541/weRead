@@ -14,8 +14,23 @@
     <view class="hero-sub">把微信读书的划线、想法、书评，变成可检索、可判断、可创作的生产力素材。</view>
   </view>
 
+  <!-- 分类状态提示 -->
+  <view class="classify-banner" wx:if="{{classifyStatus === 'classifying'}}">
+    <view class="classify-dot"></view>
+    <text>AI 正在对笔记进行向量分类...</text>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{!hasData}}">
+    <text class="empty-icon">📚</text>
+    <text class="empty-title">还没有阅读数据</text>
+    <text class="empty-desc">同步微信读书后，你的划线和想法会出现在这里</text>
+    <view class="empty-action" bindtap="goSetup">去同步数据</view>
+  </view>
+
+  <block wx:if="{{hasData}}">
   <view class="black-note">
-    <view class="quote-ghost">“</view>
+    <view class="quote-ghost">"</view>
     <view class="black-note-text">{{quote.text || '阅读好书，就像是和过去最伟大的智者交谈。'}}</view>
     <view class="black-note-book">— {{quote.book || quote.bookTitle || '未知书籍'}}</view>
   </view>
@@ -56,5 +71,6 @@
       </view>
     </block>
   </view>
+  </block>
   </block>
 </view>

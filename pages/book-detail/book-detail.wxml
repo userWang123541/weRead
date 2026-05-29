@@ -1,15 +1,9 @@
 <view class="screen detail-page">
   <view wx:if="{{loading}}" class="loading">加载中...</view>
   <view wx:elif="{{book}}">
-    <view class="category-nav">
-      <button class="top-icon" bindtap="back">‹</button>
-      <view class="top-title">书籍详情</view>
-      <view></view>
-    </view>
-
     <view class="detail-hero">
       <view class="detail-cover" wx:if="{{book.cover}}">
-        <image class="cover-img" src="{{book.cover}}" mode="aspectFill"></image>
+        <image class="cover-img" src="{{book.cover}}" mode="aspectFill" show-menu-by-longpress="{{true}}"></image>
       </view>
       <view class="detail-cover fallback {{book.palette}}" wx:else>
         <text>{{book.title}}</text>
@@ -24,18 +18,28 @@
     </view>
 
     <view class="action-grid detail-actions">
-      <button class="big-button primary">继续阅读</button>
+      <button class="big-button primary" bindtap="continueReading">继续阅读</button>
       <button class="big-button outline" bindtap="goNotes">查看笔记</button>
     </view>
 
     <view class="section-label" wx:if="{{timeline.length > 0}}">阅读轨迹</view>
     <view class="timeline card" wx:if="{{timeline.length > 0}}">
+      <view class="timeline-header">
+        <text class="timeline-date-label">日期</text>
+        <text class="timeline-action-label">阅读动态</text>
+      </view>
       <block wx:for="{{timeline}}" wx:key="date">
-        <view class="timeline-item"><text>{{item.date}}</text><view>{{item.action}}</view></view>
+        <view class="timeline-item">
+          <text class="timeline-date">{{item.date}}</text>
+          <view class="timeline-action">{{item.action}}</view>
+        </view>
       </block>
     </view>
 
-    <view class="section-label" wx:if="{{highlights.length > 0}}">精选划线</view>
+    <view class="section-header" wx:if="{{highlightCount > 0}}">
+      <view class="section-label">精选划线</view>
+      <view class="section-more" wx:if="{{highlightCount > 5}}" bindtap="toggleHighlights">{{showAllHighlights ? '收起' : '查看全部 ' + highlightCount}}</view>
+    </view>
     <view class="highlights-list" wx:if="{{highlights.length > 0}}">
       <block wx:for="{{highlights}}" wx:key="index">
         <view class="note-card card">
@@ -45,7 +49,10 @@
       </block>
     </view>
 
-    <view class="section-label" wx:if="{{reviews.length > 0}}">我的想法</view>
+    <view class="section-header" wx:if="{{reviewCount > 0}}">
+      <view class="section-label">我的想法</view>
+      <view class="section-more" wx:if="{{reviewCount > 3}}" bindtap="toggleReviews">{{showAllReviews ? '收起' : '查看全部 ' + reviewCount}}</view>
+    </view>
     <view class="reviews-list" wx:if="{{reviews.length > 0}}">
       <block wx:for="{{reviews}}" wx:key="index">
         <view class="note-card card">

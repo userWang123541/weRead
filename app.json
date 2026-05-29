@@ -2,7 +2,6 @@
   "pages": [
     "pages/home/home",
     "pages/setup/setup",
-    "pages/bookshelf/bookshelf",
     "pages/book-detail/book-detail",
     "pages/notes/notes",
     "pages/categories/categories",
@@ -34,14 +33,8 @@
         "selectedIconPath": "assets/tab/home-on.png"
       },
       {
-        "pagePath": "pages/bookshelf/bookshelf",
-        "text": "书架",
-        "iconPath": "assets/tab/books-off.png",
-        "selectedIconPath": "assets/tab/books-on.png"
-      },
-      {
         "pagePath": "pages/notes/notes",
-        "text": "笔记管家",
+        "text": "笔记",
         "iconPath": "assets/tab/notes-off.png",
         "selectedIconPath": "assets/tab/notes-on.png"
       },

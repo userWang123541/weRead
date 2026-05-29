@@ -24,14 +24,13 @@
 
   <view class="settings-section card">
     <view class="section-label">通用</view>
-    <view class="settings-item" bindtap="goSyncPage">
-      <text>同步详情</text><text class="muted">›</text>
+    <view class="settings-item" bindtap="changeQuoteInterval">
+      <text>首页语录轮换间隔</text>
+      <text class="muted">{{quoteIntervalLabel}} ›</text>
     </view>
     <view class="settings-item" bindtap="openPrivacy">
-      <text>隐私与安全</text><text class="muted">›</text>
-    </view>
-    <view class="settings-item" bindtap="openAbout">
-      <text>关于微读工作室</text><text class="muted">v1.0.0 ›</text>
+      <text>隐私与安全</text>
+      <text class="muted">›</text>
     </view>
   </view>
 </view>

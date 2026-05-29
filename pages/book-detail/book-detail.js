@@ -8,9 +8,13 @@ Page({
     statusText: '',
     highlights: [],
     reviews: [],
+    allHighlights: [],
+    allReviews: [],
     timeline: [],
     highlightCount: 0,
-    reviewCount: 0
+    reviewCount: 0,
+    showAllHighlights: false,
+    showAllReviews: false
   },
 
   onLoad: function (query) {
@@ -45,12 +49,14 @@ Page({
           if (card.type === 0) {
             highlights.push({
               text: fmt.truncate(card.quote || '', 80),
+              fullText: card.quote || '',
               chapter: card.chapter || '',
               timeAgo: fmt.timeAgo(card.time)
             });
           } else if (card.type === 1) {
             reviews.push({
               text: fmt.truncate(card.note || card.quote || '', 80),
+              fullText: card.note || card.quote || '',
               chapter: card.chapter || '',
               timeAgo: fmt.timeAgo(card.time)
             });
@@ -63,6 +69,8 @@ Page({
           loading: false,
           book: book,
           statusText: statusText,
+          allHighlights: highlights,
+          allReviews: reviews,
           highlights: highlights.slice(0, 5),
           reviews: reviews.slice(0, 3),
           timeline: timeline,
@@ -119,11 +127,72 @@ Page({
     return timeline;
   },
 
+  toggleHighlights: function () {
+    var show = !this.data.showAllHighlights;
+    this.setData({
+      showAllHighlights: show,
+      highlights: show ? this.data.allHighlights : this.data.allHighlights.slice(0, 5)
+    });
+  },
+
+  toggleReviews: function () {
+    var show = !this.data.showAllReviews;
+    this.setData({
+      showAllReviews: show,
+      reviews: show ? this.data.allReviews : this.data.allReviews.slice(0, 3)
+    });
+  },
+
+  continueReading: function () {
+    var book = this.data.book;
+    if (!book) return;
+    var openUrl = book.openUrl || '';
+    if (openUrl) {
+      // Copy URL to clipboard so user can open it in WeChat Read
+      wx.setClipboardData({
+        data: openUrl,
+        success: function () {
+          wx.showModal({
+            title: '链接已复制',
+            content: '书籍链接已复制到剪贴板，请打开微信读书App粘贴链接继续阅读。',
+            confirmText: '我知道了',
+            showCancel: false
+          });
+        }
+      });
+    } else {
+      wx.showModal({
+        title: '无法直接打开',
+        content: '暂无该书的阅读链接，请在微信读书App中搜索此书继续阅读。',
+        confirmText: '我知道了',
+        showCancel: false
+      });
+    }
+  },
+
   back: function () {
     wx.navigateBack();
   },
 
   goNotes: function () {
-    wx.switchTab({ url: '/pages/notes/notes' });
+    var book = this.data.book;
+    if (!book) {
+      wx.switchTab({ url: '/pages/notes/notes' });
+      return;
+    }
+    // Store book filter info in globalData for notes page to pick up
+    var app = getApp();
+    app.globalData.notesFilterBookId = book.bookId || book.id || '';
+    app.globalData.notesFilterBookTitle = book.title || '';
+    wx.switchTab({
+      url: '/pages/notes/notes',
+      success: function () {
+        // Clear the filter after switching (notes page reads it on show)
+        setTimeout(function () {
+          delete app.globalData.notesFilterBookId;
+          delete app.globalData.notesFilterBookTitle;
+        }, 500);
+      }
+    });
   }
 });

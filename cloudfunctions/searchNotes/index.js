@@ -8,6 +8,7 @@ const { getEmbeddings, cosineSimilarity } = require('./classifier');
 const EMBEDDING_BASE_URL = process.env.LLM_EMBEDDING_BASE_URL || 'https://api.siliconflow.cn/v1';
 const EMBEDDING_API_KEY = process.env.LLM_EMBEDDING_API_KEY || '';
 const EMBEDDING_MODEL = process.env.LLM_EMBEDDING_MODEL || 'BAAI/bge-large-zh-v1.5';
+const RESULT_LIMIT = 50;
 
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext();
@@ -43,20 +44,21 @@ exports.main = async (event, context) => {
     if (EMBEDDING_API_KEY && searchPool.length > 0) {
       try {
         const results = await vectorRerank(query, searchPool, config);
-        return { results: results.slice(0, 20), total: results.length, query };
+        return { results: results.slice(0, RESULT_LIMIT), total: results.length, query };
       } catch (e) {
         // Fall back to keyword-only results
         return {
-          results: searchPool.slice(0, 20).map(formatResult),
+          results: rankKeywordResults(query, searchPool).slice(0, RESULT_LIMIT).map(formatResult),
           total: searchPool.length,
           query,
+          warning: e.message,
         };
       }
     }
 
     // No embedding available, return keyword results
     return {
-      results: searchPool.slice(0, 20).map(formatResult),
+      results: rankKeywordResults(query, searchPool).slice(0, RESULT_LIMIT).map(formatResult),
       total: searchPool.length,
       query,
     };
@@ -86,45 +88,59 @@ async function keywordSearch(db, openid, query) {
 
   if (!terms.length) return [];
 
-  // Build regex patterns for each term
+  const fields = ['text', 'quote', 'note', 'bookTitle', 'author', 'chapterTitle', 'category', 'bookCategory', 'tags', 'keywords'];
   const conditions = [];
 
   for (const term of terms) {
-    // Escape special regex characters in the term
     const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = db.RegExp({ regexp: escaped, options: 'i' });
-
-    conditions.push({ text: regex });
-    conditions.push({ bookTitle: regex });
-    conditions.push({ tags: regex });
+    fields.forEach(field => {
+      const condition = {};
+      condition[field] = regex;
+      conditions.push(condition);
+    });
   }
 
   try {
     const res = await db.collection('cards')
-      .where({
-        _openid: openid,
+      .where(_.and([
+        { _openid: openid },
         _.or(conditions),
-      })
+      ]))
       .limit(200)
       .get();
 
     return res.data || [];
   } catch (e) {
-    // If _.or is not supported in some environments, try simple single-term search
-    if (conditions.length > 0) {
-      const fallbackTerm = terms[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const fallbackRegex = db.RegExp({ regexp: fallbackTerm, options: 'i' });
-      const res = await db.collection('cards')
-        .where({
-          _openid: openid,
-          text: fallbackRegex,
-        })
-        .limit(200)
-        .get();
-      return res.data || [];
-    }
-    return [];
+    return fallbackKeywordSearch(db, openid, terms, fields);
   }
+}
+
+async function fallbackKeywordSearch(db, openid, terms, fields) {
+  const seen = {};
+  const results = [];
+
+  for (const term of terms) {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = db.RegExp({ regexp: escaped, options: 'i' });
+
+    for (const field of fields) {
+      const where = { _openid: openid };
+      where[field] = regex;
+      try {
+        const res = await db.collection('cards').where(where).limit(100).get();
+        (res.data || []).forEach(card => {
+          const id = card._id || card.cardId;
+          if (!seen[id]) {
+            seen[id] = true;
+            results.push(card);
+          }
+        });
+      } catch (err) {}
+    }
+  }
+
+  return results;
 }
 
 // ---------------------------------------------------------------------------
@@ -154,7 +170,7 @@ async function vectorRerank(query, candidates, config) {
   // Compute scores
   const scored = candidates.map((card, i) => {
     const vectorScore = cosineSimilarity(queryEmbedding, candidateEmbeddings[i] || []);
-    const keywordScore = computeKeywordScore(query, card.text || card.note || card.quote || '');
+    const keywordScore = computeKeywordScore(query, searchableText(card));
     const finalScore = vectorScore * 0.6 + keywordScore * 0.4;
 
     return {
@@ -201,6 +217,33 @@ function computeKeywordScore(query, text) {
   }
 
   return matched / terms.length;
+}
+
+function searchableText(card) {
+  return [
+    card.text,
+    card.quote,
+    card.note,
+    card.bookTitle,
+    card.author,
+    card.chapterTitle,
+    card.category,
+    card.bookCategory,
+    ...(card.tags || []),
+    ...(card.keywords || []),
+  ].filter(Boolean).join('\n');
+}
+
+function rankKeywordResults(query, candidates) {
+  return (candidates || []).slice().map(card => {
+    return {
+      ...card,
+      _score: computeKeywordScore(query, searchableText(card)),
+    };
+  }).sort((a, b) => {
+    if ((b._score || 0) !== (a._score || 0)) return (b._score || 0) - (a._score || 0);
+    return (b.createTime || 0) - (a.createTime || 0);
+  });
 }
 
 /**

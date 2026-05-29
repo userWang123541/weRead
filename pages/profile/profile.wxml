@@ -4,7 +4,7 @@
       <text class="avatar-text">读</text>
     </view>
     <view class="reader-info">
-      <view class="reader-name">沉思的读者</view>
+      <view class="reader-name">{{userName}}</view>
       <view class="reader-sub">终身阅读者</view>
     </view>
   </view>
@@ -36,9 +36,15 @@
     <view class="menu-row" bindtap="goSync">
       <text class="menu-icon">↻</text>
       <text class="menu-text">同步与备份</text>
-      <text class="menu-status">已开启</text>
+      <text class="menu-status">{{syncStatusText}}</text>
       <text class="menu-arrow">›</text>
     </view>
+    <view class="menu-row" bindtap="goSettings">
+      <text class="menu-icon">∷</text>
+      <text class="menu-text">设置</text>
+      <text class="menu-arrow">›</text>
+    </view>
+
     <view class="menu-row" bindtap="openAbout">
       <text class="menu-icon">ⓘ</text>
       <text class="menu-text">关于微读</text>

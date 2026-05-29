@@ -88,3 +88,14 @@
   color: #fffdf8;
   background: #2b2621;
 }
+
+/* ---- error state ---- */
+.sync-icon.error {
+  background: #fde8e8;
+  color: #c1121f;
+}
+
+.sync-desc.error-text {
+  color: #c1121f;
+  font-weight: 600;
+}
